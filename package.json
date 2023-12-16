@@ -1,0 +1,22 @@
+{
+  "name": "gwapo-db",
+  "version": "1.0.0",
+  "description": "- gwapo - the service - gwapot - database (the gwapo depot ) - gwapese - schema - gwapobot - user",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "node dist/test/main.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "async-sema": "^3.1.1",
+    "dotenv": "^16.3.1",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.4",
+    "@types/pg": "^8.10.9",
+    "typescript": "^5.3.3"
+  }
+}

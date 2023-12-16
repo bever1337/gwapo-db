@@ -1,0 +1,14 @@
+%syntax-version=1.0.0
+%project=gawpo-db
+%uri=https://github.com/bever1337/gwapo-db
+
+schema 2023-12-08T04:26:35Z gwapobot <gwapobot@example.com> # Base schema
+lang 2023-12-08T05:50:13Z gwapobot <gwapobot@example.com> # Add lang
+currencies 2023-12-08T04:29:19Z gwapobot <gwapobot@example.com> # Add currency schema
+races 2023-12-09T20:19:23Z gwapobot <gwapobot@example.com> # Add races
+rarity 2023-12-09T21:21:21Z gwapobot <gwapobot@example.com> # Add rarity
+weapons 2023-12-10T04:50:40Z gwapobot <gwapobot@example.com> # Add weapons
+armor 2023-12-10T05:06:27Z gwapobot <gwapobot@example.com> # Add armor
+gathering 2023-12-10T05:13:52Z gwapobot <gwapobot@example.com> # Add gathering
+dyes 2023-12-10T18:35:11Z gwapobot <gwapobot@example.com> # Add dyes
+skins 2023-12-09T20:09:21Z gwapobot <gwapobot@example.com> # Add skin
