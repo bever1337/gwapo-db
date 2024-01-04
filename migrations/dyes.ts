@@ -15,8 +15,8 @@ async function main() {
   console.log("Got materials", dyedMaterials.length);
 
   const languageTags: string[] = await client
-    .query(`SELECT language_tag FROM gwapese.language_tags;`)
-    .then((queryResult) => queryResult.rows.map((row) => row.language_tag));
+    .query(`SELECT lang_tag FROM gwapese.lang;`)
+    .then((queryResult) => queryResult.rows.map((row) => row.lang_tag));
 
   console.log("Got languages", languageTags);
 
@@ -87,7 +87,7 @@ async function main() {
             } = color;
             await client.query({
               name: "upsertDetailedColor",
-              text: `CALL gwapese.upsert_detailed_color($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
+              text: `CALL gwapese.upsert_color_sample($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
               values: [
                 id,
                 blue,
@@ -106,7 +106,7 @@ async function main() {
 
         await client.query({
           name: "upsertNamedColor",
-          text: `CALL gwapese.upsert_named_color($1, $2, $3)`,
+          text: `CALL gwapese.upsert_color_name($1, $2, $3)`,
           values: [id, name, languageTag],
         });
       }

@@ -1,18 +1,20 @@
 -- Revert gawpo-db:currencies from pg
 BEGIN;
 
-DROP TABLE gwapese.named_currencies;
+DROP TABLE gwapese.historical_currency_name;
 
-DROP TABLE gwapese.described_currencies;
+DROP TABLE gwapese.currency_category;
 
-DROP PROCEDURE gwapese.upsert_currency;
+DROP TABLE gwapese.currency_description;
 
-DROP PROCEDURE gwapese.upsert_currency_description;
+DROP TABLE gwapese.historical_currency_description;
 
-DROP PROCEDURE gwapese.upsert_currency_name;
+DROP TABLE gwapese.currency_name;
 
-DROP FUNCTION gwapese.select_currencies;
+DROP TABLE gwapese.historical_currency_category;
 
-DROP TABLE gwapese.currencies;
+DROP TABLE gwapese.currency;
+
+DROP TABLE gwapese.historical_currency;
 
 COMMIT;

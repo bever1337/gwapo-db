@@ -1,4 +1,4 @@
--- Revert gawpo-db:dyes from pg
+-- Revert gawpo-db:color from pg
 BEGIN;
 
 DROP FUNCTION gwapese.srgb_to_lin;
@@ -11,24 +11,16 @@ DROP FUNCTION gwapese.y_to_lstar;
 
 DROP FUNCTION gwapese.rgb_to_lightness;
 
-DROP PROCEDURE gwapese.upsert_detailed_color;
+DROP TABLE gwapese.historical_color_sample;
 
-DROP PROCEDURE gwapese.upsert_named_color;
+DROP TABLE gwapese.color_sample;
 
-DROP PROCEDURE gwapese.upsert_color;
+DROP TABLE gwapese.historical_color_name;
 
-DROP TABLE gwapese.detailed_colors;
+DROP TABLE gwapese.color_name;
 
-DROP TABLE gwapese.named_colors;
+DROP TABLE gwapese.historical_color;
 
-DROP TABLE gwapese.colors;
-
-DROP TABLE gwapese.color_hue_categories;
-
-DROP TABLE gwapese.color_material_categories;
-
-DROP TABLE gwapese.color_rarity_categories;
-
-DROP TABLE gwapese.dyed_materials;
+DROP TABLE gwapese.color;
 
 COMMIT;

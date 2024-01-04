@@ -1,86 +1,107 @@
--- Verify gawpo-db:dyes on pg
+-- Verify gawpo-db:color on pg
 BEGIN;
 
 SELECT
-  hue
-FROM
-  gwapese.color_hue_categories
-WHERE
-  FALSE;
-
-SELECT
-  material
-FROM
-  gwapese.color_material_categories
-WHERE
-  FALSE;
-
-SELECT
-  rarity
-FROM
-  gwapese.color_rarity_categories
-WHERE
-  FALSE;
-
-SELECT
-  material
-FROM
-  gwapese.dyed_materials
-WHERE
-  FALSE;
-
-SELECT
-  id,
+  color_id,
   hue,
   material,
-  rarity
+  rarity,
+  sysrange_lower,
+  sysrange_upper
 FROM
-  gwapese.colors
+  gwapese.color
 WHERE
   FALSE;
 
 SELECT
-  id,
-  blue,
-  green,
+  color_id,
+  hue,
   material,
-  red
+  rarity,
+  sysrange_lower,
+  sysrange_upper
 FROM
-  gwapese.detailed_colors
+  gwapese.historical_color
 WHERE
   FALSE;
 
 SELECT
-  id,
-  color_name,
-  language_tag
+  app_name,
+  color_id,
+  original,
+  lang_tag,
+  sysrange_lower,
+  sysrange_upper
 FROM
-  gwapese.named_colors
+  gwapese.color_name
 WHERE
   FALSE;
 
 SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.upsert_color(smallint, text, text, text)', 'execute');
+  app_name,
+  color_id,
+  original,
+  lang_tag,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.historical_color_name
+WHERE
+  FALSE;
 
 SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.upsert_detailed_color(smallint, smallint, smallint, double precision, smallint, smallint, double precision, text, smallint, double precision)', 'execute');
+  blue,
+  brightness,
+  color_id,
+  contrast,
+  green,
+  hue,
+  lightness,
+  material,
+  perceived_lightness,
+  red,
+  rgb,
+  saturation,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.color_sample
+WHERE
+  FALSE;
 
 SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.upsert_named_color(smallint, text, text)', 'execute');
+  blue,
+  brightness,
+  color_id,
+  contrast,
+  green,
+  hue,
+  lightness,
+  material,
+  perceived_lightness,
+  red,
+  rgb,
+  saturation,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.historical_color_sample
+WHERE
+  FALSE;
 
 SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.rgb_to_hex(smallint, smallint, smallint)', 'execute');
+  has_function_privilege('gwapese.rgb_to_hex(smallint, smallint, smallint)', 'execute');
 
 SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.srgb_to_lin(double precision)', 'execute');
+  has_function_privilege('gwapese.srgb_to_lin(double precision)', 'execute');
 
 SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.rgb_to_y(double precision, double precision, double precision)', 'execute');
+  has_function_privilege('gwapese.rgb_to_y(double precision, double precision, double precision)', 'execute');
 
 SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.y_to_lstar(double precision)', 'execute');
+  has_function_privilege('gwapese.y_to_lstar(double precision)', 'execute');
 
 SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.rgb_to_lightness(smallint, smallint, smallint)', 'execute');
+  has_function_privilege('gwapese.rgb_to_lightness(smallint, smallint, smallint)', 'execute');
 
 ROLLBACK;

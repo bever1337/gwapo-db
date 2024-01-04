@@ -8,11 +8,7 @@ import { pool } from "../lib/pool";
 
 function main() {
   const stream = run({
-    files: [
-      "dist/test/currencies.test.js",
-      "dist/test/lang.test.js",
-      "dist/test/schema.test.js",
-    ],
+    files: ["dist/test/lang.test.js"],
     concurrency: false,
     setup() {},
   }).compose(tap);

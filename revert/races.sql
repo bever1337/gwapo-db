@@ -1,8 +1,8 @@
 -- Revert gawpo-db:races from pg
 BEGIN;
 
-DROP PROCEDURE gwapese.insert_race;
+DROP TABLE gwapese.historical_race;
 
-DROP TABLE gwapese.races;
+DROP TABLE gwapese.race;
 
 COMMIT;

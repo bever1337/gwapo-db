@@ -2,44 +2,95 @@
 BEGIN;
 
 SELECT
-  id,
-  categories,
+  currency_id,
   deprecated,
   icon,
-  presentation_order
+  presentation_order,
+  sysrange_lower,
+  sysrange_upper
 FROM
-  gwapese.currencies
+  gwapese.currency
 WHERE
   FALSE;
 
 SELECT
-  id,
-  currency_description,
-  language_tag
+  currency_id,
+  deprecated,
+  icon,
+  presentation_order,
+  sysrange_lower,
+  sysrange_upper
 FROM
-  gwapese.described_currencies
+  gwapese.historical_currency
 WHERE
   FALSE;
 
 SELECT
-  id,
-  currency_name,
-  language_tag
+  category,
+  currency_id,
+  sysrange_lower,
+  sysrange_upper
 FROM
-  gwapese.named_currencies
+  gwapese.currency_category
 WHERE
   FALSE;
 
 SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.select_currencies(text)', 'execute');
+  category,
+  currency_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.historical_currency_category
+WHERE
+  FALSE;
 
 SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.upsert_currency(SMALLINT, SMALLINT[], BOOLEAN, TEXT, SMALLINT)', 'execute');
+  app_name,
+  currency_id,
+  original,
+  lang_tag,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.currency_description
+WHERE
+  FALSE;
 
 SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.upsert_currency_description(SMALLINT, TEXT, text)', 'execute');
+  app_name,
+  currency_id,
+  original,
+  lang_tag,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.historical_currency_description
+WHERE
+  FALSE;
 
 SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.upsert_currency_name(SMALLINT, TEXT, text)', 'execute');
+  app_name,
+  currency_id,
+  original,
+  lang_tag,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.currency_name
+WHERE
+  FALSE;
+
+SELECT
+  app_name,
+  currency_id,
+  original,
+  lang_tag,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.historical_currency_name
+WHERE
+  FALSE;
 
 ROLLBACK;

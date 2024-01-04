@@ -9,8 +9,8 @@ async function main() {
   const client = await pool.connect();
 
   const languageTags: string[] = await client
-    .query(`SELECT (language_tag) FROM gwapese.language_tags;`)
-    .then((queryResult) => queryResult.rows.map((row) => row.language_tag));
+    .query(`SELECT (lang_tag) FROM gwapese.lang;`)
+    .then((queryResult) => queryResult.rows.map((row) => row.lang_tag));
 
   console.log("Got languages", languageTags);
 

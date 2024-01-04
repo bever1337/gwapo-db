@@ -39,8 +39,8 @@ async function main() {
     client = await pool.connect();
 
     const languageTags: string[] = await client
-      .query(`SELECT (language_tag) FROM gwapese.language_tags;`)
-      .then((queryResult) => queryResult.rows.map((row) => row.language_tag));
+      .query(`SELECT lang_tag FROM gwapese.lang;`)
+      .then((queryResult) => queryResult.rows.map((row) => row.lang_tag));
 
     const currenciesResponses: Gw2Currency[][] = await Promise.all(
       languageTags.map(toFetch)
@@ -58,6 +58,17 @@ async function main() {
           order,
         } of currenciesForLang) {
           if (languageTag === "en") {
+            await client.query({
+              name: "preparedUpsertCurrency",
+              text: `CALL gwapese.upsert_currency ($1, $2, $3, $4, $5);`,
+              values: [
+                id,
+                additionalCurrencyDoc[id]?.categories ?? [Category.General],
+                additionalCurrencyDoc[id]?.deprecated ?? false,
+                icon,
+                order,
+              ],
+            });
             await client.query({
               name: "preparedUpsertCurrency",
               text: `CALL gwapese.upsert_currency ($1, $2, $3, $4, $5);`,

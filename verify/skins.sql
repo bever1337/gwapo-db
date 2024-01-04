@@ -2,142 +2,221 @@
 BEGIN;
 
 SELECT
-  skin_flag
-FROM
-  gwapese.skin_flags
-WHERE
-  FALSE;
-
-SELECT
-  skin_type
-FROM
-  gwapese.skin_types
-WHERE
-  FALSE;
-
-SELECT
-  id,
   icon,
   rarity,
-  skin_type
+  skin_id,
+  skin_type,
+  sysrange_lower,
+  sysrange_upper
 FROM
-  gwapese.skins
+  gwapese.skin
 WHERE
   FALSE;
 
 SELECT
-  id,
+  icon,
+  rarity,
+  skin_id,
   skin_type,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.historical_skin
+WHERE
+  FALSE;
+
+SELECT
+  app_name,
+  original,
+  lang_tag,
+  skin_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.skin_description
+WHERE
+  FALSE;
+
+SELECT
+  app_name,
+  original,
+  lang_tag,
+  skin_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.historical_skin_description
+WHERE
+  FALSE;
+
+SELECT
+  flag,
+  skin_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.skin_flag
+WHERE
+  FALSE;
+
+SELECT
+  flag,
+  skin_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.historical_skin_flag
+WHERE
+  FALSE;
+
+SELECT
+  app_name,
+  original,
+  lang_tag,
+  skin_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.skin_name
+WHERE
+  FALSE;
+
+SELECT
+  app_name,
+  original,
+  lang_tag,
+  skin_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.historical_skin_name
+WHERE
+  FALSE;
+
+SELECT
+  restriction,
+  skin_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.skin_restriction
+WHERE
+  FALSE;
+
+SELECT
+  restriction,
+  skin_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.historical_skin_restriction
+WHERE
+  FALSE;
+
+SELECT
+  skin_id,
   slot,
+  sysrange_lower,
+  sysrange_upper,
   weight_class
 FROM
-  gwapese.armor_skins
+  gwapese.armor_skin
 WHERE
   FALSE;
 
 SELECT
-  id,
-  skin_type
+  skin_id,
+  slot,
+  sysrange_lower,
+  sysrange_upper,
+  weight_class
 FROM
-  gwapese.back_skins
+  gwapese.historical_armor_skin
 WHERE
   FALSE;
 
 SELECT
-  id,
-  language_tag,
-  skin_description
-FROM
-  gwapese.described_skins
-WHERE
-  FALSE;
-
-SELECT
-  id,
+  color_id,
+  material,
+  skin_id,
   slot_index,
-  color,
-  material
+  sysrange_lower,
+  sysrange_upper
 FROM
-  gwapese.dyed_skin_slots
+  gwapese.armor_skin_dye_slot
 WHERE
   FALSE;
 
 SELECT
-  id,
+  color_id,
+  material,
+  skin_id,
   slot_index,
-  color,
-  material
+  sysrange_lower,
+  sysrange_upper
 FROM
-  gwapese.dyed_skin_slots
+  gwapese.historical_armor_skin_dye_slot
 WHERE
   FALSE;
 
 SELECT
-  id,
-  skin_flag
+  skin_id,
+  sysrange_lower,
+  sysrange_upper
 FROM
-  gwapese.flagged_skins
+  gwapese.back_skin
 WHERE
   FALSE;
 
 SELECT
-  id,
-  skin_type,
-  tool
+  skin_id,
+  sysrange_lower,
+  sysrange_upper
 FROM
-  gwapese.gathering_skins
+  gwapese.historical_back_skin
 WHERE
   FALSE;
 
 SELECT
-  id,
-  language_tag,
-  skin_name
+  skin_id,
+  tool,
+  sysrange_lower,
+  sysrange_upper
 FROM
-  gwapese.named_skins
+  gwapese.gathering_skin
 WHERE
   FALSE;
 
 SELECT
-  id,
-  restriction
+  skin_id,
+  tool,
+  sysrange_lower,
+  sysrange_upper
 FROM
-  gwapese.restricted_skins
+  gwapese.historical_gathering_skin
 WHERE
   FALSE;
 
 SELECT
-  id,
   damage_type,
-  skin_type,
+  skin_id,
+  sysrange_lower,
+  sysrange_upper,
   weapon_type
 FROM
-  gwapese.weapon_skins
+  gwapese.weapon_skin
 WHERE
   FALSE;
 
 SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.upsert_skin(smallint, text, text, text)', 'execute');
-
-SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.upsert_armor_skin(smallint, text, text, text, text)', 'execute');
-
-SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.upsert_back_skin(smallint, text, text)', 'execute');
-
-SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.upsert_described_skin(smallint, text, text)', 'execute');
-
-SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.upsert_dyed_skin_slot(smallint, smallint, text, smallint)', 'execute');
-
-SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.upsert_gathering_skin(smallint, text, text, text)', 'execute');
-
-SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.upsert_named_skin(smallint, text, text)', 'execute');
-
-SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.upsert_weapon_skin(smallint, text, text, text, text)', 'execute');
+  damage_type,
+  skin_id,
+  sysrange_lower,
+  sysrange_upper,
+  weapon_type
+FROM
+  gwapese.historical_weapon_skin
+WHERE
+  FALSE;
 
 ROLLBACK;

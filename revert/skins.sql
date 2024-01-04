@@ -1,44 +1,44 @@
 -- Revert gawpo-db:skins from pg
 BEGIN;
 
-DROP PROCEDURE gwapese.upsert_armor_skin;
+DROP TABLE gwapese.historical_skin_description;
 
-DROP PROCEDURE gwapese.upsert_back_skin;
+DROP TABLE gwapese.skin_description;
 
-DROP PROCEDURE gwapese.upsert_described_skin;
+DROP TABLE gwapese.historical_skin_flag;
 
-DROP PROCEDURE gwapese.upsert_dyed_skin_slot;
+DROP TABLE gwapese.skin_flag;
 
-DROP PROCEDURE gwapese.upsert_gathering_skin;
+DROP TABLE gwapese.historical_skin_name;
 
-DROP PROCEDURE gwapese.upsert_named_skin;
+DROP TABLE gwapese.skin_name;
 
-DROP PROCEDURE gwapese.upsert_weapon_skin;
+DROP TABLE gwapese.historical_skin_restriction;
 
-DROP PROCEDURE gwapese.upsert_skin;
+DROP TABLE gwapese.skin_restriction;
 
-DROP TABLE gwapese.dyed_skin_slots;
+DROP TABLE gwapese.historical_armor_skin_dye_slot;
 
-DROP TABLE gwapese.armor_skins;
+DROP TABLE gwapese.armor_skin_dye_slot;
 
-DROP TABLE gwapese.back_skins;
+DROP TABLE gwapese.historical_armor_skin;
 
-DROP TABLE gwapese.described_skins;
+DROP TABLE gwapese.armor_skin;
 
-DROP TABLE gwapese.flagged_skins;
+DROP TABLE gwapese.historical_back_skin;
 
-DROP TABLE gwapese.gathering_skins;
+DROP TABLE gwapese.back_skin;
 
-DROP TABLE gwapese.named_skins;
+DROP TABLE gwapese.historical_gathering_skin;
 
-DROP TABLE gwapese.restricted_skins;
+DROP TABLE gwapese.gathering_skin;
 
-DROP TABLE gwapese.weapon_skins;
+DROP TABLE gwapese.historical_weapon_skin;
 
-DROP TABLE gwapese.skins;
+DROP TABLE gwapese.weapon_skin;
 
-DROP TABLE gwapese.skin_flags;
+DROP TABLE gwapese.historical_skin;
 
-DROP TABLE gwapese.skin_types;
+DROP TABLE gwapese.skin;
 
 COMMIT;

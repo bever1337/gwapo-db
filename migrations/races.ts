@@ -16,7 +16,7 @@ function main() {
         Promise.all(
           races.map((race) =>
             client.query({
-              text: `CALL gwapese.insert_race ($1);`,
+              text: `CALL gwapese.upsert_race ($1);`,
               values: [race],
             })
           )

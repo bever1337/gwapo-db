@@ -2,13 +2,21 @@
 BEGIN;
 
 SELECT
-  race
+  race_name,
+  sysrange_lower,
+  sysrange_upper
 FROM
-  gwapese.races
+  gwapese.race
 WHERE
   FALSE;
 
 SELECT
-  HAS_FUNCTION_PRIVILEGE('gwapese.insert_race(text)', 'execute');
+  race_name,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.historical_race
+WHERE
+  FALSE;
 
 ROLLBACK;
