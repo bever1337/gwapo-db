@@ -2,7 +2,7 @@
 -- requires: schema
 -- requires: history
 -- requires: lang
--- requires: races
+-- requires: race
 -- requires: skin
 BEGIN;
 
@@ -51,7 +51,7 @@ CREATE TABLE gwapese.historical_skin_armor_description (
 );
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'skin_armor_description', 'skin_armor_description');
+  'skin_armor_description', 'historical_skin_armor_description');
 
 CREATE TABLE gwapese.skin_armor_dye_slot (
   color_id smallint NOT NULL,

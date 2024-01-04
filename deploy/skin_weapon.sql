@@ -2,14 +2,14 @@
 -- requires: schema
 -- requires: history
 -- requires: lang
--- requires: races
+-- requires: race
 -- requires: skin
 BEGIN;
 
 CREATE TABLE gwapese.skin_weapon (
+  damage_type text NOT NULL,
   icon text NOT NULL,
   rarity text NOT NULL,
-  damage_type text NOT NULL,
   skin_id smallint UNIQUE NOT NULL,
   skin_type text GENERATED ALWAYS AS ('Weapon') STORED,
   weapon_type text NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE gwapese.skin_weapon (
     gwapese.skin (skin_id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT skin_type_identifies_skin_weapon_fk FOREIGN KEY (skin_id,
     skin_type) REFERENCES gwapese.skin_type (skin_id, skin_type) ON DELETE
-    CASCADE ON UPDATE CASCADE
+    CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'skin_weapon');
@@ -51,7 +51,7 @@ CREATE TABLE gwapese.historical_skin_weapon_description (
 );
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'skin_weapo_descriptionn', 'historical_skin_weapon_description');
+  'skin_weapon_description', 'historical_skin_weapon_description');
 
 CREATE TABLE gwapese.skin_weapon_flag (
   flag text NOT NULL,

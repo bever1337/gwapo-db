@@ -2,7 +2,7 @@
 -- requires: schema
 -- requires: history
 -- requires: lang
--- requires: races
+-- requires: race
 -- requires: skin
 BEGIN;
 
@@ -15,8 +15,7 @@ CREATE TABLE gwapese.skin_back (
   CONSTRAINT skin_identifies_skin_back_fk FOREIGN KEY (skin_id) REFERENCES
     gwapese.skin (skin_id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT skin_type_identifies_skin_back_fk FOREIGN KEY (skin_id, skin_type)
-    REFERENCES gwapese.skin_type (skin_id, skin_type) ON DELETE CASCADE ON
-    UPDATE CASCADE
+    REFERENCES gwapese.skin_type (skin_id, skin_type) ON DELETE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'skin_back');
@@ -44,7 +43,7 @@ CREATE TABLE gwapese.skin_back_description (
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'skin_back_description');
 
-CREATE TABLE gwapese.historical_skin_back (
+CREATE TABLE gwapese.historical_skin_back_description (
   LIKE gwapese.skin_back_description
 );
 
@@ -61,7 +60,7 @@ CREATE TABLE gwapese.skin_back_flag (
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'skin_back_flag');
 
-CREATE TABLE gwapese.historical_skin_back (
+CREATE TABLE gwapese.historical_skin_back_flag (
   LIKE gwapese.skin_back_flag
 );
 
@@ -83,7 +82,7 @@ CREATE TABLE gwapese.skin_back_name (
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'skin_back_name');
 
-CREATE TABLE gwapese.historical_skin_back (
+CREATE TABLE gwapese.historical_skin_back_name (
   LIKE gwapese.skin_back_name
 );
 
@@ -102,7 +101,7 @@ CREATE TABLE gwapese.skin_back_restriction (
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'skin_back_restriction');
 
-CREATE TABLE gwapese.historical_skin_back (
+CREATE TABLE gwapese.historical_skin_back_restriction (
   LIKE gwapese.skin_back_restriction
 );
 

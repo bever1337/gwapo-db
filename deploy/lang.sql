@@ -94,78 +94,74 @@ CREATE TABLE gwapese.historical_translated_copy (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'translated_copy', 'historical_translated_copy');
 
-CREATE OR REPLACE PROCEDURE gwapese.delete_operating_copy (IN in_app_name text,
-  IN in_lang_tag text, IN in_original text)
-  AS $$
-BEGIN
-  DELETE FROM gwapese.operating_copy
-  WHERE app_name = in_app_name
-    AND lang_tag = in_lang_tag
-    AND original = in_original;
-END;
-$$
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE PROCEDURE gwapese.delete_translated_copy (IN in_app_name
-  text, IN in_original_lang_tag text, IN in_original text, IN
-  in_translation_lang_tag text)
-  AS $$
-BEGIN
-  DELETE FROM gwapese.translated_copy
-  WHERE app_name = in_app_name
-    AND original_lang_tag = in_original_lang_tag
-    AND original = in_original
-    AND translation_lang_tag = in_translation_lang_tag;
-END;
-$$
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE PROCEDURE gwapese.upsert_operating_copy (IN in_app_name text,
-  IN in_lang_tag text, IN in_original text)
-  AS $$
-BEGIN
-  MERGE INTO gwapese.operating_copy AS target_operating_copy
-  USING (
-  VALUES (in_app_name, in_lang_tag, in_original)) AS source_operating_copy
-    (app_name, lang_tag, original) ON target_operating_copy.app_name =
-    source_operating_copy.app_name
-    AND target_operating_copy.lang_tag = source_operating_copy.lang_tag
-    AND target_operating_copy.original = source_operating_copy.original
-  WHEN NOT MATCHED THEN
-    INSERT (app_name, lang_tag, original)
-      VALUES (source_operating_copy.app_name, source_operating_copy.lang_tag,
-	source_operating_copy.original);
-END;
-$$
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE PROCEDURE gwapese.upsert_translated_copy (IN in_app_name
-  text, IN in_original_lang_tag text, IN in_original text, IN
-  in_translation_lang_tag text, IN in_translation text)
-  AS $$
-BEGIN
-  MERGE INTO gwapese.translated_copy AS target_translated_copy
-  USING (
-  VALUES (in_app_name, in_original_lang_tag, in_original,
-    in_translation_lang_tag)) AS source_translated_copy (app_name,
-    original_lang_tag, original, translation_lang_tag) ON
-    target_translated_copy.app_name = source_translated_copy.app_name
-    AND target_translated_copy.original_lang_tag = source_translated_copy.original_lang_tag
-    AND target_translated_copy.original = source_translated_copy.original
-    AND target_translated_copy.translation_lang_tag =
-      source_translated_copy.translation_lang_tag
-  WHEN MATCHED
-    AND target_translated_copy.translation != in_translation THEN
-    UPDATE SET
-      translation = in_translation
-  WHEN NOT MATCHED THEN
-    INSERT (app_name, original_lang_tag, original, translation_lang_tag, translation)
-      VALUES (source_translated_copy.app_name,
-	source_translated_copy.original_lang_tag,
-	source_translated_copy.original,
-	source_translated_copy.translation_lang_tag, in_translation);
-END;
-$$
-LANGUAGE plpgsql;
-
+-- CREATE OR REPLACE PROCEDURE gwapese.delete_operating_copy (IN in_app_name text,
+--   IN in_lang_tag text, IN in_original text)
+--   AS $$
+-- BEGIN
+--   DELETE FROM gwapese.operating_copy
+--   WHERE app_name = in_app_name
+--     AND lang_tag = in_lang_tag
+--     AND original = in_original;
+-- END;
+-- $$
+-- LANGUAGE plpgsql;
+-- CREATE OR REPLACE PROCEDURE gwapese.delete_translated_copy (IN in_app_name
+--   text, IN in_original_lang_tag text, IN in_original text, IN
+--   in_translation_lang_tag text)
+--   AS $$
+-- BEGIN
+--   DELETE FROM gwapese.translated_copy
+--   WHERE app_name = in_app_name
+--     AND original_lang_tag = in_original_lang_tag
+--     AND original = in_original
+--     AND translation_lang_tag = in_translation_lang_tag;
+-- END;
+-- $$
+-- LANGUAGE plpgsql;
+-- CREATE OR REPLACE PROCEDURE gwapese.upsert_operating_copy (IN in_app_name text,
+--   IN in_lang_tag text, IN in_original text)
+--   AS $$
+-- BEGIN
+--   MERGE INTO gwapese.operating_copy AS target_operating_copy
+--   USING (
+--   VALUES (in_app_name, in_lang_tag, in_original)) AS source_operating_copy
+--     (app_name, lang_tag, original) ON target_operating_copy.app_name =
+--     source_operating_copy.app_name
+--     AND target_operating_copy.lang_tag = source_operating_copy.lang_tag
+--     AND target_operating_copy.original = source_operating_copy.original
+--   WHEN NOT MATCHED THEN
+--     INSERT (app_name, lang_tag, original)
+--       VALUES (source_operating_copy.app_name, source_operating_copy.lang_tag,
+-- 	source_operating_copy.original);
+-- END;
+-- $$
+-- LANGUAGE plpgsql;
+-- CREATE OR REPLACE PROCEDURE gwapese.upsert_translated_copy (IN in_app_name
+--   text, IN in_original_lang_tag text, IN in_original text, IN
+--   in_translation_lang_tag text, IN in_translation text)
+--   AS $$
+-- BEGIN
+--   MERGE INTO gwapese.translated_copy AS target_translated_copy
+--   USING (
+--   VALUES (in_app_name, in_original_lang_tag, in_original,
+--     in_translation_lang_tag)) AS source_translated_copy (app_name,
+--     original_lang_tag, original, translation_lang_tag) ON
+--     target_translated_copy.app_name = source_translated_copy.app_name
+--     AND target_translated_copy.original_lang_tag = source_translated_copy.original_lang_tag
+--     AND target_translated_copy.original = source_translated_copy.original
+--     AND target_translated_copy.translation_lang_tag =
+--       source_translated_copy.translation_lang_tag
+--   WHEN MATCHED
+--     AND target_translated_copy.translation != in_translation THEN
+--     UPDATE SET
+--       translation = in_translation
+--   WHEN NOT MATCHED THEN
+--     INSERT (app_name, original_lang_tag, original, translation_lang_tag, translation)
+--       VALUES (source_translated_copy.app_name,
+-- 	source_translated_copy.original_lang_tag,
+-- 	source_translated_copy.original,
+-- 	source_translated_copy.translation_lang_tag, in_translation);
+-- END;
+-- $$
+-- LANGUAGE plpgsql;
 COMMIT;

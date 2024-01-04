@@ -1,4 +1,4 @@
--- Verify gawpo-db:currencies on pg
+-- Verify gawpo-db:currency on pg
 BEGIN;
 
 SELECT

@@ -2,7 +2,7 @@
 -- requires: schema
 -- requires: history
 -- requires: lang
--- requires: races
+-- requires: race
 -- requires: skin
 BEGIN;
 
@@ -17,7 +17,7 @@ CREATE TABLE gwapese.skin_gathering (
     gwapese.skin (skin_id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT skin_type_identifies_skin_gathering_fk FOREIGN KEY (skin_id,
     skin_type) REFERENCES gwapese.skin_type (skin_id, skin_type) ON DELETE
-    CASCADE ON UPDATE CASCADE
+    CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'skin_gathering');

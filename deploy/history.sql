@@ -3,24 +3,44 @@ BEGIN;
 
 CREATE SCHEMA temporal_tables;
 
-CREATE OR REPLACE PROCEDURE temporal_tables.alter_table_to_temporal (IN
-  in_schema_name text, IN in_table_name text)
-  AS $$
+CREATE OR REPLACE FUNCTION temporal_tables.fmt_trigger_fn_name (IN
+  in_historical_table_name text)
+  RETURNS text
+  AS $quote_fmt_trigger_fn_name$
 BEGIN
-  EXECUTE format('ALTER TABLE %1$I.%2$I
+  RETURN 'historicize_' || substring(in_historical_table_name FOR 48) || '_fn';
+END;
+$quote_fmt_trigger_fn_name$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION temporal_tables.fmt_trigger_name (IN
+  in_historical_table_name text)
+  RETURNS text
+  AS $quote_fmt_trigger_name$
+BEGIN
+  RETURN 'historicize_' || substring(in_historical_table_name FOR 48) || '_tr';
+END;
+$quote_fmt_trigger_name$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION temporal_tables.fmt_alter_table_to_temporal (IN
+  in_schema_name text, IN in_table_name text)
+  RETURNS text
+  AS $quote_fmt_alter_table_to_temporal$
+BEGIN
+  RETURN format('ALTER TABLE %1$I.%2$I
     ADD COLUMN sysrange_lower timestamp(3) NOT NULL,
     ADD COLUMN sysrange_upper timestamp(3) NOT NULL;', in_schema_name, in_table_name);
 END;
-$$
+$quote_fmt_alter_table_to_temporal$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE PROCEDURE temporal_tables.create_historicize_trigger (IN
-  in_schema_name text, IN in_present_table_name text, IN
-  in_historical_table_name text)
-  AS $$
+CREATE OR REPLACE FUNCTION temporal_tables.fmt_create_temporal_fn (IN
+  in_schema_name text, IN in_historical_table_name text)
+  RETURNS text
+  AS $quote_fmt_create_temporal_fn$
 BEGIN
-  -- [schema, trigger_fn, history_table]
-  EXECUTE format('CREATE OR REPLACE FUNCTION %1$I.%2$I ()
+  RETURN format('CREATE OR REPLACE FUNCTION %1$I.%2$I ()
     RETURNS TRIGGER
     AS $$
   BEGIN
@@ -48,59 +68,83 @@ BEGIN
     END IF;
   END;
   $$
-  LANGUAGE plpgsql;', in_schema_name, 'historicize_' || in_present_table_name ||
-    '_fn', in_historical_table_name);
-  -- [trigger_name, schema, temporal_table, trigger_fn]
-  EXECUTE format('CREATE OR REPLACE TRIGGER %1$I
-    BEFORE DELETE OR INSERT OR UPDATE ON %2$I.%3$I
-    EXECUTE FUNCTION %2$I.%4$I ();', 'historicize_' ||
-      in_present_table_name || '_tr', in_schema_name,
-      in_present_table_name, 'historicize_' || in_present_table_name ||
-      '_fn');
+  LANGUAGE plpgsql;', in_schema_name, temporal_tables.fmt_trigger_fn_name
+    (in_historical_table_name), in_historical_table_name);
 END;
-$$
+$quote_fmt_create_temporal_fn$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION temporal_tables.fmt_create_table_trigger (IN
+  in_schema_name text, IN in_present_table_name text, IN
+  in_historical_table_name text)
+  RETURNS text
+  AS $quote_fmt_create_table_trigger$
+BEGIN
+  RETURN format('CREATE OR REPLACE TRIGGER %1$I
+    BEFORE DELETE OR INSERT OR UPDATE ON %2$I.%3$I
+    FOR EACH ROW
+    EXECUTE FUNCTION %2$I.%4$I ();', temporal_tables.fmt_trigger_name
+      (in_historical_table_name), in_schema_name, in_present_table_name,
+      temporal_tables.fmt_trigger_fn_name (in_historical_table_name));
+END;
+$quote_fmt_create_table_trigger$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION temporal_tables.fmt_drop_table_trigger (IN
+  in_schema_name text, IN in_present_table_name text, IN
+  in_historical_table_name text)
+  RETURNS text
+  AS $quote_fmt_drop_table_trigger$
+BEGIN
+  RETURN format('DROP TRIGGER %1$I ON %2$I.%3$I;', temporal_tables.fmt_trigger_name
+    (in_historical_table_name), in_schema_name, in_present_table_name);
+END;
+$quote_fmt_drop_table_trigger$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION temporal_tables.fmt_drop_trigger_fn (IN
+  in_schema_name text, IN in_historical_table_name text)
+  RETURNS text
+  AS $quote_fmt_drop_trigger_fn$
+BEGIN
+  RETURN format('DROP FUNCTION %1$I.%2$I;', in_schema_name,
+    temporal_tables.fmt_trigger_fn_name (in_historical_table_name));
+END;
+$quote_fmt_drop_trigger_fn$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE PROCEDURE temporal_tables.alter_table_to_temporal (IN
+  in_schema_name text, IN in_table_name text)
+  AS $quote_alter_table_to_temporal$
+BEGIN
+  EXECUTE temporal_tables.fmt_alter_table_to_temporal (in_schema_name, in_table_name);
+END;
+$quote_alter_table_to_temporal$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE PROCEDURE temporal_tables.create_historicize_trigger (IN
+  in_schema_name text, IN in_present_table_name text, IN
+  in_historical_table_name text)
+  AS $quote_create_historicize_trigger$
+BEGIN
+  EXECUTE temporal_tables.fmt_create_temporal_fn (in_schema_name,
+    in_historical_table_name);
+  EXECUTE temporal_tables.fmt_create_table_trigger (in_schema_name,
+    in_present_table_name, in_historical_table_name);
+END;
+$quote_create_historicize_trigger$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE PROCEDURE temporal_tables.drop_historicize_fn (IN
   in_schema_name text, IN in_present_table_name text, IN
   in_historical_table_name text)
-  AS $$
+  AS $quote_drop_historicize_fn$
 BEGIN
-  -- [trigger_name, schema, temporal_table]
-  EXECUTE format('DROP TRIGGER %1$I ON %2$I.%3$I;', 'historicize_' || in_present_table_name ||
-    '_tr', in_schema_name, in_present_table_name);
-  -- [schema, trigger_fn]
-  EXECUTE format('DROP FUNCTION %1$I.%2$I;', in_schema_name, 'historicize_' ||
-    in_present_table_name || '_fn');
+  EXECUTE temporal_tables.fmt_drop_table_trigger (in_schema_name,
+    in_present_table_name, in_historical_table_name);
+  EXECUTE temporal_tables.fmt_drop_trigger_fn (in_schema_name, in_historical_table_name);
 END;
-$$
+$quote_drop_historicize_fn$
 LANGUAGE plpgsql;
 
--- CREATE OR REPLACE FUNCTION temporal_tables.historicize ()
---   RETURNS TRIGGER
---   AS $$
--- BEGIN
---   IF TG_OP = 'DELETE' THEN
---     OLD.sysrange_upper = current_timestamp(3);
---     EXECUTE format('INSERT INTO %1$I.%2$I VALUES ($1.*);', TG_ARGV[0], TG_ARGV[1])
---     USING OLD;
---     RETURN OLD;
---   ELSIF TG_OP = 'INSERT' THEN
---     NEW.sysrange_lower = current_timestamp(3);
---     NEW.sysrange_upper = 'infinity';
---     RETURN NEW;
---   ELSIF TG_OP = 'UPDATE' THEN
---     OLD.sysrange_upper = current_timestamp(3);
---     NEW.sysrange_lower = OLD.sysrange_upper;
---     NEW.sysrange_upper = 'infinity';
---     EXECUTE format('INSERT INTO %1$I.%2$I VALUES ($1.*);', TG_ARGV[0], TG_ARGV[1])
---     USING OLD;
---     RETURN NEW;
---   ELSE
---     RAISE TRIGGER_PROTOCOL_VIOLATED 'function "historicize" must be fired for INSERT or UPDATE or DELETE';
---   END IF;
--- END;
--- $$
--- LANGUAGE plpgsql;
--- COMMENT ON FUNCTION temporal_tables.historicize IS '(schema_name text, historical_table_name text) => trigger';
 COMMIT;

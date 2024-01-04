@@ -53,7 +53,7 @@ CREATE TABLE gwapese.color_sample (
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_sample');
 
-CREATE TABLE gwapese.historical_color (
+CREATE TABLE gwapese.historical_color_sample (
   LIKE gwapese.color_sample
 );
 
@@ -126,7 +126,7 @@ CREATE TABLE gwapese.color_sample_reference (
   green smallint NOT NULL,
   material text NOT NULL,
   red smallint NOT NULL,
-  CONSTRAINT color_sample_base_pk PRIMARY KEY (color_id, material),
+  CONSTRAINT color_sample_reference_pk PRIMARY KEY (color_id, material),
   CONSTRAINT color_sample_reference_u UNIQUE (color_id, material, red, green, blue),
   CONSTRAINT color_sample_identifies_reference_fk FOREIGN KEY (color_id,
     material) REFERENCES gwapese.color_sample (color_id, material) ON DELETE
@@ -135,7 +135,7 @@ CREATE TABLE gwapese.color_sample_reference (
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_sample_reference');
 
-CREATE TABLE gwapese.historical_color (
+CREATE TABLE gwapese.historical_color_sample_reference (
   LIKE gwapese.color_sample_reference
 );
 
@@ -149,7 +149,7 @@ CREATE TABLE gwapese.color_sample_reference_perception (
   material text NOT NULL,
   perceived_lightness double precision NOT NULL,
   red smallint NOT NULL,
-  CONSTRAINT color_sample_base_pk PRIMARY KEY (color_id, material),
+  CONSTRAINT color_sample_reference_perception_pk PRIMARY KEY (color_id, material),
   CONSTRAINT color_sample_base_defines_perception_fk FOREIGN KEY (color_id,
     material, red, green, blue) REFERENCES gwapese.color_sample_reference
     (color_id, material, red, green, blue) ON DELETE CASCADE ON UPDATE CASCADE

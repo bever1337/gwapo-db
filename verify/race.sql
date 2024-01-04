@@ -1,4 +1,4 @@
--- Verify gawpo-db:races on pg
+-- Verify gawpo-db:race on pg
 BEGIN;
 
 SELECT

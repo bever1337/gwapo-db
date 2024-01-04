@@ -1,4 +1,4 @@
--- Deploy gawpo-db:races to pg
+-- Deploy gawpo-db:race to pg
 -- requires: schema
 -- requires: history
 BEGIN;

@@ -1,107 +1,117 @@
--- Verify gawpo-db:lang on pg
+-- Verify gawpo-db:skin_gathering on pg
 BEGIN;
 
 SELECT
-  lang_tag,
+  icon,
+  rarity,
+  skin_id,
+  skin_type,
+  tool,
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.lang
+  gwapese.skin_gathering
 WHERE
   FALSE;
 
 SELECT
-  lang_tag,
+  icon,
+  rarity,
+  skin_id,
+  skin_type,
+  tool,
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.historical_lang
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.app
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.historical_app
+  gwapese.historical_skin_gathering
 WHERE
   FALSE;
 
 SELECT
   app_name,
-  lang_tag,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.operating_lang
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  lang_tag,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.historical_operating_lang
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  lang_tag,
   original,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.operating_copy
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
   lang_tag,
-  original,
+  skin_id,
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.historical_operating_copy
+  gwapese.skin_gathering_description
 WHERE
   FALSE;
 
 SELECT
   app_name,
-  original_lang_tag,
   original,
-  translation_lang_tag,
-  translation,
+  lang_tag,
+  skin_id,
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.translated_copy
+  gwapese.historical_skin_gathering_description
+WHERE
+  FALSE;
+
+SELECT
+  flag,
+  skin_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.skin_gathering_flag
+WHERE
+  FALSE;
+
+SELECT
+  flag,
+  skin_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.historical_skin_gathering_flag
 WHERE
   FALSE;
 
 SELECT
   app_name,
-  original_lang_tag,
   original,
-  translation_lang_tag,
-  translation,
+  lang_tag,
+  skin_id,
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.historical_translated_copy
+  gwapese.skin_gathering_name
+WHERE
+  FALSE;
+
+SELECT
+  app_name,
+  original,
+  lang_tag,
+  skin_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.historical_skin_gathering_name
+WHERE
+  FALSE;
+
+SELECT
+  restriction,
+  skin_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.skin_gathering_restriction
+WHERE
+  FALSE;
+
+SELECT
+  restriction,
+  skin_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.historical_skin_gathering_restriction
 WHERE
   FALSE;
 
