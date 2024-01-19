@@ -21,7 +21,31 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.historical_color
+  gwapese.color_history
+WHERE
+  FALSE;
+
+SELECT
+  blue,
+  color_id,
+  green,
+  red,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.color_base
+WHERE
+  FALSE;
+
+SELECT
+  blue,
+  color_id,
+  green,
+  red,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.color_base_history
 WHERE
   FALSE;
 
@@ -45,7 +69,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.historical_color_name
+  gwapese.color_name_history
 WHERE
   FALSE;
 
@@ -65,33 +89,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.historical_color_sample
-WHERE
-  FALSE;
-
-SELECT
-  blue,
-  color_id,
-  green,
-  material,
-  red,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.color_sample_base
-WHERE
-  FALSE;
-
-SELECT
-  blue,
-  color_id,
-  green,
-  material,
-  red,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.historical_color_sample_base
+  gwapese.color_sample_history
 WHERE
   FALSE;
 
@@ -115,7 +113,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.historical_color_sample_adjustment
+  gwapese.color_sample_adjustment_history
 WHERE
   FALSE;
 
@@ -141,7 +139,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.historical_color_sample_shift
+  gwapese.color_sample_shift_history
 WHERE
   FALSE;
 
@@ -167,7 +165,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.historical_color_sample_reference
+  gwapese.color_sample_reference_history
 WHERE
   FALSE;
 
@@ -195,7 +193,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.historical_color_sample_reference_perception
+  gwapese.color_sample_reference_perception_history
 WHERE
   FALSE;
 

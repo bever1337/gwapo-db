@@ -6,20 +6,39 @@ BEGIN;
 
 CREATE TABLE gwapese.color (
   color_id smallint NOT NULL,
-  hue text NOT NULL,
-  material text NOT NULL,
-  rarity text NOT NULL,
+  hue text,
+  material text,
+  rarity text,
   CONSTRAINT color_pk PRIMARY KEY (color_id)
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color');
 
-CREATE TABLE gwapese.historical_color (
+CREATE TABLE gwapese.color_history (
   LIKE gwapese.color
 );
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'color', 'historical_color');
+  'color', 'color_history');
+
+CREATE TABLE gwapese.color_base (
+  blue smallint NOT NULL,
+  color_id smallint NOT NULL,
+  green smallint NOT NULL,
+  red smallint NOT NULL,
+  CONSTRAINT color_base_pk PRIMARY KEY (color_id),
+  CONSTRAINT color_identifies_color_base_fk FOREIGN KEY (color_id) REFERENCES
+    gwapese.color (color_id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_base');
+
+CREATE TABLE gwapese.color_base_history (
+  LIKE gwapese.color_base
+);
+
+CALL temporal_tables.create_historicize_trigger ('gwapese',
+  'color_base', 'color_base_history');
 
 CREATE TABLE gwapese.color_name (
   app_name text NOT NULL,
@@ -29,56 +48,36 @@ CREATE TABLE gwapese.color_name (
   CONSTRAINT color_name_pk PRIMARY KEY (app_name, lang_tag, color_id),
   CONSTRAINT color_identifies_color_name_fk FOREIGN KEY (color_id) REFERENCES
     gwapese.color (color_id) ON DELETE CASCADE,
-  CONSTRAINT operating_copy_precedes_color_name FOREIGN KEY (app_name,
+  CONSTRAINT operating_copy_precedes_color_name_fk FOREIGN KEY (app_name,
     lang_tag, original) REFERENCES gwapese.operating_copy (app_name, lang_tag,
     original)
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_name');
 
-CREATE TABLE gwapese.historical_color_name (
+CREATE TABLE gwapese.color_name_history (
   LIKE gwapese.color_name
 );
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'color_name', 'historical_color_name');
+  'color_name', 'color_name_history');
 
 CREATE TABLE gwapese.color_sample (
   color_id smallint NOT NULL,
   material text NOT NULL,
   CONSTRAINT color_sample_pk PRIMARY KEY (color_id, material),
-  CONSTRAINT color_comprises_color_samples_fk FOREIGN KEY (color_id) REFERENCES
+  CONSTRAINT color_comprises_color_sample_fk FOREIGN KEY (color_id) REFERENCES
     gwapese.color (color_id) ON DELETE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_sample');
 
-CREATE TABLE gwapese.historical_color_sample (
+CREATE TABLE gwapese.color_sample_history (
   LIKE gwapese.color_sample
 );
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'color_sample', 'historical_color_sample');
-
-CREATE TABLE gwapese.color_sample_base (
-  blue smallint NOT NULL,
-  color_id smallint NOT NULL,
-  green smallint NOT NULL,
-  material text NOT NULL,
-  red smallint NOT NULL,
-  CONSTRAINT color_sample_base_pk PRIMARY KEY (color_id, material),
-  CONSTRAINT color_sample_identifies_base_fk FOREIGN KEY (color_id, material)
-    REFERENCES gwapese.color_sample (color_id, material) ON DELETE CASCADE
-);
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_sample_base');
-
-CREATE TABLE gwapese.historical_color_sample_base (
-  LIKE gwapese.color_sample_base
-);
-
-CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'color_sample_base', 'historical_color_sample_base');
+  'color_sample', 'color_sample_history');
 
 CREATE TABLE gwapese.color_sample_adjustment (
   brightness smallint NOT NULL,
@@ -86,19 +85,19 @@ CREATE TABLE gwapese.color_sample_adjustment (
   contrast double precision NOT NULL,
   material text NOT NULL,
   CONSTRAINT color_sample_adjustment_pk PRIMARY KEY (color_id, material),
-  CONSTRAINT color_sample_identifies_adjustment_fk FOREIGN KEY (color_id,
-    material) REFERENCES gwapese.color_sample (color_id, material) ON DELETE
-    CASCADE
+  CONSTRAINT color_sample_identifies_color_sample_adjustment_fk FOREIGN KEY
+    (color_id, material) REFERENCES gwapese.color_sample (color_id, material)
+    ON DELETE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_sample_adjustment');
 
-CREATE TABLE gwapese.historical_color_sample_adjustment (
+CREATE TABLE gwapese.color_sample_adjustment_history (
   LIKE gwapese.color_sample_adjustment
 );
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'color_sample_adjustment', 'historical_color_sample_adjustment');
+  'color_sample_adjustment', 'color_sample_adjustment_history');
 
 CREATE TABLE gwapese.color_sample_shift (
   color_id smallint NOT NULL,
@@ -107,18 +106,19 @@ CREATE TABLE gwapese.color_sample_shift (
   material text NOT NULL,
   saturation double precision NOT NULL,
   CONSTRAINT color_sample_shift_pk PRIMARY KEY (color_id, material),
-  CONSTRAINT color_sample_identifies_shift_fk FOREIGN KEY (color_id, material)
-    REFERENCES gwapese.color_sample (color_id, material) ON DELETE CASCADE
+  CONSTRAINT color_sample_identifies_color_sample_shift_fk FOREIGN KEY
+    (color_id, material) REFERENCES gwapese.color_sample (color_id, material)
+    ON DELETE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_sample_shift');
 
-CREATE TABLE gwapese.historical_color_sample_shift (
+CREATE TABLE gwapese.color_sample_shift_history (
   LIKE gwapese.color_sample_shift
 );
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'color_sample_shift', 'historical_color_sample_shift');
+  'color_sample_shift', 'color_sample_shift_history');
 
 CREATE TABLE gwapese.color_sample_reference (
   blue smallint NOT NULL,
@@ -128,19 +128,19 @@ CREATE TABLE gwapese.color_sample_reference (
   red smallint NOT NULL,
   CONSTRAINT color_sample_reference_pk PRIMARY KEY (color_id, material),
   CONSTRAINT color_sample_reference_u UNIQUE (color_id, material, red, green, blue),
-  CONSTRAINT color_sample_identifies_reference_fk FOREIGN KEY (color_id,
-    material) REFERENCES gwapese.color_sample (color_id, material) ON DELETE
-    CASCADE
+  CONSTRAINT color_sample_identifies_color_sample_reference_fk FOREIGN KEY
+    (color_id, material) REFERENCES gwapese.color_sample (color_id, material)
+    ON DELETE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_sample_reference');
 
-CREATE TABLE gwapese.historical_color_sample_reference (
+CREATE TABLE gwapese.color_sample_reference_history (
   LIKE gwapese.color_sample_reference
 );
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'color_sample_reference', 'historical_color_sample_reference');
+  'color_sample_reference', 'color_sample_reference_history');
 
 CREATE TABLE gwapese.color_sample_reference_perception (
   blue smallint NOT NULL,
@@ -150,19 +150,20 @@ CREATE TABLE gwapese.color_sample_reference_perception (
   perceived_lightness double precision NOT NULL,
   red smallint NOT NULL,
   CONSTRAINT color_sample_reference_perception_pk PRIMARY KEY (color_id, material),
-  CONSTRAINT color_sample_base_defines_perception_fk FOREIGN KEY (color_id,
-    material, red, green, blue) REFERENCES gwapese.color_sample_reference
-    (color_id, material, red, green, blue) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT color_base_defines_color_sample_reference_perception_fk FOREIGN
+    KEY (color_id, material, red, green, blue) REFERENCES
+    gwapese.color_sample_reference (color_id, material, red, green, blue) ON
+    DELETE CASCADE ON UPDATE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_sample_reference_perception');
 
-CREATE TABLE gwapese.historical_color_sample_reference_perception (
+CREATE TABLE gwapese.color_sample_reference_perception_history (
   LIKE gwapese.color_sample_reference_perception
 );
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'color_sample_reference_perception', 'historical_color_sample_reference_perception');
+  'color_sample_reference_perception', 'color_sample_reference_perception_history');
 
 CREATE OR REPLACE FUNCTION gwapese.rgb_to_hex (IN in_red smallint, IN in_green
   smallint, IN in_blue smallint)

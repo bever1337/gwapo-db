@@ -15,7 +15,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.historical_race
+  gwapese.race_history
 WHERE
   FALSE;
 

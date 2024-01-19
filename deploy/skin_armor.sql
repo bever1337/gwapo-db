@@ -3,12 +3,11 @@
 -- requires: history
 -- requires: lang
 -- requires: race
+-- requires: color
 -- requires: skin
 BEGIN;
 
 CREATE TABLE gwapese.skin_armor (
-  icon text NOT NULL,
-  rarity text NOT NULL,
   skin_id smallint UNIQUE NOT NULL,
   skin_type text GENERATED ALWAYS AS ('Armor') STORED,
   slot text NOT NULL,
@@ -23,35 +22,12 @@ CREATE TABLE gwapese.skin_armor (
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'skin_armor');
 
-CREATE TABLE gwapese.historical_skin_armor (
+CREATE TABLE gwapese.skin_armor_history (
   LIKE gwapese.skin_armor
 );
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'skin_armor', 'historical_skin_armor');
-
-CREATE TABLE gwapese.skin_armor_description (
-  app_name text NOT NULL,
-  original text NOT NULL,
-  lang_tag text NOT NULL,
-  skin_id smallint NOT NULL,
-  CONSTRAINT skin_armor_description_pk PRIMARY KEY (app_name, lang_tag, skin_id),
-  CONSTRAINT operating_copy_precedes_skin_armor_description_fk FOREIGN KEY
-    (app_name, lang_tag, original) REFERENCES gwapese.operating_copy (app_name,
-    lang_tag, original) ON DELETE CASCADE ON UPDATE RESTRICT,
-  CONSTRAINT skin_armor_identifies_skin_armor_description_fk FOREIGN KEY
-    (skin_id) REFERENCES gwapese.skin_armor (skin_id) ON DELETE CASCADE ON
-    UPDATE CASCADE
-);
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'skin_armor_description');
-
-CREATE TABLE gwapese.historical_skin_armor_description (
-  LIKE gwapese.skin_armor_description
-);
-
-CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'skin_armor_description', 'historical_skin_armor_description');
+  'skin_armor', 'skin_armor_history');
 
 CREATE TABLE gwapese.skin_armor_dye_slot (
   color_id smallint NOT NULL,
@@ -69,70 +45,11 @@ CREATE TABLE gwapese.skin_armor_dye_slot (
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'skin_armor_dye_slot');
 
-CREATE TABLE gwapese.historical_skin_armor_dye_slot (
+CREATE TABLE gwapese.skin_armor_dye_slot_history (
   LIKE gwapese.skin_armor_dye_slot
 );
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'skin_armor_dye_slot', 'historical_skin_armor_dye_slot');
-
-CREATE TABLE gwapese.skin_armor_flag (
-  flag text NOT NULL,
-  skin_id smallint NOT NULL,
-  CONSTRAINT skin_armor_flag_pk PRIMARY KEY (skin_id, flag),
-  CONSTRAINT skin_armor_identifies_skin_armor_flag_fk FOREIGN KEY (skin_id)
-    REFERENCES gwapese.skin_armor (skin_id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'skin_armor_flag');
-
-CREATE TABLE gwapese.historical_skin_armor_flag (
-  LIKE gwapese.skin_armor_flag
-);
-
-CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'skin_armor_flag', 'historical_skin_armor_flag');
-
-CREATE TABLE gwapese.skin_armor_name (
-  app_name text NOT NULL,
-  original text NOT NULL,
-  lang_tag text NOT NULL,
-  skin_id smallint NOT NULL,
-  CONSTRAINT skin_armor_name_pk PRIMARY KEY (app_name, lang_tag, skin_id),
-  CONSTRAINT operating_copy_precedes_skin_armor_name_fk FOREIGN KEY (app_name,
-    lang_tag, original) REFERENCES gwapese.operating_copy (app_name, lang_tag,
-    original) ON DELETE CASCADE ON UPDATE RESTRICT,
-  CONSTRAINT skin_armor_identifies_skin_armor_name_fk FOREIGN KEY (skin_id)
-    REFERENCES gwapese.skin_armor (skin_id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'skin_armor_name');
-
-CREATE TABLE gwapese.historical_skin_armor_name (
-  LIKE gwapese.skin_armor_name
-);
-
-CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'skin_armor_name', 'historical_skin_armor_name');
-
-CREATE TABLE gwapese.skin_armor_restriction (
-  restriction text NOT NULL,
-  skin_id smallint NOT NULL,
-  CONSTRAINT skin_armor_restriction_pk PRIMARY KEY (skin_id, restriction),
-  CONSTRAINT skin_armor_identifies_skin_armor_restriction_fk FOREIGN KEY
-    (skin_id) REFERENCES gwapese.skin_armor (skin_id) ON DELETE CASCADE,
-  CONSTRAINT race_enumerates_skin_armor_restriction_fk FOREIGN KEY
-    (restriction) REFERENCES gwapese.race (race_name) ON DELETE CASCADE ON
-    UPDATE CASCADE
-);
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'skin_armor_restriction');
-
-CREATE TABLE gwapese.historical_skin_armor_restriction (
-  LIKE gwapese.skin_armor_restriction
-);
-
-CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'skin_armor_restriction', 'historical_skin_armor_restriction');
+  'skin_armor_dye_slot', 'skin_armor_dye_slot_history');
 
 COMMIT;

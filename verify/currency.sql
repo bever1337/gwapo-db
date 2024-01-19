@@ -21,7 +21,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.historical_currency
+  gwapese.currency_history
 WHERE
   FALSE;
 
@@ -41,7 +41,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.historical_currency_category
+  gwapese.currency_category_history
 WHERE
   FALSE;
 
@@ -65,7 +65,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.historical_currency_description
+  gwapese.currency_description_history
 WHERE
   FALSE;
 
@@ -89,7 +89,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.historical_currency_name
+  gwapese.currency_name_history
 WHERE
   FALSE;
 

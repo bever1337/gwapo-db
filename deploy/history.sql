@@ -4,24 +4,28 @@ BEGIN;
 CREATE SCHEMA temporal_tables;
 
 CREATE OR REPLACE FUNCTION temporal_tables.fmt_trigger_fn_name (IN
-  in_historical_table_name text)
+  in_temporal_table_name text)
   RETURNS text
   AS $quote_fmt_trigger_fn_name$
 BEGIN
-  RETURN 'historicize_' || substring(in_historical_table_name FOR 48) || '_fn';
+  RETURN in_temporal_table_name || '_tt_fn';
 END;
 $quote_fmt_trigger_fn_name$
 LANGUAGE plpgsql;
 
+COMMENT ON FUNCTION temporal_tables.fmt_trigger_fn_name (text) IS 'WARNING: Function name is unescaped, unquoted, and potentially longer than an OID.';
+
 CREATE OR REPLACE FUNCTION temporal_tables.fmt_trigger_name (IN
-  in_historical_table_name text)
+  in_temporal_table_name text)
   RETURNS text
   AS $quote_fmt_trigger_name$
 BEGIN
-  RETURN 'historicize_' || substring(in_historical_table_name FOR 48) || '_tr';
+  RETURN in_temporal_table_name || '_tt_tr';
 END;
 $quote_fmt_trigger_name$
 LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION temporal_tables.fmt_trigger_name (text) IS 'WARNING: Function name is unescaped, unquoted, and potentially longer than an OID.';
 
 CREATE OR REPLACE FUNCTION temporal_tables.fmt_alter_table_to_temporal (IN
   in_schema_name text, IN in_table_name text)
@@ -36,7 +40,8 @@ $quote_fmt_alter_table_to_temporal$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION temporal_tables.fmt_create_temporal_fn (IN
-  in_schema_name text, IN in_historical_table_name text)
+  in_schema_name text, IN in_temporal_table_name text, IN in_history_table_name
+  text)
   RETURNS text
   AS $quote_fmt_create_temporal_fn$
 BEGIN
@@ -45,7 +50,7 @@ BEGIN
     AS $$
   BEGIN
     IF TG_WHEN != ''BEFORE'' OR TG_LEVEL != ''ROW'' THEN
-      RAISE TRIGGER_PROTOCOL_VIOLATED;
+      RAISE trigger_protocol_violated;
     END IF;
     IF TG_OP = ''DELETE'' THEN
       OLD.sysrange_upper = current_timestamp(3);
@@ -64,19 +69,18 @@ BEGIN
         VALUES (OLD.*);
       RETURN NEW;
     ELSE
-      RAISE TRIGGER_PROTOCOL_VIOLATED;
+      RAISE trigger_protocol_violated;
     END IF;
   END;
   $$
   LANGUAGE plpgsql;', in_schema_name, temporal_tables.fmt_trigger_fn_name
-    (in_historical_table_name), in_historical_table_name);
+    (in_temporal_table_name), in_history_table_name);
 END;
 $quote_fmt_create_temporal_fn$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION temporal_tables.fmt_create_table_trigger (IN
-  in_schema_name text, IN in_present_table_name text, IN
-  in_historical_table_name text)
+  in_schema_name text, IN in_temporal_table_name text)
   RETURNS text
   AS $quote_fmt_create_table_trigger$
 BEGIN
@@ -84,31 +88,30 @@ BEGIN
     BEFORE DELETE OR INSERT OR UPDATE ON %2$I.%3$I
     FOR EACH ROW
     EXECUTE FUNCTION %2$I.%4$I ();', temporal_tables.fmt_trigger_name
-      (in_historical_table_name), in_schema_name, in_present_table_name,
-      temporal_tables.fmt_trigger_fn_name (in_historical_table_name));
+      (in_temporal_table_name), in_schema_name, in_temporal_table_name,
+      temporal_tables.fmt_trigger_fn_name (in_temporal_table_name));
 END;
 $quote_fmt_create_table_trigger$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION temporal_tables.fmt_drop_table_trigger (IN
-  in_schema_name text, IN in_present_table_name text, IN
-  in_historical_table_name text)
+  in_schema_name text, IN in_temporal_table_name text)
   RETURNS text
   AS $quote_fmt_drop_table_trigger$
 BEGIN
   RETURN format('DROP TRIGGER %1$I ON %2$I.%3$I;', temporal_tables.fmt_trigger_name
-    (in_historical_table_name), in_schema_name, in_present_table_name);
+    (in_temporal_table_name), in_schema_name, in_temporal_table_name);
 END;
 $quote_fmt_drop_table_trigger$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION temporal_tables.fmt_drop_trigger_fn (IN
-  in_schema_name text, IN in_historical_table_name text)
+  in_schema_name text, IN in_temporal_table_name text)
   RETURNS text
   AS $quote_fmt_drop_trigger_fn$
 BEGIN
   RETURN format('DROP FUNCTION %1$I.%2$I;', in_schema_name,
-    temporal_tables.fmt_trigger_fn_name (in_historical_table_name));
+    temporal_tables.fmt_trigger_fn_name (in_temporal_table_name));
 END;
 $quote_fmt_drop_trigger_fn$
 LANGUAGE plpgsql;
@@ -123,26 +126,30 @@ $quote_alter_table_to_temporal$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE PROCEDURE temporal_tables.create_historicize_trigger (IN
-  in_schema_name text, IN in_present_table_name text, IN
-  in_historical_table_name text)
+  in_schema_name text, IN in_temporal_table_name text, IN in_history_table_name
+  text)
   AS $quote_create_historicize_trigger$
 BEGIN
+  IF octet_length(temporal_tables.fmt_trigger_fn_name (in_temporal_table_name)) > 63 THEN
+    RAISE string_data_right_truncation;
+  END IF;
+  IF octet_length(temporal_tables.fmt_trigger_name (in_temporal_table_name)) > 63 THEN
+    RAISE string_data_right_truncation;
+  END IF;
   EXECUTE temporal_tables.fmt_create_temporal_fn (in_schema_name,
-    in_historical_table_name);
+    in_temporal_table_name, in_history_table_name);
   EXECUTE temporal_tables.fmt_create_table_trigger (in_schema_name,
-    in_present_table_name, in_historical_table_name);
+    in_temporal_table_name);
 END;
 $quote_create_historicize_trigger$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE PROCEDURE temporal_tables.drop_historicize_fn (IN
-  in_schema_name text, IN in_present_table_name text, IN
-  in_historical_table_name text)
+  in_schema_name text, IN in_temporal_table_name text)
   AS $quote_drop_historicize_fn$
 BEGIN
-  EXECUTE temporal_tables.fmt_drop_table_trigger (in_schema_name,
-    in_present_table_name, in_historical_table_name);
-  EXECUTE temporal_tables.fmt_drop_trigger_fn (in_schema_name, in_historical_table_name);
+  EXECUTE temporal_tables.fmt_drop_table_trigger (in_schema_name, in_temporal_table_name);
+  EXECUTE temporal_tables.fmt_drop_trigger_fn (in_schema_name, in_temporal_table_name);
 END;
 $quote_drop_historicize_fn$
 LANGUAGE plpgsql;
