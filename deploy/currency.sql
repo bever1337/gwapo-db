@@ -66,7 +66,7 @@ CREATE TABLE gwapese.currency_name (
   app_name text NOT NULL,
   currency_id smallint NOT NULL,
   lang_tag text NOT NULL,
-  original text,
+  original text NOT NULL,
   CONSTRAINT currency_name_pk PRIMARY KEY (app_name, lang_tag, currency_id),
   CONSTRAINT currency_identifies_currency_name_fk FOREIGN KEY (currency_id)
     REFERENCES gwapese.currency (currency_id) ON DELETE CASCADE ON UPDATE

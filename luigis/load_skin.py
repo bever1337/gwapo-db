@@ -2,7 +2,6 @@ import datetime
 import json
 import luigi
 from os import path
-import typing
 
 import common
 import load_lang
@@ -172,7 +171,7 @@ WHEN NOT MATCHED THEN
     }
 
 
-def prune_skin_flags(flags: typing.List[str], skin_id: int) -> dict[str]:
+def prune_skin_flags(flags: list[str], skin_id: int) -> dict[str]:
     return {
         "query": """
 DELETE FROM gwapese.skin_flag
@@ -232,7 +231,7 @@ WHEN NOT MATCHED THEN
     }
 
 
-def prune_skin_restrictions(restrictions: typing.List[str], skin_id: int) -> dict[str]:
+def prune_skin_restrictions(restrictions: list[str], skin_id: int) -> dict[str]:
     return {
         "query": """
 DELETE FROM gwapese.skin_restriction

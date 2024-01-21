@@ -2,7 +2,6 @@ import datetime
 import json
 import luigi
 from os import path
-import typing
 
 import common
 import load_lang
@@ -141,7 +140,7 @@ WHEN NOT MATCHED THEN
     }
 
 
-def prune_currency_categories(categories: typing.List[int], currency_id: int) -> dict:
+def prune_currency_categories(categories: list[int], currency_id: int) -> dict:
     return {
         "query": """
 DELETE FROM gwapese.currency_category
@@ -152,7 +151,7 @@ WHERE currency_id = %(currency_id)s::smallint
     }
 
 
-def upsert_currency_categories(categories: typing.List[int], currency_id: int) -> dict:
+def upsert_currency_categories(categories: list[int], currency_id: int) -> dict:
     return {
         "query": """
 MERGE INTO gwapese.currency_category AS target_currency_category

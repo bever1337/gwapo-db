@@ -2,7 +2,6 @@ import datetime
 import json
 import luigi
 from os import path
-import typing
 
 import common
 import transform_skin
@@ -38,7 +37,7 @@ class TransformSkinType(luigi.Task):
         with self.input().open("r") as ro_input_file:
             skin_json = json.load(fp=ro_input_file)
 
-        skins: typing.List[dict] = []
+        skins: list[dict] = []
 
         skin_type = self.skin_type.value
         for skin in skin_json:

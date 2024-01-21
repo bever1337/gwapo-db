@@ -2,7 +2,6 @@ import datetime
 import json
 import luigi
 from os import path
-import typing
 
 import common
 import load_lang
@@ -73,7 +72,7 @@ class LoadColor(luigi.Task):
                         )
                     )
 
-                    color_base: typing.List[int] = color["base_rgb"]
+                    color_base: list[int] = color["base_rgb"]
                     cursor.execute(
                         **upsert_color_base(
                             blue=color_base[2],

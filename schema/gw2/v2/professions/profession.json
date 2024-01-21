@@ -1,0 +1,95 @@
+{
+  "$id": "schema/gw2/v2/professions/profession.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "code": { "type": "integer" },
+    "flags": { "items": { "minLength": 1, "type": "string" }, "type": "array" },
+    "icon_big": { "format": "uri", "minLength": 1, "type": "string" },
+    "icon": { "format": "uri", "minLength": 1, "type": "string" },
+    "id": { "minLength": 1, "type": "string" },
+    "name": { "minLength": 1, "type": "string" },
+    "skills_by_palette": {
+      "items": {
+        "items": { "type": "integer" },
+        "minLength": 2,
+        "maxLength": 2,
+        "type": "array"
+      },
+      "type": "array"
+    },
+    "specializations": { "items": { "type": "integer" }, "type": "array" },
+    "training": {
+      "items": {
+        "properties": {
+          "id": { "type": "integer" },
+          "category": { "minLength": 1, "type": "string" },
+          "name": { "minLength": 1, "type": "string" },
+          "track": {
+            "items": {
+              "oneOf": [
+                {
+                  "properties": {
+                    "cost": { "type": "integer" },
+                    "skill_id": { "type": "integer" },
+                    "type": { "const": "Skill" }
+                  },
+                  "required": ["cost", "skill_id", "type"],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "cost": { "type": "integer" },
+                    "trait_id": { "type": "integer" },
+                    "type": { "const": "Trait" }
+                  },
+                  "required": ["cost", "trait_id", "type"],
+                  "type": "object"
+                }
+              ]
+            },
+            "type": "array"
+          }
+        },
+        "required": ["id", "category", "name", "track"],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "weapons": {
+      "patternProperties": {
+        "^.+$": {
+          "properties": {
+            "skills": {
+              "items": {
+                "properties": {
+                  "id": { "type": "integer" },
+                  "slot": { "minLength": 1, "type": "string" }
+                },
+                "required": ["id", "slot"],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "specialization": { "type": "integer" }
+          },
+          "required": ["skills"],
+          "type": "object"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "required": [
+    "code",
+    "flags",
+    "icon_big",
+    "icon",
+    "id",
+    "name",
+    "skills_by_palette",
+    "specializations",
+    "training",
+    "weapons"
+  ],
+  "type": "object"
+}

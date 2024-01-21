@@ -2,7 +2,6 @@ import datetime
 import json
 import luigi
 from os import path
-import typing
 
 import common
 import transform_skin_type
@@ -55,7 +54,7 @@ class LoadSkinArmor(luigi.Task):
                     )
 
                     dye_slots: dict = skin_details.get("dye_slots", {})
-                    default_dye_slots: typing.List[dict] = dye_slots.get("default", [])
+                    default_dye_slots: list[dict] = dye_slots.get("default", [])
                     for i, dye_slot in enumerate(default_dye_slots):
                         if dye_slot == None:
                             cursor.execute(

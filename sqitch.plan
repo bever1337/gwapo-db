@@ -13,3 +13,16 @@ skin_armor [schema history lang race color skin] 2024-01-04T04:00:55Z bever1337 
 skin_back [schema history lang race skin] 2024-01-04T04:01:49Z bever1337 <gwapobot@example.com> # Adds back skins
 skin_gathering [schema history lang race skin] 2024-01-04T04:01:33Z bever1337 <gwapobot@example.com> # Adds gathering skins
 skin_weapon [schema history lang race skin] 2024-01-04T04:01:15Z bever1337 <gwapobot@example.com> # Adds weapon skins
+mini [schema history lang] 2024-01-20T05:25:08Z bever1337 <gwapobot@example.com> # Adds minis
+novelty [schema history lang] 2024-01-20T05:41:00Z bever1337 <gwapobot@example.com> # Adds novelties
+glider [schema history lang] 2024-01-20T05:47:48Z bever1337 <gwapobot@example.com> # Adds gliders
+mount [schema history lang color] 2024-01-20T06:00:14Z bever1337 <gwapobot@example.com> # Adds mounts
+outfit [schema history lang] 2024-01-20T16:50:41Z bever1337 <gwapobot@example.com> # Adds outfits
+jade_bot [schema history lang] 2024-01-20T17:16:39Z bever1337 <gwapobot@example.com> # Adds jade bots
+guild_upgrade [schema history lang] 2024-01-20T17:23:59Z bever1337 <gwapobot@example.com> # Adds guild upgrades
+skiff [schema history lang color] 2024-01-20T17:44:13Z bever1337 <gwapobot@example.com> # Adds skiffs
+finisher [schema history lang] 2024-01-20T17:56:05Z bever1337 <gwapobot@example.com> # Adds finishers
+emote [schema history] 2024-01-20T22:25:06Z bever1337 <gwapobot@example.com> # Adds emotes
+mount_skin [schema history lang mount] 2024-01-21T19:11:51Z bever1337 <gwapobot@example.com> # Adds mount skins
+profession [schema history lang] 2024-01-21T21:23:18Z bever1337 <gwapobot@example.com> # Adds professions
+specialization [schema history lang profession] 2024-01-21T21:24:19Z bever1337 <gwapobot@example.com> # Adds specs

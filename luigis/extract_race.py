@@ -1,8 +1,12 @@
 import datetime
 import jsonschema
+import json
 import luigi
 from os import path
 import requests
+
+
+race_url = "https://api.guildwars2.com/v2/races"
 
 
 class ExtractRace(luigi.Task):
@@ -21,14 +25,14 @@ class ExtractRace(luigi.Task):
         return luigi.LocalTarget(path=target_path)
 
     def run(self):
-        races_response = requests.get("https://api.guildwars2.com/v2/races")
+        races_response = requests.get(race_url)
         if races_response.status_code != 200:
             raise RuntimeError("Expected status code 200")
         races_json = races_response.json()
-        jsonschema.validate(instance=races_json, schema=v2_races_schema)
+
+        with open("../schema/gw2/v2/races/index.json") as race_schema_file:
+            schema = json.load(fp=race_schema_file)
+        jsonschema.Draft202012Validator(schema=schema).validate(races_json)
 
         with self.output().open("w") as write_target:
             write_target.write(races_response.text)
-
-
-v2_races_schema = {"items": {"type": "string"}, "type": "array"}

@@ -1,0 +1,6 @@
+{
+  "$id": "schema/gw2/v2/jadebots/index.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "items": { "type": "integer" },
+  "type": "array"
+}

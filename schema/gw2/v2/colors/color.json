@@ -1,0 +1,65 @@
+{
+  "$id": "schema/gw2/v2/colors/color.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "details": {
+      "properties": {
+        "brightness": { "type": "integer" },
+        "contrast": { "type": "number" },
+        "hue": { "type": "number" },
+        "lightness": { "type": "number" },
+        "rgb": {
+          "items": { "type": "integer" },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        },
+        "saturation": { "type": "number" }
+      },
+      "required": [
+        "brightness",
+        "contrast",
+        "hue",
+        "lightness",
+        "rgb",
+        "saturation"
+      ],
+      "type": "object"
+    }
+  },
+  "properties": {
+    "base_rgb": {
+      "prefixItems": [
+        { "type": "integer" },
+        { "type": "integer" },
+        { "type": "integer" }
+      ],
+      "type": "array"
+    },
+    "categories": {
+      "prefixItems": [
+        { "type": "string" },
+        { "type": "string" },
+        { "type": "string" }
+      ],
+      "type": "array"
+    },
+    "cloth": { "$ref": "#/$defs/details" },
+    "fur": { "$ref": "#/$defs/details" },
+    "id": { "type": "integer" },
+    "item": { "type": "integer" },
+    "leather": { "$ref": "#/$defs/details" },
+    "metal": { "$ref": "#/$defs/details" },
+    "name": { "type": "string" }
+  },
+  "required": [
+    "base_rgb",
+    "categories",
+    "cloth",
+    "id",
+    "leather",
+    "metal",
+    "name"
+  ],
+  "type": "object"
+}

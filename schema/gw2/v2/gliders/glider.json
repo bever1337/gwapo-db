@@ -1,0 +1,15 @@
+{
+  "$id": "schema/gw2/v2/gliders/glider.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "default_dyes": { "items": { "type": "integer" }, "type": "array" },
+    "description": { "minLength": 1, "type": "string" },
+    "icon": { "format": "uri", "minLength": 1, "type": "string" },
+    "id": { "type": "integer" },
+    "order": { "type": "integer" },
+    "name": { "minLength": 1, "type": "string" },
+    "unlock_items": { "items": { "type": "integer" }, "type": "array" }
+  },
+  "required": ["default_dyes", "description", "icon", "id", "order", "name"],
+  "type": "object"
+}

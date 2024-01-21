@@ -3,7 +3,6 @@ import jsonschema
 import json
 import luigi
 from os import path
-import typing
 
 import common
 import extract_skin
@@ -33,7 +32,7 @@ class TransformSkin(luigi.Task):
 
     def run(self):
         with self.input().open("r") as input_skin_file:
-            input_skin_json: typing.List[dict] = json.load(fp=input_skin_file)
+            input_skin_json: list[dict] = json.load(fp=input_skin_file)
 
         output_skin = []
 
