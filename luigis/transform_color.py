@@ -5,7 +5,7 @@ import luigi
 from os import path
 
 import common
-import extract_color
+import extract_batch
 
 
 class TransformColor(luigi.Task):
@@ -26,8 +26,22 @@ class TransformColor(luigi.Task):
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        return extract_color.ExtractColor(
-            extract_datetime=self.extract_datetime, lang_tag=self.lang_tag
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.json".format(
+            timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
+            lang_tag=self.lang_tag.value,
+        )
+        return extract_batch.ExtractBatch(
+            entity_schema="../schema/gw2/v2/colors/color.json",
+            extract_datetime=self.extract_datetime,
+            extract_dir=path.join(self.output_dir, "extract_color_id"),
+            id_schema="../schema/gw2/v2/colors/index.json",
+            output_file=path.join(
+                self.output_dir,
+                "extract_color",
+                target_filename,
+            ),
+            url_params={"lang": self.lang_tag.value},
+            url="https://api.guildwars2.com/v2/colors",
         )
 
     def run(self):

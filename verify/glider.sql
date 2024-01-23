@@ -50,20 +50,22 @@ WHERE
 SELECT
   color_id,
   glider_id,
+  slot_index,
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.glider_dye
+  gwapese.glider_dye_slot
 WHERE
   FALSE;
 
 SELECT
   color_id,
   glider_id,
+  slot_index,
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.glider_dye_history
+  gwapese.glider_dye_slot_history
 WHERE
   FALSE;
 

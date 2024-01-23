@@ -7,7 +7,6 @@ BEGIN;
 CREATE TABLE gwapese.mini (
   icon text NOT NULL,
   mini_id smallint NOT NULL,
-  item_id smallint NOT NULL,
   presentation_order smallint NOT NULL,
   CONSTRAINT mini_pk PRIMARY KEY (mini_id)
 );
@@ -65,4 +64,5 @@ CREATE TABLE gwapese.mini_unlock_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'mini_unlock', 'mini_unlock_history');
 
+-- todo references unlock_item
 COMMIT;

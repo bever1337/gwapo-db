@@ -7,16 +7,16 @@
       "items": {
         "properties": {
           "count": { "type": "integer" },
-          "item_id": { "items": { "type": "integer" }, "type": "array" },
+          "item_id": { "type": "integer" },
           "name": { "minLength": 1, "type": "string" },
           "type": { "type": "string" }
         },
-        "required": ["count", "name", "type"],
+        "required": ["count", "type"],
         "type": "object"
       },
       "type": "array"
     },
-    "description": { "minLength": 1, "type": "string" },
+    "description": { "type": "string" },
     "experience": { "type": "integer" },
     "icon": { "format": "uri", "minLength": 1, "type": "string" },
     "id": { "type": "integer" },

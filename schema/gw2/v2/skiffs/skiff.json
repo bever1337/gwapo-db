@@ -3,25 +3,19 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
     "dye_slots": {
-      "properties": {
-        "default": {
-          "items": {
-            "properties": {
-              "color_id": { "type": "integer" },
-              "material": { "minLength": 1, "type": "string" }
-            },
-            "required": ["color_id", "material"],
-            "type": "object"
-          },
-          "type": "array"
-        }
+      "items": {
+        "properties": {
+          "color_id": { "type": "integer" },
+          "material": { "minLength": 1, "type": "string" }
+        },
+        "required": ["color_id", "material"],
+        "type": "object"
       },
-      "required": ["default"],
-      "type": "object"
+      "type": "array"
     },
     "icon": { "format": "uri", "minLength": 1, "type": "string" },
     "id": { "type": "integer" },
-    "name": { "type": "string" }
+    "name": { "minLength": 1, "type": "string" }
   },
   "required": ["dye_slots", "icon", "id", "name"],
   "type": "object"

@@ -31,7 +31,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.finisher_details
+  gwapese.finisher_detail
 WHERE
   FALSE;
 
@@ -43,7 +43,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.finisher_details_history
+  gwapese.finisher_detail_history
 WHERE
   FALSE;
 

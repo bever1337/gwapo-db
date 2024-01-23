@@ -64,4 +64,5 @@ CREATE TABLE gwapese.jade_bot_name_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'jade_bot_name', 'jade_bot_name_history');
 
+-- todo references unlock_item
 COMMIT;

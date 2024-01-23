@@ -1,11 +1,11 @@
 -- Revert gawpo-db:finisher from pg
 BEGIN;
 
-CALL temporal_tables.drop_historicize_fn ('gwapese', 'finisher_details');
+CALL temporal_tables.drop_historicize_fn ('gwapese', 'finisher_detail');
 
-DROP TABLE gwapese.finisher_details_history;
+DROP TABLE gwapese.finisher_detail_history;
 
-DROP TABLE gwapese.finisher_details;
+DROP TABLE gwapese.finisher_detail;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'finisher_name');
 

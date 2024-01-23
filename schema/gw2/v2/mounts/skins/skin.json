@@ -15,7 +15,7 @@
     },
     "icon": { "format": "uri", "minLength": 1, "type": "string" },
     "id": { "type": "integer" },
-    "mount": { "type": "integer" },
+    "mount": { "minLength": 1, "type": "string" },
     "name": { "minLength": 1, "type": "string" }
   },
   "required": ["dye_slots", "icon", "id", "mount", "name"],

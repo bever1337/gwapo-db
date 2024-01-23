@@ -5,7 +5,7 @@
     "background": { "format": "uri", "minLength": 1, "type": "string" },
     "elite": { "type": "boolean" },
     "icon": { "format": "uri", "minLength": 1, "type": "string" },
-    "id": { "minLength": 1, "type": "string" },
+    "id": { "type": "integer" },
     "minor_traits": { "items": { "type": "integer" }, "type": "array" },
     "major_traits": { "items": { "type": "integer" }, "type": "array" },
     "name": { "minLength": 1, "type": "string" },

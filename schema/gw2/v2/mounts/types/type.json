@@ -3,7 +3,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
     "default_skin": { "type": "integer" },
-    "id": { "type": "integer" },
+    "id": { "minLength": 1, "type": "string" },
     "name": { "minLength": 1, "type": "string" },
     "skills": { "items": {}, "type": "array" },
     "skins": { "items": { "type": "integer" }, "type": "array" }

@@ -7,11 +7,11 @@ DROP TABLE gwapese.glider_description_history;
 
 DROP TABLE gwapese.glider_description;
 
-CALL temporal_tables.drop_historicize_fn ('gwapese', 'glider_dye');
+CALL temporal_tables.drop_historicize_fn ('gwapese', 'glider_dye_slot');
 
-DROP TABLE gwapese.glider_dye_history;
+DROP TABLE gwapese.glider_dye_slot_history;
 
-DROP TABLE gwapese.glider_dye;
+DROP TABLE gwapese.glider_dye_slot;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'glider_name');
 

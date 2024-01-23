@@ -5,10 +5,10 @@
 BEGIN;
 
 CREATE TABLE gwapese.profession (
-  profession_id smallint NOT NULL,
   code smallint NOT NULL,
-  icon text NOT NULL,
   icon_big text NOT NULL,
+  icon text NOT NULL,
+  profession_id text NOT NULL,
   CONSTRAINT profession_pk PRIMARY KEY (profession_id)
 );
 
@@ -25,7 +25,7 @@ CREATE TABLE gwapese.profession_name (
   app_name text NOT NULL,
   lang_tag text NOT NULL,
   original text NOT NULL,
-  profession_id smallint NOT NULL,
+  profession_id text NOT NULL,
   CONSTRAINT profession_name_pk PRIMARY KEY (app_name, lang_tag, profession_id),
   CONSTRAINT profession_identifies_profession_name_fk FOREIGN KEY
     (profession_id) REFERENCES gwapese.profession (profession_id) ON DELETE

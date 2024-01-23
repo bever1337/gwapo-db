@@ -41,20 +41,4 @@ CREATE TABLE gwapese.mount_name_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'mount_name', 'mount_name_history');
 
-CREATE TABLE gwapese.mount_skill (
-  mount_id smallint NOT NULL,
-  skill_id smallint NOT NULL,
-  slot text NOT NULL,
-  CONSTRAINT mount_skill_pk PRIMARY KEY (mount_id, skill_id)
-);
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'mount_skill');
-
-CREATE TABLE gwapese.mount_skill_history (
-  LIKE gwapese.mount_skill
-);
-
-CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'mount_skill', 'mount_skill_history');
-
 COMMIT;

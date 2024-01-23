@@ -43,26 +43,4 @@ FROM
 WHERE
   FALSE;
 
-SELECT
-  mount_id,
-  skill_id,
-  slot,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.mount_skill
-WHERE
-  FALSE;
-
-SELECT
-  mount_id,
-  skill_id,
-  slot,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.mount_skill_history
-WHERE
-  FALSE;
-
 ROLLBACK;

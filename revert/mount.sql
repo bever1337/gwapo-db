@@ -7,12 +7,6 @@ DROP TABLE gwapese.mount_name_history;
 
 DROP TABLE gwapese.mount_name;
 
-CALL temporal_tables.drop_historicize_fn ('gwapese', 'mount_skill');
-
-DROP TABLE gwapese.mount_skill_history;
-
-DROP TABLE gwapese.mount_skill;
-
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'mount');
 
 DROP TABLE gwapese.mount_history;

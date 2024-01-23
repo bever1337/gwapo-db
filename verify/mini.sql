@@ -4,7 +4,6 @@ BEGIN;
 SELECT
   icon,
   mini_id,
-  item_id,
   presentation_order,
   sysrange_lower,
   sysrange_upper
@@ -16,7 +15,6 @@ WHERE
 SELECT
   icon,
   mini_id,
-  item_id,
   presentation_order,
   sysrange_lower,
   sysrange_upper

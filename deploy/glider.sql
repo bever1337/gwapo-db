@@ -43,24 +43,25 @@ CREATE TABLE gwapese.glider_description_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'glider_description', 'glider_description_history');
 
-CREATE TABLE gwapese.glider_dye (
+CREATE TABLE gwapese.glider_dye_slot (
   color_id smallint NOT NULL,
   glider_id smallint NOT NULL,
-  CONSTRAINT glider_dye_pk PRIMARY KEY (glider_id, color_id),
-  CONSTRAINT color_identifies_glider_dye_fk FOREIGN KEY (color_id) REFERENCES
-    gwapese.color (color_id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT glider_identifies_glider_dye_fk FOREIGN KEY (glider_id) REFERENCES
-    gwapese.glider (glider_id) ON DELETE CASCADE ON UPDATE CASCADE
+  slot_index smallint NOT NULL,
+  CONSTRAINT glider_dye_slot_pk PRIMARY KEY (glider_id, slot_index),
+  CONSTRAINT color_identifies_glider_dye_slot_fk FOREIGN KEY (color_id)
+    REFERENCES gwapese.color (color_id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT glider_identifies_glider_dye_slot_fk FOREIGN KEY (glider_id)
+    REFERENCES gwapese.glider (glider_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'glider_dye');
+CALL temporal_tables.alter_table_to_temporal ('gwapese', 'glider_dye_slot');
 
-CREATE TABLE gwapese.glider_dye_history (
-  LIKE gwapese.glider_dye
+CREATE TABLE gwapese.glider_dye_slot_history (
+  LIKE gwapese.glider_dye_slot
 );
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'glider_dye', 'glider_dye_history');
+  'glider_dye_slot', 'glider_dye_slot_history');
 
 CREATE TABLE gwapese.glider_name (
   app_name text NOT NULL,
@@ -84,4 +85,5 @@ CREATE TABLE gwapese.glider_name_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'glider_name', 'glider_name_history');
 
+-- todo references unlock_items
 COMMIT;

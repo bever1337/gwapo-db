@@ -20,28 +20,28 @@ CREATE TABLE gwapese.finisher_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'finisher', 'finisher_history');
 
-CREATE TABLE gwapese.finisher_details (
+CREATE TABLE gwapese.finisher_detail (
   app_name text NOT NULL,
   finisher_id smallint NOT NULL,
   lang_tag text NOT NULL,
   original text NOT NULL,
-  CONSTRAINT finisher_details_pk PRIMARY KEY (app_name, lang_tag, finisher_id),
-  CONSTRAINT finisher_identifies_finisher_details_fk FOREIGN KEY (finisher_id)
+  CONSTRAINT finisher_detail_pk PRIMARY KEY (app_name, lang_tag, finisher_id),
+  CONSTRAINT finisher_identifies_finisher_detail_fk FOREIGN KEY (finisher_id)
     REFERENCES gwapese.finisher (finisher_id) ON DELETE CASCADE ON UPDATE
     CASCADE,
-  CONSTRAINT operating_copy_precedes_finisher_details_fk FOREIGN KEY (app_name,
+  CONSTRAINT operating_copy_precedes_finisher_detail_fk FOREIGN KEY (app_name,
     lang_tag, original) REFERENCES gwapese.operating_copy (app_name, lang_tag,
     original) ON DELETE CASCADE ON UPDATE RESTRICT
 );
 
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'finisher_details');
+CALL temporal_tables.alter_table_to_temporal ('gwapese', 'finisher_detail');
 
-CREATE TABLE gwapese.finisher_details_history (
-  LIKE gwapese.finisher_details
+CREATE TABLE gwapese.finisher_detail_history (
+  LIKE gwapese.finisher_detail
 );
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'finisher_details', 'finisher_details_history');
+  'finisher_detail', 'finisher_detail_history');
 
 CREATE TABLE gwapese.finisher_name (
   app_name text NOT NULL,
@@ -66,4 +66,5 @@ CREATE TABLE gwapese.finisher_name_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'finisher_name', 'finisher_name_history');
 
+-- todo references unlock_items
 COMMIT;
