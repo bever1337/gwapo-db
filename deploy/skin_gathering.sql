@@ -7,7 +7,7 @@
 BEGIN;
 
 CREATE TABLE gwapese.skin_gathering (
-  skin_id smallint UNIQUE NOT NULL,
+  skin_id integer UNIQUE NOT NULL,
   skin_type text GENERATED ALWAYS AS ('Gathering') STORED,
   tool text NOT NULL,
   CONSTRAINT skin_gathering_pk PRIMARY KEY (skin_id, skin_type),

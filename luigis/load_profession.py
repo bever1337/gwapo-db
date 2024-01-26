@@ -99,7 +99,7 @@ def upsert_profession(
         "query": """
 MERGE INTO gwapese.profession AS target_profession
 USING (
-  VALUES (%(code)s::smallint,
+  VALUES (%(code)s::integer,
     %(icon_big)s::text,
     %(icon)s::text,
     %(profession_id)s::text)

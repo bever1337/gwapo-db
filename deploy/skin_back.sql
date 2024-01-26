@@ -7,7 +7,7 @@
 BEGIN;
 
 CREATE TABLE gwapese.skin_back (
-  skin_id smallint UNIQUE NOT NULL,
+  skin_id integer UNIQUE NOT NULL,
   skin_type text GENERATED ALWAYS AS ('Back') STORED,
   CONSTRAINT skin_back_pk PRIMARY KEY (skin_id, skin_type),
   CONSTRAINT skin_identifies_skin_back_fk FOREIGN KEY (skin_id) REFERENCES

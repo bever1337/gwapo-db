@@ -5,12 +5,12 @@
 BEGIN;
 
 CREATE TABLE gwapese.guild_upgrade (
-  build_time smallint NOT NULL,
-  experience smallint NOT NULL,
-  guild_upgrade_id smallint NOT NULL,
+  build_time integer NOT NULL,
+  experience integer NOT NULL,
+  guild_upgrade_id integer NOT NULL,
   guild_upgrade_type text NOT NULL,
   icon text NOT NULL,
-  required_level smallint NOT NULL,
+  required_level integer NOT NULL,
   CONSTRAINT guild_upgrade_pk PRIMARY KEY (guild_upgrade_id)
 );
 
@@ -25,7 +25,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.guild_upgrade_description (
   app_name text NOT NULL,
-  guild_upgrade_id smallint NOT NULL,
+  guild_upgrade_id integer NOT NULL,
   lang_tag text NOT NULL,
   original text NOT NULL,
   CONSTRAINT guild_upgrade_description_pk PRIMARY KEY (app_name, lang_tag,
@@ -49,7 +49,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.guild_upgrade_name (
   app_name text NOT NULL,
-  guild_upgrade_id smallint NOT NULL,
+  guild_upgrade_id integer NOT NULL,
   lang_tag text NOT NULL,
   original text NOT NULL,
   CONSTRAINT guild_upgrade_name_pk PRIMARY KEY (app_name, lang_tag, guild_upgrade_id),
@@ -71,8 +71,8 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
   'guild_upgrade_name', 'guild_upgrade_name_history');
 
 CREATE TABLE gwapese.guild_upgrade_prerequisite (
-  guild_upgrade_id smallint NOT NULL,
-  prerequisite_guild_upgrade_id smallint NOT NULL,
+  guild_upgrade_id integer NOT NULL,
+  prerequisite_guild_upgrade_id integer NOT NULL,
   CONSTRAINT guild_upgrade_prerequisite_pk PRIMARY KEY (guild_upgrade_id,
     prerequisite_guild_upgrade_id),
   CONSTRAINT guild_upgrade_identifies_guild_upgrade_prerequisite_fk FOREIGN KEY

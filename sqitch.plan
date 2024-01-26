@@ -26,3 +26,4 @@ emote [schema history] 2024-01-20T22:25:06Z bever1337 <gwapobot@example.com> # A
 mount_skin [schema history lang mount] 2024-01-21T19:11:51Z bever1337 <gwapobot@example.com> # Adds mount skins
 profession [schema history lang] 2024-01-21T21:23:18Z bever1337 <gwapobot@example.com> # Adds professions
 specialization [schema history lang profession] 2024-01-21T21:24:19Z bever1337 <gwapobot@example.com> # Adds specs
+item [schema history lang] 2024-01-25T01:58:46Z bever1337 <gwapobot@example.com> # Adds items

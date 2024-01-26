@@ -5,7 +5,7 @@
 BEGIN;
 
 CREATE TABLE gwapese.color (
-  color_id smallint NOT NULL,
+  color_id integer NOT NULL,
   hue text,
   material text,
   rarity text,
@@ -23,7 +23,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.color_base (
   blue smallint NOT NULL,
-  color_id smallint NOT NULL,
+  color_id integer NOT NULL,
   green smallint NOT NULL,
   red smallint NOT NULL,
   CONSTRAINT color_base_pk PRIMARY KEY (color_id),
@@ -42,7 +42,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.color_name (
   app_name text NOT NULL,
-  color_id smallint NOT NULL,
+  color_id integer NOT NULL,
   original text NOT NULL,
   lang_tag text NOT NULL,
   CONSTRAINT color_name_pk PRIMARY KEY (app_name, lang_tag, color_id),
@@ -63,7 +63,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
   'color_name', 'color_name_history');
 
 CREATE TABLE gwapese.color_sample (
-  color_id smallint NOT NULL,
+  color_id integer NOT NULL,
   material text NOT NULL,
   CONSTRAINT color_sample_pk PRIMARY KEY (color_id, material),
   CONSTRAINT color_comprises_color_sample_fk FOREIGN KEY (color_id) REFERENCES
@@ -81,7 +81,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.color_sample_adjustment (
   brightness smallint NOT NULL,
-  color_id smallint NOT NULL,
+  color_id integer NOT NULL,
   contrast double precision NOT NULL,
   material text NOT NULL,
   CONSTRAINT color_sample_adjustment_pk PRIMARY KEY (color_id, material),
@@ -100,7 +100,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
   'color_sample_adjustment', 'color_sample_adjustment_history');
 
 CREATE TABLE gwapese.color_sample_shift (
-  color_id smallint NOT NULL,
+  color_id integer NOT NULL,
   hue smallint NOT NULL,
   lightness double precision NOT NULL,
   material text NOT NULL,
@@ -122,7 +122,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.color_sample_reference (
   blue smallint NOT NULL,
-  color_id smallint NOT NULL,
+  color_id integer NOT NULL,
   green smallint NOT NULL,
   material text NOT NULL,
   red smallint NOT NULL,
@@ -144,7 +144,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.color_sample_reference_perception (
   blue smallint NOT NULL,
-  color_id smallint NOT NULL,
+  color_id integer NOT NULL,
   green smallint NOT NULL,
   material text NOT NULL,
   perceived_lightness double precision NOT NULL,

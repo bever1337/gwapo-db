@@ -92,7 +92,7 @@ def upsert_outfit(icon: str, outfit_id: int) -> dict[str]:
         "query": """
 MERGE INTO gwapese.outfit AS target_outfit
 USING (
-  VALUES (%(icon)s::text, %(outfit_id)s::smallint)
+  VALUES (%(icon)s::text, %(outfit_id)s::integer)
 ) AS source_outfit (icon, outfit_id)
 ON
   target_outfit.outfit_id = source_outfit.outfit_id
@@ -114,7 +114,7 @@ def upsert_outfit_name(app_name: str, lang_tag: str, outfit_id: int, original: s
         "query": """
 MERGE INTO gwapese.outfit_name AS target_outfit_name
 USING (
-VALUES (%(app_name)s::text, %(lang_tag)s::text, %(outfit_id)s::smallint, %(original)s::text)) AS
+VALUES (%(app_name)s::text, %(lang_tag)s::text, %(outfit_id)s::integer, %(original)s::text)) AS
   source_outfit_name (app_name, lang_tag, outfit_id, original)
   ON target_outfit_name.app_name = source_outfit_name.app_name
   AND target_outfit_name.lang_tag = source_outfit_name.lang_tag

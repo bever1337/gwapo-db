@@ -114,7 +114,7 @@ def upsert_novelty(icon: str, novelty_id: int, slot: str) -> dict[str]:
         "query": """
 MERGE INTO gwapese.novelty AS target_novelty
 USING (
-  VALUES (%(icon)s::text, %(novelty_id)s::smallint, %(slot)s::text)
+  VALUES (%(icon)s::text, %(novelty_id)s::integer, %(slot)s::text)
 ) AS source_novelty (icon, novelty_id, slot)
 ON
   target_novelty.novelty_id = source_novelty.novelty_id
@@ -142,7 +142,7 @@ def upsert_novelty_description(
 MERGE INTO gwapese.novelty_description AS target_novelty_description
 USING (
   VALUES (
-    %(app_name)s::text, %(lang_tag)s::text, %(novelty_id)s::smallint, %(original)s::text)
+    %(app_name)s::text, %(lang_tag)s::text, %(novelty_id)s::integer, %(original)s::text)
 ) AS
   source_novelty_description (app_name, lang_tag, novelty_id, original)
   ON target_novelty_description.app_name = source_novelty_description.app_name
@@ -172,7 +172,7 @@ def upsert_novelty_name(app_name: str, lang_tag: str, novelty_id: int, original:
         "query": """
 MERGE INTO gwapese.novelty_name AS target_novelty_name
 USING (
-VALUES (%(app_name)s::text, %(lang_tag)s::text, %(novelty_id)s::smallint, %(original)s::text)) AS
+VALUES (%(app_name)s::text, %(lang_tag)s::text, %(novelty_id)s::integer, %(original)s::text)) AS
   source_novelty_name (app_name, lang_tag, novelty_id, original)
   ON target_novelty_name.app_name = source_novelty_name.app_name
   AND target_novelty_name.lang_tag = source_novelty_name.lang_tag

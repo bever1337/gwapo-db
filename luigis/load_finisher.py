@@ -114,8 +114,8 @@ def upsert_finisher(finisher_id: int, icon: str, presentation_order: str) -> dic
         "query": """
 MERGE INTO gwapese.finisher AS target_finisher
 USING (
-  VALUES (%(finisher_id)s::smallint, %(icon)s::text,
-  %(presentation_order)s::smallint)
+  VALUES (%(finisher_id)s::integer, %(icon)s::text,
+  %(presentation_order)s::integer)
 ) AS source_finisher (finisher_id, icon, presentation_order)
 ON
   target_finisher.finisher_id = source_finisher.finisher_id
@@ -146,7 +146,7 @@ def upsert_finisher_detail(
         "query": """
 MERGE INTO gwapese.finisher_detail AS target_finisher_detail
 USING (
-VALUES (%(app_name)s::text, %(finisher_id)s::smallint, %(lang_tag)s::text, %(original)s::text)) AS
+VALUES (%(app_name)s::text, %(finisher_id)s::integer, %(lang_tag)s::text, %(original)s::text)) AS
   source_finisher_detail (app_name, finisher_id, lang_tag, original)
   ON target_finisher_detail.app_name = source_finisher_detail.app_name
   AND target_finisher_detail.lang_tag = source_finisher_detail.lang_tag
@@ -175,7 +175,7 @@ def upsert_finisher_name(app_name: str, finisher_id: int, lang_tag: str, origina
         "query": """
 MERGE INTO gwapese.finisher_name AS target_finisher_name
 USING (
-VALUES (%(app_name)s::text, %(finisher_id)s::smallint, %(lang_tag)s::text, %(original)s::text)) AS
+VALUES (%(app_name)s::text, %(finisher_id)s::integer, %(lang_tag)s::text, %(original)s::text)) AS
   source_finisher_name (app_name, finisher_id, lang_tag, original)
   ON target_finisher_name.app_name = source_finisher_name.app_name
   AND target_finisher_name.lang_tag = source_finisher_name.lang_tag

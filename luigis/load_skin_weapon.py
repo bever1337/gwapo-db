@@ -66,7 +66,7 @@ def upsert_skin_weapon(damage_type: str, skin_id: int, weapon_type: str) -> dict
         "query": """
 MERGE INTO gwapese.skin_weapon AS target_skin_weapon
 USING (
-  VALUES (%(damage_type)s::text, %(skin_id)s::smallint, %(weapon_type)s::text)
+  VALUES (%(damage_type)s::text, %(skin_id)s::integer, %(weapon_type)s::text)
 ) AS source_skin_weapon (damage_type, skin_id, weapon_type)
 ON
   target_skin_weapon.skin_id = source_skin_weapon.skin_id

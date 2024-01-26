@@ -5,7 +5,7 @@
 BEGIN;
 
 CREATE TABLE gwapese.profession (
-  code smallint NOT NULL,
+  code integer NOT NULL,
   icon_big text NOT NULL,
   icon text NOT NULL,
   profession_id text NOT NULL,

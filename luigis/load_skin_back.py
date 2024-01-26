@@ -59,7 +59,7 @@ def upsert_skin_back(skin_id: int) -> dict[str]:
         "query": """
 MERGE INTO gwapese.skin_back AS target_skin_back
 USING (
-  VALUES (%(skin_id)s::smallint)
+  VALUES (%(skin_id)s::integer)
 ) AS source_skin_back (skin_id)
 ON
   target_skin_back.skin_id = source_skin_back.skin_id

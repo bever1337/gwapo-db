@@ -5,10 +5,10 @@
 BEGIN;
 
 CREATE TABLE gwapese.currency (
-  currency_id smallint NOT NULL,
+  currency_id integer NOT NULL,
   deprecated boolean NOT NULL,
   icon text NOT NULL,
-  presentation_order smallint NOT NULL,
+  presentation_order integer NOT NULL,
   CONSTRAINT currency_pk PRIMARY KEY (currency_id)
 );
 
@@ -22,8 +22,8 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
   'currency', 'currency_history');
 
 CREATE TABLE gwapese.currency_category (
-  category smallint NOT NULL,
-  currency_id smallint NOT NULL,
+  category integer NOT NULL,
+  currency_id integer NOT NULL,
   CONSTRAINT currency_category_pk PRIMARY KEY (currency_id, category),
   CONSTRAINT currency_identifies_currency_category_fk FOREIGN KEY (currency_id)
     REFERENCES gwapese.currency (currency_id) ON DELETE CASCADE ON UPDATE
@@ -41,7 +41,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.currency_description (
   app_name text NOT NULL,
-  currency_id smallint NOT NULL,
+  currency_id integer NOT NULL,
   lang_tag text NOT NULL,
   original text NOT NULL,
   CONSTRAINT currency_description_pk PRIMARY KEY (app_name, lang_tag, currency_id),
@@ -64,7 +64,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.currency_name (
   app_name text NOT NULL,
-  currency_id smallint NOT NULL,
+  currency_id integer NOT NULL,
   lang_tag text NOT NULL,
   original text NOT NULL,
   CONSTRAINT currency_name_pk PRIMARY KEY (app_name, lang_tag, currency_id),

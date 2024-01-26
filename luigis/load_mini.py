@@ -100,7 +100,7 @@ def upsert_mini(icon: str, mini_id: int, presentation_order: int) -> dict[str]:
         "query": """
 MERGE INTO gwapese.mini AS target_mini
 USING (
-  VALUES (%(icon)s::text, %(mini_id)s::smallint, %(presentation_order)s::smallint)
+  VALUES (%(icon)s::text, %(mini_id)s::integer, %(presentation_order)s::integer)
 ) AS source_mini (icon, mini_id, presentation_order)
 ON
   target_mini.mini_id = source_mini.mini_id
@@ -128,7 +128,7 @@ def upsert_mini_name(app_name: str, lang_tag: str, mini_id: int, original: str):
         "query": """
 MERGE INTO gwapese.mini_name AS target_mini_name
 USING (
-VALUES (%(app_name)s::text, %(lang_tag)s::text, %(mini_id)s::smallint, %(original)s::text)) AS
+VALUES (%(app_name)s::text, %(lang_tag)s::text, %(mini_id)s::integer, %(original)s::text)) AS
   source_mini_name (app_name, lang_tag, mini_id, original)
   ON target_mini_name.app_name = source_mini_name.app_name
   AND target_mini_name.lang_tag = source_mini_name.lang_tag
@@ -157,7 +157,7 @@ def upsert_mini_unlock(app_name: str, lang_tag: str, mini_id: int, original: str
         "query": """
 MERGE INTO gwapese.mini_unlock AS target_mini_unlock
 USING (
-VALUES (%(app_name)s::text, %(lang_tag)s::text, %(mini_id)s::smallint, %(original)s::text)) AS
+VALUES (%(app_name)s::text, %(lang_tag)s::text, %(mini_id)s::integer, %(original)s::text)) AS
   source_mini_unlock (app_name, lang_tag, mini_id, original)
   ON target_mini_unlock.app_name = source_mini_unlock.app_name
   AND target_mini_unlock.lang_tag = source_mini_unlock.lang_tag

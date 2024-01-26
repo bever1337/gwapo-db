@@ -55,14 +55,22 @@ class LoadSkinArmor(luigi.Task):
 
                     dye_slots: dict = skin_details.get("dye_slots", {})
                     default_dye_slots: list[dict] = dye_slots.get("default", [])
+                    slot_indices = [index for index in range(len(default_dye_slots))]
+                    cursor.execute(
+                        **trim_skin_armor_dye_slots(
+                            skin_id=skin_id, slot_indices=slot_indices
+                        )
+                    )
                     for i, dye_slot in enumerate(default_dye_slots):
                         if dye_slot == None:
+                            # second pass removes holes
                             cursor.execute(
                                 **prune_skin_armor_dye_slot(
                                     skin_id=skin_id, slot_index=i
                                 )
                             )
                         else:
+                            # second pass fills holes
                             cursor.execute(
                                 **upsert_skin_armor_dye_slot(
                                     color_id=dye_slot["color_id"],
@@ -87,7 +95,7 @@ def upsert_skin_armor(skin_id: int, slot: str, weight_class: str) -> dict[str]:
         "query": """
 MERGE INTO gwapese.skin_armor AS target_skin_armor
 USING (
-  VALUES (%(skin_id)s::smallint, %(slot)s::text, %(weight_class)s::text)
+  VALUES (%(skin_id)s::integer, %(slot)s::text, %(weight_class)s::text)
 ) AS source_skin_armor (skin_id, slot, weight_class)
 ON
   target_skin_armor.skin_id = source_skin_armor.skin_id
@@ -107,12 +115,23 @@ WHEN NOT MATCHED THEN
     }
 
 
+def trim_skin_armor_dye_slots(skin_id: int, slot_indices: list[int]) -> dict:
+    return {
+        "query": """
+DELETE FROM gwapese.skin_armor_dye_slot
+WHERE gwapese.skin_armor_dye_slot.skin_id = %(skin_id)s::integer
+  AND NOT gwapese.skin_armor_dye_slot.slot_index = ANY (%(slot_indices)s::integer[]);
+""",
+        "params": {"skin_id": skin_id, "slot_indices": slot_indices},
+    }
+
+
 def prune_skin_armor_dye_slot(skin_id: int, slot_index: int) -> dict[str]:
     return {
         "query": """
 DELETE FROM gwapese.skin_armor_dye_slot
-WHERE gwapese.skin_armor_dye_slot.skin_id = %(skin_id)s::smallint
-  AND gwapese.skin_armor_dye_slot.slot_index = %(slot_index)s::smallint
+WHERE gwapese.skin_armor_dye_slot.skin_id = %(skin_id)s::integer
+  AND gwapese.skin_armor_dye_slot.slot_index = %(slot_index)s::integer
 """,
         "params": {
             "skin_id": skin_id,
@@ -128,7 +147,7 @@ def upsert_skin_armor_dye_slot(
         "query": """
 MERGE INTO gwapese.skin_armor_dye_slot AS target_dye_slot
 USING (
-  VALUES (%(color_id)s::smallint, %(material)s::text, %(skin_id)s::smallint, %(slot_index)s::smallint)
+  VALUES (%(color_id)s::integer, %(material)s::text, %(skin_id)s::integer, %(slot_index)s::integer)
 ) AS source_dye_slot (color_id, material, skin_id, slot_index)
 ON
   target_dye_slot.skin_id = source_dye_slot.skin_id

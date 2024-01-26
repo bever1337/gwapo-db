@@ -5,7 +5,7 @@
 BEGIN;
 
 CREATE TABLE gwapese.jade_bot (
-  jade_bot_id smallint NOT NULL,
+  jade_bot_id integer NOT NULL,
   CONSTRAINT jade_bot_pk PRIMARY KEY (jade_bot_id)
 );
 
@@ -20,7 +20,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.jade_bot_description (
   app_name text NOT NULL,
-  jade_bot_id smallint NOT NULL,
+  jade_bot_id integer NOT NULL,
   lang_tag text NOT NULL,
   original text NOT NULL,
   CONSTRAINT jade_bot_description_pk PRIMARY KEY (app_name, lang_tag, jade_bot_id),
@@ -43,7 +43,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.jade_bot_name (
   app_name text NOT NULL,
-  jade_bot_id smallint NOT NULL,
+  jade_bot_id integer NOT NULL,
   lang_tag text NOT NULL,
   original text NOT NULL,
   CONSTRAINT jade_bot_name_pk PRIMARY KEY (app_name, lang_tag, jade_bot_id),

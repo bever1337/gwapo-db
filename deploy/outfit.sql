@@ -6,7 +6,7 @@ BEGIN;
 
 CREATE TABLE gwapese.outfit (
   icon text NOT NULL,
-  outfit_id smallint NOT NULL,
+  outfit_id integer NOT NULL,
   CONSTRAINT outfit_pk PRIMARY KEY (outfit_id)
 );
 
@@ -23,7 +23,7 @@ CREATE TABLE gwapese.outfit_name (
   app_name text NOT NULL,
   lang_tag text NOT NULL,
   original text NOT NULL,
-  outfit_id smallint NOT NULL,
+  outfit_id integer NOT NULL,
   CONSTRAINT outfit_name_pk PRIMARY KEY (app_name, lang_tag, outfit_id),
   CONSTRAINT outfit_identifies_outfit_name_fk FOREIGN KEY (outfit_id)
     REFERENCES gwapese.outfit (outfit_id) ON DELETE CASCADE ON UPDATE CASCADE,

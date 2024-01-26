@@ -6,7 +6,7 @@ BEGIN;
 
 CREATE TABLE gwapese.novelty (
   icon text NOT NULL,
-  novelty_id smallint NOT NULL,
+  novelty_id integer NOT NULL,
   slot text NOT NULL,
   CONSTRAINT novelty_pk PRIMARY KEY (novelty_id)
 );
@@ -23,7 +23,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 CREATE TABLE gwapese.novelty_description (
   app_name text NOT NULL,
   lang_tag text NOT NULL,
-  novelty_id smallint NOT NULL,
+  novelty_id integer NOT NULL,
   original text NOT NULL,
   CONSTRAINT novelty_description_pk PRIMARY KEY (app_name, lang_tag, novelty_id),
   CONSTRAINT novelty_identifies_novelty_description_fk FOREIGN KEY (novelty_id)
@@ -46,7 +46,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 CREATE TABLE gwapese.novelty_name (
   app_name text NOT NULL,
   lang_tag text NOT NULL,
-  novelty_id smallint NOT NULL,
+  novelty_id integer NOT NULL,
   original text NOT NULL,
   CONSTRAINT novelty_name_pk PRIMARY KEY (app_name, lang_tag, novelty_id),
   CONSTRAINT novelty_identifies_novelty_name_fk FOREIGN KEY (novelty_id)

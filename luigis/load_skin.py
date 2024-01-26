@@ -120,7 +120,7 @@ def upsert_skin(icon: str, rarity: str, skin_id: int) -> dict[str]:
         "query": """
 MERGE INTO gwapese.skin AS target_skin
 USING (
-  VALUES (%(icon)s::text, %(rarity)s::text, %(skin_id)s::smallint)
+  VALUES (%(icon)s::text, %(rarity)s::text, %(skin_id)s::integer)
 ) AS source_skin (icon, rarity, skin_id)
 ON
   target_skin.skin_id = source_skin.skin_id
@@ -147,7 +147,7 @@ def upsert_skin_description(
 MERGE INTO gwapese.skin_description AS target_skin_description
 USING (
 VALUES (%(app_name)s::text, %(lang_tag)s::text, %(original)s::text,
-  %(skin_id)s::smallint)) AS source_skin_description (app_name,
+  %(skin_id)s::integer)) AS source_skin_description (app_name,
   lang_tag, original, skin_id)
   ON target_skin_description.app_name = source_skin_description.app_name
   AND target_skin_description.lang_tag = source_skin_description.lang_tag
@@ -175,7 +175,7 @@ def prune_skin_flags(flags: list[str], skin_id: int) -> dict[str]:
     return {
         "query": """
 DELETE FROM gwapese.skin_flag
-WHERE skin_id = %(skin_id)s::smallint
+WHERE skin_id = %(skin_id)s::integer
   AND NOT flag = ANY (%(flags)s::text[]);
 """,
         "params": {"flags": flags, "skin_id": skin_id},
@@ -187,7 +187,7 @@ def upsert_skin_flag(flag: str, skin_id: int) -> dict[str]:
         "query": """
 MERGE INTO gwapese.skin_flag AS target_skin_flag
 USING (
-  VALUES (%(flag)s::text, %(skin_id)s::smallint)
+  VALUES (%(flag)s::text, %(skin_id)s::integer)
 ) AS source_skin_flag (flag, skin_id)
 ON
   target_skin_flag.flag = source_skin_flag.flag
@@ -207,8 +207,9 @@ def upsert_skin_name(
         "query": """
 MERGE INTO gwapese.skin_name AS target_skin_name
 USING (
-VALUES (%(app_name)s::text, %(lang_tag)s::text, %(original)s::text, %(skin_id)s::smallint)) AS
-  source_skin_name (app_name, lang_tag, original, skin_id)
+VALUES (%(app_name)s::text, %(lang_tag)s::text,
+  %(original)s::text, %(skin_id)s::integer)
+) AS source_skin_name (app_name, lang_tag, original, skin_id)
   ON target_skin_name.app_name = source_skin_name.app_name
   AND target_skin_name.lang_tag = source_skin_name.lang_tag
   AND target_skin_name.skin_id = source_skin_name.skin_id
@@ -235,7 +236,7 @@ def prune_skin_restrictions(restrictions: list[str], skin_id: int) -> dict[str]:
     return {
         "query": """
 DELETE FROM gwapese.skin_restriction
-WHERE skin_id = %(skin_id)s::smallint
+WHERE skin_id = %(skin_id)s::integer
   AND NOT restriction = ANY (%(restrictions)s::text[]);
 """,
         "params": {"restrictions": restrictions, "skin_id": skin_id},
@@ -247,7 +248,7 @@ def upsert_skin_restriction(restriction: str, skin_id: int) -> dict[str]:
         "query": """
 MERGE INTO gwapese.skin_restriction AS target_skin_restriction
 USING (
-  VALUES (%(restriction)s::text, %(skin_id)s::smallint)
+  VALUES (%(restriction)s::text, %(skin_id)s::integer)
 ) AS source_skin_restriction (restriction, skin_id)
 ON
   target_skin_restriction.restriction = source_skin_restriction.restriction
@@ -265,7 +266,7 @@ def upsert_skin_type(skin_id: int, skin_type: str) -> dict[str]:
         "query": """
 MERGE INTO gwapese.skin_type AS target_skin_type
 USING (
-  VALUES (%(skin_id)s::smallint, %(skin_type)s::text)
+  VALUES (%(skin_id)s::integer, %(skin_type)s::text)
 ) AS source_skin_type (skin_id, skin_type)
 ON
   target_skin_type.skin_id = source_skin_type.skin_id

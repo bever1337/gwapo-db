@@ -108,7 +108,7 @@ def upsert_jade_bot(jade_bot_id: int) -> dict[str]:
         "query": """
 MERGE INTO gwapese.jade_bot AS target_jade_bot
 USING (
-  VALUES (%(jade_bot_id)s::smallint)
+  VALUES (%(jade_bot_id)s::integer)
 ) AS source_jade_bot (jade_bot_id)
 ON
   target_jade_bot.jade_bot_id = source_jade_bot.jade_bot_id
@@ -127,7 +127,7 @@ def upsert_jade_bot_description(
         "query": """
 MERGE INTO gwapese.jade_bot_description AS target_jade_bot_description
 USING (
-VALUES (%(app_name)s::text, %(jade_bot_id)s::smallint,
+VALUES (%(app_name)s::text, %(jade_bot_id)s::integer,
   %(lang_tag)s::text, %(original)s::text)
 ) AS
   source_jade_bot_description (app_name, jade_bot_id, lang_tag, original)
@@ -158,7 +158,7 @@ def upsert_jade_bot_name(app_name: str, jade_bot_id: int, lang_tag: str, origina
         "query": """
 MERGE INTO gwapese.jade_bot_name AS target_jade_bot_name
 USING (
-VALUES (%(app_name)s::text, %(jade_bot_id)s::smallint, %(lang_tag)s::text, %(original)s::text)) AS
+VALUES (%(app_name)s::text, %(jade_bot_id)s::integer, %(lang_tag)s::text, %(original)s::text)) AS
   source_jade_bot_name (app_name, jade_bot_id, lang_tag, original)
   ON target_jade_bot_name.app_name = source_jade_bot_name.app_name
   AND target_jade_bot_name.lang_tag = source_jade_bot_name.lang_tag

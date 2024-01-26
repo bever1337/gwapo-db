@@ -108,8 +108,8 @@ def upsert_currency(
         "query": """
 MERGE INTO gwapese.currency AS target_currency
 USING (
-  VALUES (%(currency_id)s::smallint, %(deprecated)s::boolean,
-  %(icon)s::text, %(presentation_order)s::smallint)
+  VALUES (%(currency_id)s::integer, %(deprecated)s::boolean,
+  %(icon)s::text, %(presentation_order)s::integer)
 ) AS source_currency (currency_id, deprecated, icon, presentation_order)
 ON
   target_currency.currency_id = source_currency.currency_id
@@ -144,8 +144,8 @@ def prune_currency_categories(categories: list[int], currency_id: int) -> dict:
     return {
         "query": """
 DELETE FROM gwapese.currency_category
-WHERE currency_id = %(currency_id)s::smallint
-  AND NOT category = ANY (%(categories)s::smallint[]);
+WHERE currency_id = %(currency_id)s::integer
+  AND NOT category = ANY (%(categories)s::integer[]);
 """,
         "params": {"categories": categories, "currency_id": currency_id},
     }
@@ -157,9 +157,9 @@ def upsert_currency_categories(categories: list[int], currency_id: int) -> dict:
 MERGE INTO gwapese.currency_category AS target_currency_category
 USING (
   SELECT
-    %(currency_id)s::smallint AS currency_id, category
+    %(currency_id)s::integer AS currency_id, category
   FROM
-    unnest(%(categories)s::smallint[]) AS category) AS source_currency_category
+    unnest(%(categories)s::integer[]) AS category) AS source_currency_category
 ON target_currency_category.category = source_currency_category.category
   AND target_currency_category.currency_id = source_currency_category.currency_id
 WHEN NOT MATCHED THEN
@@ -177,7 +177,7 @@ def upsert_currency_description(
         "query": """
 MERGE INTO gwapese.currency_description AS target_currency_description
 USING (
-VALUES (%s::text, %s::smallint, %s::text, %s::text)) AS
+VALUES (%s::text, %s::integer, %s::text, %s::text)) AS
   source_currency_description (app_name, currency_id, lang_tag, original)
   ON target_currency_description.app_name = source_currency_description.app_name
   AND target_currency_description.lang_tag = source_currency_description.lang_tag
@@ -201,7 +201,7 @@ def upsert_currency_name(app_name: str, currency_id: int, lang_tag: str, origina
         "query": """
 MERGE INTO gwapese.currency_name AS target_currency_name
 USING (
-VALUES (%(app_name)s::text, %(currency_id)s::smallint, %(lang_tag)s::text, %(original)s::text)) AS
+VALUES (%(app_name)s::text, %(currency_id)s::integer, %(lang_tag)s::text, %(original)s::text)) AS
   source_currency_name (app_name, currency_id, lang_tag, original)
   ON target_currency_name.app_name = source_currency_name.app_name
   AND target_currency_name.lang_tag = source_currency_name.lang_tag

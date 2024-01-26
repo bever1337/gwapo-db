@@ -51,7 +51,7 @@ class ExtractBatch(luigi.Task):
             response_json = response.json()
             validator.validate(response_json)
             entities.extend(response_json)
-            time.sleep(1 / 7)
+            time.sleep(1 / 6)
 
         with self.output().open("w") as write_target:
             json.dump(obj=entities, fp=write_target)

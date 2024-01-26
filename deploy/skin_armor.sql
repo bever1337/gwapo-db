@@ -8,7 +8,7 @@
 BEGIN;
 
 CREATE TABLE gwapese.skin_armor (
-  skin_id smallint UNIQUE NOT NULL,
+  skin_id integer UNIQUE NOT NULL,
   skin_type text GENERATED ALWAYS AS ('Armor') STORED,
   slot text NOT NULL,
   weight_class text NOT NULL,
@@ -30,10 +30,10 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
   'skin_armor', 'skin_armor_history');
 
 CREATE TABLE gwapese.skin_armor_dye_slot (
-  color_id smallint NOT NULL,
+  color_id integer NOT NULL,
   material text NOT NULL,
-  skin_id smallint NOT NULL,
-  slot_index smallint NOT NULL,
+  skin_id integer NOT NULL,
+  slot_index integer NOT NULL,
   CONSTRAINT skin_armor_dye_slot_pk PRIMARY KEY (skin_id, slot_index),
   CONSTRAINT skin_armor_contains_skin_armor_dye_slot_fk FOREIGN KEY (skin_id)
     REFERENCES gwapese.skin_armor (skin_id) ON DELETE CASCADE ON UPDATE

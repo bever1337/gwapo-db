@@ -109,6 +109,7 @@ class LoadGuildUpgrade(luigi.Task):
                         )
                     )
 
+                # upsert prerequisites _after_ all guild upgrades
                 for guild_upgrade in json_input:
                     cursor.execute(
                         **upsert_guild_prerequisites(
@@ -141,12 +142,12 @@ def upsert_guild_upgrade(
 MERGE INTO gwapese.guild_upgrade AS target_guild_upgrade
 USING (
   VALUES (
-    %(build_time)s::smallint,
-    %(experience)s::smallint,
-    %(guild_upgrade_id)s::smallint,
+    %(build_time)s::integer,
+    %(experience)s::integer,
+    %(guild_upgrade_id)s::integer,
     %(guild_upgrade_type)s::text,
     %(icon)s::text,
-    %(required_level)s::smallint)
+    %(required_level)s::integer)
 ) AS source_guild_upgrade (
     build_time,
     experience,
@@ -209,7 +210,7 @@ def upsert_guild_upgrade_description(
         "query": """
 MERGE INTO gwapese.guild_upgrade_description AS target_guild_upgrade_description
 USING (
-VALUES (%(app_name)s::text, %(guild_upgrade_id)s::smallint,
+VALUES (%(app_name)s::text, %(guild_upgrade_id)s::integer,
   %(lang_tag)s::text, %(original)s::text)
 ) AS
   source_guild_upgrade_description (app_name, guild_upgrade_id, lang_tag, original)
@@ -241,8 +242,8 @@ def prune_guild_upgrade_prerequisites(
     return {
         "query": """
 DELETE FROM gwapese.guild_upgrade_prerequisite
-WHERE guild_upgrade_id = %(guild_upgrade_id)s::smallint
-  AND NOT prerequisite_guild_upgrade_id = ANY (%(prerequisites)s::smallint[]);
+WHERE guild_upgrade_id = %(guild_upgrade_id)s::integer
+  AND NOT prerequisite_guild_upgrade_id = ANY (%(prerequisites)s::integer[]);
 """,
         "params": {
             "prerequisites": prerequisites,
@@ -257,9 +258,9 @@ def upsert_guild_prerequisites(guild_upgrade_id: int, prerequisites: list[int]) 
 MERGE INTO gwapese.guild_upgrade_prerequisite AS trg
 USING (
   SELECT
-    %(guild_upgrade_id)s::smallint AS guild_upgrade_id, prerequisite_guild_upgrade_id
+    %(guild_upgrade_id)s::integer AS guild_upgrade_id, prerequisite_guild_upgrade_id
   FROM
-    unnest(%(prerequisites)s::smallint[]) AS prerequisite_guild_upgrade_id) AS src
+    unnest(%(prerequisites)s::integer[]) AS prerequisite_guild_upgrade_id) AS src
 ON trg.prerequisite_guild_upgrade_id = src.prerequisite_guild_upgrade_id
   AND trg.guild_upgrade_id = src.guild_upgrade_id
 WHEN NOT MATCHED THEN
@@ -280,7 +281,7 @@ def upsert_guild_upgrade_name(
         "query": """
 MERGE INTO gwapese.guild_upgrade_name AS target_guild_upgrade_name
 USING (
-VALUES (%(app_name)s::text, %(guild_upgrade_id)s::smallint, %(lang_tag)s::text, %(original)s::text)) AS
+VALUES (%(app_name)s::text, %(guild_upgrade_id)s::integer, %(lang_tag)s::text, %(original)s::text)) AS
   source_guild_upgrade_name (app_name, guild_upgrade_id, lang_tag, original)
   ON target_guild_upgrade_name.app_name = source_guild_upgrade_name.app_name
   AND target_guild_upgrade_name.lang_tag = source_guild_upgrade_name.lang_tag

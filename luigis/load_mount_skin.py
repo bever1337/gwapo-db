@@ -114,7 +114,7 @@ def upsert_mount_skin(icon: str, mount_id: str, mount_skin_id: int) -> dict[str]
         "query": """
 MERGE INTO gwapese.mount_skin AS target_mount_skin
 USING (
-  VALUES (%(icon)s::text, %(mount_id)s::text, %(mount_skin_id)s::smallint)
+  VALUES (%(icon)s::text, %(mount_id)s::text, %(mount_skin_id)s::integer)
 ) AS source_mount_skin (icon, mount_id mount_skin_id)
 ON
   target_mount_skin.mount_id = source_mount_skin.mount_id
@@ -137,8 +137,8 @@ def prune_mount_skin_dye_slots(mount_skin_id: int, slot_indices: list[int]) -> d
     return {
         "query": """
 DELETE FROM gwapese.mount_skin_dye_slot
-WHERE mount_skin_id = %(mount_skin_id)s::smallint
-  AND NOT slot_index = ANY (%(slot_indices)s::smallint[]);
+WHERE mount_skin_id = %(mount_skin_id)s::integer
+  AND NOT slot_index = ANY (%(slot_indices)s::integer[]);
 """,
         "params": {"mount_skin_id": mount_skin_id, "slot_indices": slot_indices},
     }
@@ -151,10 +151,10 @@ def upsert_mount_skin_dye_slots(
         "query": """
 MERGE INTO gwapese.mount_skin_dye_slot AS target_mount_skin_dye_slot
 USING (
-  VALUES (%(color_id)s::smallint,
+  VALUES (%(color_id)s::integer,
     %(material)s::text,
-    %(mount_skin_id)s::smallint,
-    %(slot_index)s::smallint)
+    %(mount_skin_id)s::integer,
+    %(slot_index)s::integer)
 ) AS
   source_mount_skin_dye_slot (color_id, material, mount_skin_id, slot_index)
   ON target_mount_skin_dye_slot.mount_skin_id = source_mount_skin_dye_slot.mount_skin_id
@@ -186,7 +186,7 @@ USING (
         %(app_name)s::text,
         %(lang_tag)s::text,
         %(original)s::text,
-        %(mount_skin_id)s::smallint)
+        %(mount_skin_id)s::integer)
 ) AS
   source_mount_skin_name (app_name, lang_tag, original, mount_skin_id)
   ON target_mount_skin_name.app_name = source_mount_skin_name.app_name

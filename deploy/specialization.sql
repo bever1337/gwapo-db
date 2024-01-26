@@ -10,7 +10,7 @@ CREATE TABLE gwapese.specialization (
   elite boolean NOT NULL,
   icon text NOT NULL,
   profession_id text NOT NULL,
-  specialization_id smallint UNIQUE NOT NULL,
+  specialization_id integer UNIQUE NOT NULL,
   CONSTRAINT specialization_pk PRIMARY KEY (profession_id, specialization_id),
   CONSTRAINT specialization_ak UNIQUE (specialization_id),
   CONSTRAINT profession_identifies_specialization_fk FOREIGN KEY
@@ -30,7 +30,7 @@ CREATE TABLE gwapese.specialization_name (
   app_name text NOT NULL,
   lang_tag text NOT NULL,
   original text NOT NULL,
-  specialization_id smallint NOT NULL,
+  specialization_id integer NOT NULL,
   CONSTRAINT specialization_name_pk PRIMARY KEY (app_name, lang_tag, specialization_id),
   CONSTRAINT specialization_identifies_specialization_name_fk FOREIGN KEY
     (specialization_id) REFERENCES gwapese.specialization (specialization_id)

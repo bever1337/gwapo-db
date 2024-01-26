@@ -6,8 +6,8 @@ BEGIN;
 
 CREATE TABLE gwapese.mini (
   icon text NOT NULL,
-  mini_id smallint NOT NULL,
-  presentation_order smallint NOT NULL,
+  mini_id integer NOT NULL,
+  presentation_order integer NOT NULL,
   CONSTRAINT mini_pk PRIMARY KEY (mini_id)
 );
 
@@ -23,7 +23,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 CREATE TABLE gwapese.mini_name (
   app_name text NOT NULL,
   lang_tag text NOT NULL,
-  mini_id smallint NOT NULL,
+  mini_id integer NOT NULL,
   original text NOT NULL,
   CONSTRAINT mini_name_pk PRIMARY KEY (app_name, lang_tag, mini_id),
   CONSTRAINT mini_identifies_mini_name_fk FOREIGN KEY (mini_id) REFERENCES
@@ -45,7 +45,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 CREATE TABLE gwapese.mini_unlock (
   app_name text NOT NULL,
   lang_tag text NOT NULL,
-  mini_id smallint NOT NULL,
+  mini_id integer NOT NULL,
   original text NOT NULL,
   CONSTRAINT mini_unlock_pk PRIMARY KEY (app_name, lang_tag, mini_id),
   CONSTRAINT mini_identifies_mini_unlock_fk FOREIGN KEY (mini_id) REFERENCES

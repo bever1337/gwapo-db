@@ -102,7 +102,7 @@ USING (
     %(elite)s::boolean,
     %(icon)s::text,
     %(profession_id)s::text,
-    %(specialization_id)s::smallint)
+    %(specialization_id)s::integer)
 ) AS source_specialization (background, elite, icon, profession_id, specialization_id)
 ON target_specialization.profession_id = source_specialization.profession_id
   AND target_specialization.specialization_id = source_specialization.specialization_id
@@ -142,7 +142,7 @@ USING (
   VALUES (%(app_name)s::text,
     %(lang_tag)s::text,
     %(original)s::text,
-    %(specialization_id)s::smallint)
+    %(specialization_id)s::integer)
 ) AS source_specialization_name (app_name, lang_tag, original, specialization_id)
   ON target_specialization_name.app_name = source_specialization_name.app_name
   AND target_specialization_name.lang_tag = source_specialization_name.lang_tag

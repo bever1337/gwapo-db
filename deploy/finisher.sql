@@ -5,9 +5,9 @@
 BEGIN;
 
 CREATE TABLE gwapese.finisher (
-  finisher_id smallint NOT NULL,
+  finisher_id integer NOT NULL,
   icon text NOT NULL,
-  presentation_order smallint NOT NULL,
+  presentation_order integer NOT NULL,
   CONSTRAINT finisher_pk PRIMARY KEY (finisher_id)
 );
 
@@ -22,7 +22,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.finisher_detail (
   app_name text NOT NULL,
-  finisher_id smallint NOT NULL,
+  finisher_id integer NOT NULL,
   lang_tag text NOT NULL,
   original text NOT NULL,
   CONSTRAINT finisher_detail_pk PRIMARY KEY (app_name, lang_tag, finisher_id),
@@ -45,7 +45,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.finisher_name (
   app_name text NOT NULL,
-  finisher_id smallint NOT NULL,
+  finisher_id integer NOT NULL,
   lang_tag text NOT NULL,
   original text NOT NULL,
   CONSTRAINT finisher_name_pk PRIMARY KEY (app_name, lang_tag, finisher_id),

@@ -118,7 +118,7 @@ def upsert_glider(glider_id: int, icon: str, presentation_order: str) -> dict[st
         "query": """
 MERGE INTO gwapese.glider AS target_glider
 USING (
-  VALUES (%(glider_id)s::smallint, %(icon)s::text, %(presentation_order)s::smallint)
+  VALUES (%(glider_id)s::integer, %(icon)s::text, %(presentation_order)s::integer)
 ) AS source_glider (glider_id, icon, presentation_order)
 ON
   target_glider.glider_id = source_glider.glider_id
@@ -149,7 +149,7 @@ def upsert_glider_description(
         "query": """
 MERGE INTO gwapese.glider_description AS target_glider_description
 USING (
-VALUES (%(app_name)s::text, %(glider_id)s::smallint,
+VALUES (%(app_name)s::text, %(glider_id)s::integer,
   %(lang_tag)s::text, %(original)s::text)
 ) AS
   source_glider_description (app_name, glider_id, lang_tag, original)
@@ -179,8 +179,8 @@ def prune_glider_dye_slots(glider_id: int, slot_indices: list[int]) -> dict:
     return {
         "query": """
 DELETE FROM gwapese.glider_dye_slot
-WHERE glider_id = %(glider_id)s::smallint
-  AND NOT slot_index = ANY (%(slot_indices)s::smallint[]);
+WHERE glider_id = %(glider_id)s::integer
+  AND NOT slot_index = ANY (%(slot_indices)s::integer[]);
 """,
         "params": {"glider_id": glider_id, "slot_indices": slot_indices},
     }
@@ -191,7 +191,7 @@ def upsert_glider_dye_slot(color_id: int, glider_id: int, slot_index: int) -> di
         "query": """
 MERGE INTO gwapese.glider_dye_slot AS target_glider_dye_slot
 USING (
-  VALUES (%(color_id)s::smallint, %(glider_id)s::smallint, %(slot_index)s::smallint)
+  VALUES (%(color_id)s::integer, %(glider_id)s::integer, %(slot_index)s::integer)
 ) AS
   source_glider_dye_slot (color_id, glider_id, slot_index)
   ON target_glider_dye_slot.glider_id = source_glider_dye_slot.glider_id
@@ -214,7 +214,7 @@ def upsert_glider_name(app_name: str, glider_id: int, lang_tag: str, original: s
         "query": """
 MERGE INTO gwapese.glider_name AS target_glider_name
 USING (
-VALUES (%(app_name)s::text, %(glider_id)s::smallint, %(lang_tag)s::text, %(original)s::text)) AS
+VALUES (%(app_name)s::text, %(glider_id)s::integer, %(lang_tag)s::text, %(original)s::text)) AS
   source_glider_name (app_name, glider_id, lang_tag, original)
   ON target_glider_name.app_name = source_glider_name.app_name
   AND target_glider_name.lang_tag = source_glider_name.lang_tag

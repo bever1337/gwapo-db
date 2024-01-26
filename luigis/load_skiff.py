@@ -109,7 +109,7 @@ def upsert_skiff(icon: str, skiff_id: int) -> dict[str]:
         "query": """
 MERGE INTO gwapese.skiff AS target_skiff
 USING (
-  VALUES (%(icon)s::text, %(skiff_id)s::smallint)
+  VALUES (%(icon)s::text, %(skiff_id)s::integer)
 ) AS source_skiff (icon, skiff_id)
 ON
   target_skiff.skiff_id = source_skiff.skiff_id
@@ -130,8 +130,8 @@ def prune_skiff_dye_slots(skiff_id: int, slot_indices: list[int]) -> dict:
     return {
         "query": """
 DELETE FROM gwapese.skiff_dye_slot
-WHERE skiff_id = %(skiff_id)s::smallint
-  AND NOT slot_index = ANY (%(slot_indices)s::smallint[]);
+WHERE skiff_id = %(skiff_id)s::integer
+  AND NOT slot_index = ANY (%(slot_indices)s::integer[]);
 """,
         "params": {"skiff_id": skiff_id, "slot_indices": slot_indices},
     }
@@ -144,10 +144,10 @@ def upsert_skiff_dye_slots(
         "query": """
 MERGE INTO gwapese.skiff_dye_slot AS target_skiff_dye_slot
 USING (
-  VALUES (%(color_id)s::smallint,
+  VALUES (%(color_id)s::integer,
     %(material)s::text,
-    %(skiff_id)s::smallint,
-    %(slot_index)s::smallint)
+    %(skiff_id)s::integer,
+    %(slot_index)s::integer)
 ) AS
   source_skiff_dye_slot (color_id, material, skiff_id, slot_index)
   ON target_skiff_dye_slot.skiff_id = source_skiff_dye_slot.skiff_id
@@ -177,7 +177,7 @@ USING (
         %(app_name)s::text,
         %(lang_tag)s::text,
         %(original)s::text,
-        %(skiff_id)s::smallint)
+        %(skiff_id)s::integer)
 ) AS
   source_skiff_name (app_name, lang_tag, original, skiff_id)
   ON target_skiff_name.app_name = source_skiff_name.app_name

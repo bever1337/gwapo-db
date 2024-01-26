@@ -8,7 +8,7 @@ BEGIN;
 CREATE TABLE gwapese.mount_skin (
   icon text NOT NULL,
   mount_id text NOT NULL,
-  mount_skin_id smallint UNIQUE NOT NULL,
+  mount_skin_id integer UNIQUE NOT NULL,
   CONSTRAINT mount_skin_pk PRIMARY KEY (mount_id, mount_skin_id),
   CONSTRAINT mount_identifies_mount_skin_fk FOREIGN KEY (mount_id) REFERENCES
     gwapese.mount (mount_id) ON DELETE CASCADE ON UPDATE CASCADE
@@ -25,7 +25,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.mount_skin_default (
   mount_id text UNIQUE NOT NULL,
-  mount_skin_id smallint NOT NULL,
+  mount_skin_id integer NOT NULL,
   CONSTRAINT mount_skin_default_pk PRIMARY KEY (mount_id, mount_skin_id),
   CONSTRAINT mount_identifies_mount_skin_default_fk FOREIGN KEY (mount_id)
     REFERENCES gwapese.mount (mount_id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -44,10 +44,10 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
   'mount_skin_default', 'mount_skin_default_history');
 
 CREATE TABLE gwapese.mount_skin_dye_slot (
-  color_id smallint NOT NULL,
+  color_id integer NOT NULL,
   material text NOT NULL,
-  mount_skin_id smallint NOT NULL,
-  slot_index smallint NOT NULL,
+  mount_skin_id integer NOT NULL,
+  slot_index integer NOT NULL,
   CONSTRAINT mount_skin_dye_slot_pk PRIMARY KEY (mount_skin_id, slot_index),
   CONSTRAINT mount_skin_contains_mount_skin_dye_slot_fk FOREIGN KEY
     (mount_skin_id) REFERENCES gwapese.mount_skin (mount_skin_id) ON DELETE
@@ -69,7 +69,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 CREATE TABLE gwapese.mount_skin_name (
   app_name text NOT NULL,
   lang_tag text NOT NULL,
-  mount_skin_id smallint NOT NULL,
+  mount_skin_id integer NOT NULL,
   original text NOT NULL,
   CONSTRAINT mount_skin_name_pk PRIMARY KEY (app_name, lang_tag, mount_skin_id),
   CONSTRAINT mount_skin_identifies_mount_skin_name_fk FOREIGN KEY
@@ -89,4 +89,5 @@ CREATE TABLE gwapese.mount_skin_name_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'mount_skin_name', 'mount_skin_name_history');
 
+-- todo mount_skin_default
 COMMIT;

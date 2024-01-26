@@ -130,7 +130,7 @@ def upsert_color(color_id: int, hue: str, material: str, rarity: str):
         "query": """
 MERGE INTO gwapese.color AS target_color
 USING (
-  VALUES (%s::smallint, %s::text, %s::text, %s::text)) AS
+  VALUES (%s::integer, %s::text, %s::text, %s::text)) AS
     source_color (color_id, hue, material, rarity) ON
     target_color.color_id = source_color.color_id
   WHEN MATCHED AND target_color.hue != source_color.hue
@@ -155,7 +155,7 @@ def upsert_color_name(app_name: str, color_id: int, lang_tag: str, original: str
         "query": """
 MERGE INTO gwapese.color_name AS target_color_name
 USING (
-VALUES (%s::text, %s::smallint, %s::text, %s::text)) AS
+VALUES (%s::text, %s::integer, %s::text, %s::text)) AS
   source_color_name (app_name, color_id, lang_tag, original)
   ON target_color_name.app_name = source_color_name.app_name
   AND target_color_name.lang_tag = source_color_name.lang_tag
@@ -180,7 +180,7 @@ def upsert_color_base(blue: int, color_id: int, green: int, red: int) -> dict[st
         "query": """
 MERGE INTO gwapese.color_base AS target_color_base
 USING (
-VALUES (%s::smallint, %s::smallint, %s::smallint, %s::smallint)) AS
+VALUES (%s::smallint, %s::integer, %s::smallint, %s::smallint)) AS
   source_color_base (blue, color_id, green, red)
   ON target_color_base.color_id = source_color_base.color_id
 WHEN MATCHED AND target_color_base.blue != source_color_base.blue
@@ -203,7 +203,7 @@ def upsert_color_sample(color_id: int, material: str) -> dict[str, str]:
         "query": """
 MERGE INTO gwapese.color_sample AS target_color_sample
 USING (
-VALUES (%s::smallint, %s::text)) AS source_color_sample (color_id, material)
+VALUES (%s::integer, %s::text)) AS source_color_sample (color_id, material)
   ON target_color_sample.color_id = source_color_sample.color_id
   AND target_color_sample.material = source_color_sample.material
 WHEN NOT MATCHED THEN
@@ -221,7 +221,7 @@ def upsert_color_sample_adjustment(
         "query": """
 MERGE INTO gwapese.color_sample_adjustment AS target_adjustment
 USING (
-VALUES (%s::smallint, %s::smallint, CAST(%s AS double precision),
+VALUES (%s::smallint, %s::integer, CAST(%s AS double precision),
   %s::text)) AS source_adjustment (brightness, color_id,
   contrast, material)
   ON target_adjustment.color_id = source_adjustment.color_id
@@ -247,7 +247,7 @@ def upsert_color_sample_shift(
         "query": """
 MERGE INTO gwapese.color_sample_shift AS target_shift
 USING (
-VALUES (%s::smallint, %s::smallint, CAST(%s AS double precision),
+VALUES (%s::integer, %s::smallint, CAST(%s AS double precision),
   %s::text, CAST(%s AS double precision))) AS source_shift
   (color_id, hue, lightness, material, saturation)
   ON target_shift.color_id = source_shift.color_id
@@ -274,10 +274,9 @@ def upsert_color_sample_reference(
         "query": """
 MERGE INTO gwapese.color_sample_reference AS target_reference
 USING (
-VALUES (%s::smallint, %s::smallint, %s::smallint, %s,
-  %s::smallint)) AS source_reference (blue, color_id,
-  green, material, red) ON
-  target_reference.color_id = source_reference.color_id
+VALUES (%s::smallint, %s::integer, %s::smallint, %s, %s::smallint)
+) AS source_reference (blue, color_id, green, material, red)
+ON target_reference.color_id = source_reference.color_id
   AND target_reference.material = source_reference.material
 WHEN MATCHED AND target_reference.blue != source_reference.blue
   OR target_reference.green != source_reference.green
