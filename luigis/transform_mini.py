@@ -13,7 +13,7 @@ class TransformMini(luigi.Task):
     output_dir = luigi.PathParameter(absolute=True, exists=True)
 
     def output(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.json".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
@@ -25,7 +25,7 @@ class TransformMini(luigi.Task):
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.json".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
@@ -44,9 +44,6 @@ class TransformMini(luigi.Task):
         )
 
     def run(self):
-        with self.input().open("r") as mini_input_file:
-            mini_json: list[dict] = json.load(fp=mini_input_file)
-
         with open("transformations_mini.json", "r") as ro_transform:
             transform_json = json.load(fp=ro_transform)
 
@@ -55,15 +52,17 @@ class TransformMini(luigi.Task):
             mini_transform_id = mini_transform["id"]
             transform_dict[mini_transform_id] = mini_transform
 
-        for mini in mini_json:
-            mini_id = mini["id"]
+        with (
+            self.input().open("r") as r_input_file,
+            self.output().open("w") as w_output_file,
+        ):
+            for mini_line in r_input_file:
+                mini = json.loads(mini_line)
+                mini_id = mini["id"]
 
-            transform = transform_dict.get(mini_id)
-            if transform == None:
-                continue
+                transform = transform_dict.get(mini_id)
+                if transform != None:
+                    mini["item_id"] = transform["item_id"]
+                    mini["name"] = transform["name"]
 
-            mini["item_id"] = transform["item_id"]
-            mini["name"] = transform["name"]
-
-        with self.output().open("w") as w_output_file:
-            w_output_file.write(json.dumps(mini_json))
+                w_output_file.write("".join([json.dumps(mini), "\n"]))

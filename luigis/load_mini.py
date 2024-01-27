@@ -31,16 +31,15 @@ class LoadMini(luigi.Task):
         )
 
     def run(self):
-        with self.input().open("r") as ro_input_file:
-            json_input = json.load(fp=ro_input_file)
-
         with (
+            self.input().open("r") as r_input_file,
             common.get_conn() as connection,
             connection.cursor() as cursor,
         ):
             cursor.execute(query="BEGIN")
             try:
-                for mini in json_input:
+                for mini_line in r_input_file:
+                    mini = json.loads(mini_line)
                     mini_id = mini["id"]
                     cursor.execute(
                         **upsert_mini(

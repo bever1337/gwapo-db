@@ -28,7 +28,7 @@ class LoadItem(luigi.Task):
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.json".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
@@ -59,28 +59,27 @@ class LoadItem(luigi.Task):
         }
 
     def run(self):
+        self.set_status_message("Starting".format(count=0))
+
         inputs = self.input()
 
-        with inputs["item"].open("r") as ro_input_file:
-            item_json = json.load(fp=ro_input_file)
-
         with inputs["profession"].open("r") as ro_input_file:
-            profession_json: list[dict] = json.load(fp=ro_input_file)
-            professions: list[str] = [
-                profession["id"] for profession in profession_json
-            ]
+            professions: list[str] = [json.loads(line)["id"] for line in ro_input_file]
 
         with inputs["race"].open("r") as ro_input_file:
             race_names: list[str] = json.load(fp=ro_input_file)
 
         with (
+            inputs["item"].open("r") as r_input_file,
             common.get_conn() as connection,
             connection.cursor() as cursor,
         ):
             cursor.execute(query="BEGIN")
             # only optional keys are details and default_skin
             try:
-                for item in item_json:
+                self.set_status_message("Count: {current:d}".format(current=0))
+                for index, item_line in enumerate(r_input_file):
+                    item = json.loads(item_line)
                     item_id = item["id"]
                     cursor.execute(
                         **upsert_item(
@@ -112,26 +111,40 @@ class LoadItem(luigi.Task):
                         )
 
                     item_flags = item["flags"]
-                    prune_item_flags(flags=item_flags, item_id=item_id)
+                    cursor.execute(
+                        **prune_item_flags(flags=item_flags, item_id=item_id)
+                    )
                     for item_flag in item_flags:
-                        upsert_item_flag(flag=item_flag, item_id=item_id)
+                        cursor.execute(
+                            **upsert_item_flag(flag=item_flag, item_id=item_id)
+                        )
 
                     game_types = item["game_types"]
-                    prune_item_game_types(game_types=game_types, item_id=item_id)
+                    cursor.execute(
+                        **prune_item_game_types(game_types=game_types, item_id=item_id)
+                    )
                     for game_type in game_types:
-                        upsert_item_game_type(game_type=game_type, item_id=item_id)
+                        cursor.execute(
+                            **upsert_item_game_type(
+                                game_type=game_type, item_id=item_id
+                            )
+                        )
 
                     profession_restrictions = [
                         restriction
                         for restriction in item["restrictions"]
                         if restriction in professions
                     ]
-                    prune_item_profession_restrictions(
-                        item_id=item_id, profession_ids=profession_restrictions
+                    cursor.execute(
+                        **prune_item_profession_restrictions(
+                            item_id=item_id, profession_ids=profession_restrictions
+                        )
                     )
                     for profession_id in profession_restrictions:
-                        upsert_item_profession_restriction(
-                            profession_id=profession_id, item_id=item_id
+                        cursor.execute(
+                            **upsert_item_profession_restriction(
+                                profession_id=profession_id, item_id=item_id
+                            )
                         )
 
                     race_names_restrictions = [
@@ -139,12 +152,16 @@ class LoadItem(luigi.Task):
                         for restriction in item["restrictions"]
                         if restriction in race_names
                     ]
-                    prune_item_race_restrictions(
-                        item_id=item_id, race_names=race_names_restrictions
+                    cursor.execute(
+                        **prune_item_race_restrictions(
+                            item_id=item_id, race_names=race_names_restrictions
+                        )
                     )
                     for race_name in race_names_restrictions:
-                        upsert_item_race_restriction(
-                            race_name=race_name, item_id=item_id
+                        cursor.execute(
+                            **upsert_item_race_restriction(
+                                race_name=race_name, item_id=item_id
+                            )
                         )
 
                     item_name = item["name"]
@@ -165,7 +182,14 @@ class LoadItem(luigi.Task):
                             )
                         )
 
-                    upsert_item_type(item_id=item_id, item_type=item["type"])
+                    cursor.execute(
+                        **upsert_item_type(item_id=item_id, item_type=item["type"])
+                    )
+
+                    if index % 100 == 0:
+                        self.set_status_message(
+                            "Count: {current:d}".format(current=index)
+                        )
 
                 cursor.execute(query="COMMIT")
                 connection.commit()

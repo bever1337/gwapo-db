@@ -31,16 +31,15 @@ class LoadCurrency(luigi.Task):
         )
 
     def run(self):
-        with self.input().open("r") as ro_input_file:
-            json_input = json.load(fp=ro_input_file)
-
         with (
+            self.input().open("r") as r_input_file,
             common.get_conn() as connection,
             connection.cursor() as cursor,
         ):
             cursor.execute(query="BEGIN")
             try:
-                for currency in json_input:
+                for currency_line in r_input_file:
+                    currency = json.loads(currency_line)
                     currency_id = currency["id"]
                     cursor.execute(
                         **upsert_currency(

@@ -32,16 +32,15 @@ class LoadSkinBack(luigi.Task):
         )
 
     def run(self):
-        with self.input().open("r") as ro_input_file:
-            skin_json = json.load(fp=ro_input_file)
-
         with (
+            self.input().open("r") as r_input_file,
             common.get_conn() as connection,
             connection.cursor() as cursor,
         ):
             cursor.execute(query="BEGIN")
             try:
-                for skin in skin_json:
+                for skin_line in r_input_file:
+                    skin = json.loads(skin_line)
                     cursor.execute(**upsert_skin_back(skin_id=skin["id"]))
 
                 cursor.execute(query="COMMIT")

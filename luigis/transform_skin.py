@@ -14,7 +14,7 @@ class TransformSkin(luigi.Task):
     output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
 
     def output(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.json".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
@@ -26,7 +26,7 @@ class TransformSkin(luigi.Task):
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.json".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
@@ -45,30 +45,28 @@ class TransformSkin(luigi.Task):
         )
 
     def run(self):
-        with self.input().open("r") as input_skin_file:
-            input_skin_json: list[dict] = json.load(fp=input_skin_file)
+        with (
+            self.input().open("r") as r_input_file,
+            self.output().open("w") as w_output_file,
+        ):
+            schema_validator = jsonschema.Draft202012Validator(skin_json_schema)
 
-        output_skin = []
+            for skin_line in r_input_file:
+                skin = json.loads(skin_line)
+                skin["description"] = skin.get("description")
+                if skin["description"] == "":
+                    skin["description"] = None
 
-        schema_validator = jsonschema.Draft202012Validator(skin_json_schema)
-        for skin in input_skin_json:
-            skin["description"] = skin.get("description")
-            if skin["description"] == "":
-                skin["description"] = None
+                skin["icon"] = skin.get("icon")
+                if skin["icon"] == "":
+                    skin["icon"] = None
 
-            skin["icon"] = skin.get("icon")
-            if skin["icon"] == "":
-                skin["icon"] = None
+                skin["name"] = skin.get("name")
+                if skin["name"] == "":
+                    skin["name"] = None
 
-            skin["name"] = skin.get("name")
-            if skin["name"] == "":
-                skin["name"] = None
-
-            schema_validator.validate(skin)
-            output_skin.append(skin)
-
-        with self.output().open("w") as w_output_file:
-            json.dump(obj=output_skin, fp=w_output_file)
+                schema_validator.validate(skin)
+                w_output_file.write("".join([json.dumps(skin), "\n"]))
 
 
 skin_json_schema = {

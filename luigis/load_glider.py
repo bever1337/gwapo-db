@@ -33,16 +33,15 @@ class LoadGlider(luigi.Task):
         )
 
     def run(self):
-        with self.input().open("r") as ro_input_file:
-            json_input = json.load(fp=ro_input_file)
-
         with (
+            self.input().open("r") as r_input_file,
             common.get_conn() as connection,
             connection.cursor() as cursor,
         ):
             cursor.execute(query="BEGIN")
             try:
-                for glider in json_input:
+                for glider_line in r_input_file:
+                    glider = json.loads(glider_line)
                     glider_id = glider["id"]
                     cursor.execute(
                         **upsert_glider(

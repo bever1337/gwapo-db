@@ -26,7 +26,7 @@ class LoadSkiff(luigi.Task):
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.json".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
@@ -45,16 +45,15 @@ class LoadSkiff(luigi.Task):
         )
 
     def run(self):
-        with self.input().open("r") as ro_input_file:
-            json_input = json.load(fp=ro_input_file)
-
         with (
+            self.input().open("r") as ro_input_file,
             common.get_conn() as connection,
             connection.cursor() as cursor,
         ):
             cursor.execute(query="BEGIN")
             try:
-                for skiff in json_input:
+                for skiff_line in ro_input_file:
+                    skiff = json.loads(skiff_line)
                     skiff_id = skiff["id"]
                     cursor.execute(
                         **upsert_skiff(skiff_id=skiff_id, icon=skiff["icon"])

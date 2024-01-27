@@ -31,16 +31,15 @@ class LoadColor(luigi.Task):
         )
 
     def run(self):
-        with self.input().open("r") as ro_input_file:
-            json_input = json.load(fp=ro_input_file)
-
         with (
+            self.input().open("r") as r_input_file,
             common.get_conn() as connection,
             connection.cursor() as cursor,
         ):
             cursor.execute(query="BEGIN")
             try:
-                for color in json_input:
+                for color_line in r_input_file:
+                    color = json.loads(color_line)
                     color_id: int = color["id"]
 
                     color_categories = color["categories"]

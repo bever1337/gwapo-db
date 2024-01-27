@@ -31,19 +31,19 @@ class LoadSkin(luigi.Task):
         )
 
     def run(self):
-        with self.input().open("r") as ro_input_file:
-            skin_json = json.load(fp=ro_input_file)
-
         with (
+            self.input().open("r") as r_input_file,
             common.get_conn() as connection,
             connection.cursor() as cursor,
         ):
             cursor.execute(query="BEGIN")
             try:
-                for skin in skin_json:
+                for skin_line in r_input_file:
+                    skin = json.loads(skin_line)
+                    skin_id = skin["id"]
                     cursor.execute(
                         **upsert_skin(
-                            icon=skin["icon"], rarity=skin["rarity"], skin_id=skin["id"]
+                            icon=skin["icon"], rarity=skin["rarity"], skin_id=skin_id
                         )
                     )
 
@@ -60,17 +60,15 @@ class LoadSkin(luigi.Task):
                                 app_name="gw2",
                                 lang_tag=self.lang_tag.value,
                                 original=skin["description"],
-                                skin_id=skin["id"],
+                                skin_id=skin_id,
                             )
                         )
 
                     cursor.execute(
-                        **prune_skin_flags(flags=skin["flags"], skin_id=skin["id"])
+                        **prune_skin_flags(flags=skin["flags"], skin_id=skin_id)
                     )
                     for flag in skin["flags"]:
-                        cursor.execute(
-                            **upsert_skin_flag(flag=flag, skin_id=skin["id"])
-                        )
+                        cursor.execute(**upsert_skin_flag(flag=flag, skin_id=skin_id))
 
                     if skin["name"] != None:
                         cursor.execute(
@@ -85,24 +83,24 @@ class LoadSkin(luigi.Task):
                                 app_name="gw2",
                                 lang_tag=self.lang_tag.value,
                                 original=skin["name"],
-                                skin_id=skin["id"],
+                                skin_id=skin_id,
                             )
                         )
 
                     cursor.execute(
                         **prune_skin_restrictions(
-                            restrictions=skin["restrictions"], skin_id=skin["id"]
+                            restrictions=skin["restrictions"], skin_id=skin_id
                         )
                     )
                     for restriction in skin["restrictions"]:
                         cursor.execute(
                             **upsert_skin_restriction(
-                                restriction=restriction, skin_id=skin["id"]
+                                restriction=restriction, skin_id=skin_id
                             )
                         )
 
                     cursor.execute(
-                        **upsert_skin_type(skin_id=skin["id"], skin_type=skin["type"])
+                        **upsert_skin_type(skin_id=skin_id, skin_type=skin["type"])
                     )
 
                 cursor.execute(query="COMMIT")

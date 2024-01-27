@@ -13,7 +13,7 @@ class TransformCurrency(luigi.Task):
     output_dir = luigi.PathParameter(absolute=True, exists=True)
 
     def output(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.json".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
@@ -25,7 +25,7 @@ class TransformCurrency(luigi.Task):
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.json".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
@@ -44,9 +44,6 @@ class TransformCurrency(luigi.Task):
         )
 
     def run(self):
-        with self.input().open("r") as currency_input_file:
-            currency_json = json.load(fp=currency_input_file)
-
         with open("transformations_currency.json", "r") as ro_transform:
             transform_json = json.load(fp=ro_transform)
 
@@ -54,17 +51,27 @@ class TransformCurrency(luigi.Task):
         for currency_transform in transform_json:
             transform_dict[currency_transform["id"]] = currency_transform
 
-        final_currency_json = []
-        for currency in currency_json:
-            currency_id = currency["id"]
-            if currency_id == 74:
-                continue
+        with (
+            self.input().open("r") as r_input_file,
+            self.output().open("w") as w_output_file,
+        ):
+            final_currency_json: list[dict] = []
 
-            transform = transform_dict[currency_id]
-            currency["categories"] = transform["categories"]
-            currency["deprecated"] = transform["deprecated"]
+            for currency_line in r_input_file:
+                currency = json.loads(currency_line)
+                currency_id = currency["id"]
+                if currency_id == 74:
+                    continue
 
-            final_currency_json.append(currency)
+                transform = transform_dict[currency_id]
+                currency["categories"] = transform["categories"]
+                currency["deprecated"] = transform["deprecated"]
 
-        with self.output().open("w") as w_output_file:
-            w_output_file.write(json.dumps(final_currency_json))
+                final_currency_json.append(currency)
+
+            w_output_file.writelines(
+                [
+                    "".join([json.dumps(currency), "\n"])
+                    for currency in final_currency_json
+                ]
+            )

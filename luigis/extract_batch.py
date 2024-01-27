@@ -30,6 +30,9 @@ class ExtractBatch(luigi.Task):
         )
 
     def run(self):
+        self.set_progress_percentage(0)
+        self.set_status_message("Progress: 0 / Unknown")
+
         input_target: luigi.LocalTarget = self.input()
         with input_target.open("r") as input_file:
             id_json: list = json.load(input_file)
@@ -40,18 +43,35 @@ class ExtractBatch(luigi.Task):
             schema={"items": schema, "type": "array"}
         )
 
-        entities = []
-
-        for id_batch in itertools.batched(id_json, 200):
-            next_params = dict(self.url_params)
-            next_params["ids"] = ",".join(str(id) for id in id_batch)
-            response = requests.get(url=self.url, params=next_params)
-            if response.status_code != 200:
-                raise RuntimeError("Expected status code 200")
-            response_json = response.json()
-            validator.validate(response_json)
-            entities.extend(response_json)
-            time.sleep(1 / 6)
-
+        id_len = len(id_json)
+        progress = 0
+        self.set_progress_percentage(progress)
+        self.set_status_message(
+            "Progress: {current:d} / {total:d}".format(current=progress, total=id_len)
+        )
         with self.output().open("w") as write_target:
-            json.dump(obj=entities, fp=write_target)
+            for index, id_batch in enumerate(itertools.batched(id_json, 200)):
+                next_params = dict(self.url_params)
+                next_params["ids"] = ",".join([str(id) for id in id_batch])
+                response = requests.get(url=self.url, params=next_params)
+
+                if response.status_code != 200:
+                    raise RuntimeError("Expected status code 200")
+                response_json = response.json()
+                validator.validate(response_json)
+
+                write_target.writelines(
+                    ["".join([json.dumps(entity), "\n"]) for entity in response_json]
+                )
+
+                processed_so_far = (index * 200) + len(id_batch)
+                next_progress = round((processed_so_far / id_len) * 100)
+                if next_progress != progress:
+                    progress = next_progress
+                    self.set_progress_percentage(progress)
+                    self.set_status_message(
+                        "Progress: {current:d} / {total:d}".format(
+                            current=processed_so_far, total=id_len
+                        )
+                    )
+                time.sleep(1 / 4)

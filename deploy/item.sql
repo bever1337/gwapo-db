@@ -107,9 +107,9 @@ CREATE TABLE gwapese.item_profession_restriction (
   CONSTRAINT item_profession_restriction_pk PRIMARY KEY (item_id, profession_id),
   CONSTRAINT item_identifies_item_profession_restriction_fk FOREIGN KEY
     (item_id) REFERENCES gwapese.item (item_id) ON DELETE CASCADE,
-  CONSTRAINT race_enumerates_item_profession_restriction_fk FOREIGN KEY
-    (profession_id) REFERENCES gwapese.race (race_name) ON DELETE CASCADE ON
-    UPDATE CASCADE
+  CONSTRAINT profession_enumerates_item_profession_restriction_fk FOREIGN KEY
+    (profession_id) REFERENCES gwapese.profession (profession_id) ON DELETE
+    CASCADE ON UPDATE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'item_profession_restriction');

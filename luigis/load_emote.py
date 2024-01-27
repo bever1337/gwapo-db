@@ -23,7 +23,7 @@ class LoadEmote(luigi.Task):
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        target_filename = "{timestamp:s}.json".format(
+        target_filename = "{timestamp:s}.ndjson".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z")
         )
         return extract_batch.ExtractBatch(
@@ -40,16 +40,15 @@ class LoadEmote(luigi.Task):
         )
 
     def run(self):
-        with self.input().open("r") as ro_input_file:
-            json_input = json.load(fp=ro_input_file)
-
         with (
+            self.input().open("r") as ro_input_file,
             common.get_conn() as connection,
             connection.cursor() as cursor,
         ):
             cursor.execute(query="BEGIN")
             try:
-                for emote in json_input:
+                for emote_line in ro_input_file:
+                    emote = json.loads(emote_line)
                     emote_id = emote["id"]
                     cursor.execute(**upsert_emote(emote_id=emote_id))
                     emote_commands = emote["commands"]

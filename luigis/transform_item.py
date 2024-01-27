@@ -14,7 +14,7 @@ class TransformItem(luigi.Task):
     output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
 
     def output(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.json".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
@@ -26,7 +26,7 @@ class TransformItem(luigi.Task):
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.json".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
@@ -45,30 +45,31 @@ class TransformItem(luigi.Task):
         )
 
     def run(self):
-        with self.input().open("r") as input_item_file:
-            input_item_json: list[dict] = json.load(fp=input_item_file)
+        with (
+            self.input().open("r") as r_input_file,
+            self.output().open("w") as w_output_file,
+        ):
+            schema_validator = jsonschema.Draft202012Validator(item_json_schema)
 
-        schema_validator = jsonschema.Draft202012Validator(item_json_schema)
-        for item in input_item_json:
-            item["description"] = item.get("description")
-            if item["description"] == "":
-                item["description"] = None
+            for item_line in r_input_file:
+                item = json.loads(item_line)
+                item["description"] = item.get("description")
+                if item["description"] == "":
+                    item["description"] = None
 
-            item["icon"] = item.get("icon")
-            if item["icon"] == "":
-                item["icon"] = None
+                item["icon"] = item.get("icon")
+                if item["icon"] == "":
+                    item["icon"] = None
 
-            item["name"] = item.get("name")
-            if item["name"] == "":
-                item["name"] = None
+                item["name"] = item.get("name")
+                if item["name"] == "":
+                    item["name"] = None
 
-            item["upgrades_from"] = item.get("upgrades_from", [])
-            item["upgrades_into"] = item.get("upgrades_into", [])
+                item["upgrades_from"] = item.get("upgrades_from", [])
+                item["upgrades_into"] = item.get("upgrades_into", [])
 
-            schema_validator.validate(item)
-
-        with self.output().open("w") as w_output_file:
-            json.dump(obj=input_item_json, fp=w_output_file)
+                schema_validator.validate(item)
+                w_output_file.write("".join([json.dumps(item), "\n"]))
 
 
 item_json_schema = {

@@ -14,7 +14,7 @@ class TransformColor(luigi.Task):
     output_dir = luigi.PathParameter(absolute=True, exists=True)
 
     def output(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.json".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
@@ -26,7 +26,7 @@ class TransformColor(luigi.Task):
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.json".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
@@ -45,17 +45,17 @@ class TransformColor(luigi.Task):
         )
 
     def run(self):
-        with self.input().open("r") as color_input_file:
-            color_json = json.load(fp=color_input_file)
-
         schema_validator = jsonschema.Draft202012Validator(color_schema)
-        for color in color_json:
-            if color["id"] == 1594:
-                color["fur"] = color["cloth"]
-            schema_validator.validate(color)
-
-        with self.output().open("w") as w_output_file:
-            json.dump(obj=color_json, fp=w_output_file)
+        with (
+            self.input().open("r") as r_input_file,
+            self.output().open("w") as w_output_file,
+        ):
+            for color_line in r_input_file:
+                color = json.loads(color_line)
+                if color["id"] == 1594:
+                    color["fur"] = color["cloth"]
+                schema_validator.validate(color)
+                w_output_file.write("".join([json.dumps(color), "\n"]))
 
 
 color_schema = {

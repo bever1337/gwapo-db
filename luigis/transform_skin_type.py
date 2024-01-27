@@ -15,7 +15,7 @@ class TransformSkinType(luigi.Task):
 
     def output(self):
         target_filename = (
-            "{timestamp:s}__lang_{lang_tag:s}__type_{skin_type:s}.json".format(
+            "{timestamp:s}__lang_{lang_tag:s}__type_{skin_type:s}.ndjson".format(
                 timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
                 lang_tag=self.lang_tag.value,
                 skin_type=self.skin_type.value,
@@ -34,15 +34,13 @@ class TransformSkinType(luigi.Task):
         )
 
     def run(self):
-        with self.input().open("r") as ro_input_file:
-            skin_json = json.load(fp=ro_input_file)
+        with (
+            self.input().open("r") as r_input_file,
+            self.output().open("w") as w_output,
+        ):
+            skin_type = self.skin_type.value
 
-        skins: list[dict] = []
-
-        skin_type = self.skin_type.value
-        for skin in skin_json:
-            if skin["type"] == skin_type:
-                skins.append(skin)
-
-        with self.output().open("w") as w_output:
-            json.dump(obj=skins, fp=w_output)
+            for skin_line in r_input_file:
+                skin = json.loads(skin_line)
+                if skin["type"] == skin_type:
+                    w_output.write(skin_line)

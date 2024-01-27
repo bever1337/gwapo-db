@@ -14,7 +14,7 @@ class TransformGlider(luigi.Task):
     output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
 
     def output(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.json".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
@@ -26,7 +26,7 @@ class TransformGlider(luigi.Task):
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.json".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
@@ -45,16 +45,17 @@ class TransformGlider(luigi.Task):
         )
 
     def run(self):
-        with self.input().open("r") as glider_input_file:
-            glider_json: list[dict] = json.load(fp=glider_input_file)
-
         validator = jsonschema.Draft202012Validator(schema=stricter_glider_schema)
-        for glider in glider_json:
-            glider["unlock_items"] = glider.get("unlock_items", [])
-            validator.validate(glider)
 
-        with self.output().open("w") as w_output_file:
-            w_output_file.write(json.dumps(glider_json))
+        with (
+            self.input().open("r") as r_input_file,
+            self.output().open("w") as w_output_file,
+        ):
+            for glider_line in r_input_file:
+                glider = json.loads(glider_line)
+                glider["unlock_items"] = glider.get("unlock_items", [])
+                validator.validate(glider)
+                w_output_file.write("".join([json.dumps(glider), "\n"]))
 
 
 stricter_glider_schema = {

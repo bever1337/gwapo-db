@@ -26,7 +26,7 @@ class LoadMountSkin(luigi.Task):
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.json".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
@@ -46,16 +46,15 @@ class LoadMountSkin(luigi.Task):
 
 
 def run(self):
-    with self.input().open("r") as ro_input_file:
-        json_input = json.load(fp=ro_input_file)
-
     with (
+        self.input().open("r") as ro_input_file,
         common.get_conn() as connection,
         connection.cursor() as cursor,
     ):
         cursor.execute(query="BEGIN")
         try:
-            for mount_skin in json_input:
+            for mount_skin_line in ro_input_file:
+                mount_skin = json.loads(mount_skin_line)
                 mount_skin_id = mount_skin["id"]
                 cursor.execute(
                     **upsert_mount_skin(
