@@ -2,7 +2,7 @@ import datetime
 import jsonschema
 import json
 import luigi
-from os import path
+import os
 import requests
 
 
@@ -13,11 +13,11 @@ class ExtractId(luigi.Task):
     url = luigi.Parameter()
 
     def output(self):
-        target_filename = "{timestamp:s}.json".format(
-            timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
+        target_filename = os.path.extsep.join(
+            [self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"), "json"]
         )
-        target_path = path.join(self.output_dir, target_filename)
-        return luigi.LocalTarget(path=target_path)
+        output_path = os.path.join(self.output_dir, target_filename)
+        return luigi.LocalTarget(path=output_path)
 
     def run(self):
         response = requests.get(url=self.url)
@@ -26,8 +26,10 @@ class ExtractId(luigi.Task):
         response_json = response.json()
 
         with open(file=self.schema, mode="r") as fp:
-            schema = json.load(fp=fp)
-        jsonschema.validate(instance=response_json, schema=schema)
+            validator = jsonschema.Draft202012Validator(schema=json.load(fp))
+        validator.validate(response_json)
 
         with self.output().open("w") as write_target:
-            write_target.write(response.text)
+            write_target.writelines(
+                ["".join([str(index), "\n"]) for index in response_json]
+            )

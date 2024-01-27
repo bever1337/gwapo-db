@@ -26,20 +26,11 @@ class LoadProfession(luigi.Task):
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
-            timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
-            lang_tag=self.lang_tag.value,
-        )
         return extract_batch.ExtractBatch(
             entity_schema="../schema/gw2/v2/professions/profession.json",
             extract_datetime=self.extract_datetime,
-            extract_dir=path.join(self.output_dir, "extract_profession_id"),
             id_schema="../schema/gw2/v2/professions/index.json",
-            output_file=path.join(
-                self.output_dir,
-                "extract_profession",
-                target_filename,
-            ),
+            output_dir=self.output_dir,
             url_params={"lang": self.lang_tag.value, "v": "2019-12-19T00:00:00.000Z"},
             url="https://api.guildwars2.com/v2/professions",
         )

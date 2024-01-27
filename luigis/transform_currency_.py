@@ -1,3 +1,4 @@
+import csv
 import datetime
 import json
 import luigi
@@ -13,7 +14,7 @@ class TransformCurrency(luigi.Task):
     output_dir = luigi.PathParameter(absolute=True, exists=True)
 
     def output(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.csv".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
@@ -46,23 +47,23 @@ class TransformCurrency(luigi.Task):
             self.input().open("r") as r_input_file,
             self.output().open("w") as w_output_file,
         ):
-            final_currency_json: list[dict] = []
+            csv_writer = csv.DictWriter(
+                w_output_file,
+                fieldnames=["currency_id", "deprecated", "icon", "presentation_order"],
+            )
+            csv_writer.writeheader()
 
             for currency_line in r_input_file:
                 currency = json.loads(currency_line)
                 currency_id = currency["id"]
                 if currency_id == 74:
                     continue
-
                 transform = transform_dict[currency_id]
-                currency["categories"] = transform["categories"]
-                currency["deprecated"] = transform["deprecated"]
-
-                final_currency_json.append(currency)
-
-            w_output_file.writelines(
-                [
-                    "".join([json.dumps(currency), "\n"])
-                    for currency in final_currency_json
-                ]
-            )
+                csv_writer.writerow(
+                    {
+                        "currency_id": currency_id,
+                        "deprecated": transform["deprecated"],
+                        "icon": currency["icon"],
+                        "presentation_order": currency["order"],
+                    }
+                )

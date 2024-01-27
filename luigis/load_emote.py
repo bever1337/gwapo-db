@@ -23,19 +23,11 @@ class LoadEmote(luigi.Task):
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        target_filename = "{timestamp:s}.ndjson".format(
-            timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z")
-        )
         return extract_batch.ExtractBatch(
             entity_schema="../schema/gw2/v2/emotes/emote.json",
             extract_datetime=self.extract_datetime,
-            extract_dir=path.join(self.output_dir, "extract_emote_id"),
+            output_dir=self.output_dir,
             id_schema="../schema/gw2/v2/emotes/index.json",
-            output_file=path.join(
-                self.output_dir,
-                "extract_emote",
-                target_filename,
-            ),
             url="https://api.guildwars2.com/v2/emotes",
         )
 
