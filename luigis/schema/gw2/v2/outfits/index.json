@@ -1,0 +1,20 @@
+{
+  "$id": "gw2/v2/outfits/index.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "items": { "type": "integer" },
+      "type": "array"
+    },
+    {
+      "properties": {
+        "icon": { "format": "uri", "minLength": 1, "type": "string" },
+        "id": { "type": "integer" },
+        "name": { "type": "string" },
+        "unlock_items": { "items": { "type": "integer" }, "type": "array" }
+      },
+      "required": ["icon", "id", "name", "unlock_items"],
+      "type": "object"
+    }
+  ]
+}

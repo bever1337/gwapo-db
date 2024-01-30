@@ -1,0 +1,356 @@
+[
+  [
+    { "op": "test", "path": "/id", "value": 1 },
+    { "op": "add", "path": "/categories", "value": [0] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 2 },
+    { "op": "add", "path": "/categories", "value": [0] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 3 },
+    { "op": "add", "path": "/categories", "value": [0] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 4 },
+    { "op": "add", "path": "/categories", "value": [0, 5] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 5 },
+    { "op": "add", "path": "/categories", "value": [4] },
+    { "op": "add", "path": "/deprecated", "value": true }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 6 },
+    { "op": "add", "path": "/categories", "value": [4] },
+    { "op": "add", "path": "/deprecated", "value": true }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 7 },
+    { "op": "add", "path": "/categories", "value": [4] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 9 },
+    { "op": "add", "path": "/categories", "value": [4] },
+    { "op": "add", "path": "/deprecated", "value": true }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 10 },
+    { "op": "add", "path": "/categories", "value": [4] },
+    { "op": "add", "path": "/deprecated", "value": true }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 11 },
+    { "op": "add", "path": "/categories", "value": [4] },
+    { "op": "add", "path": "/deprecated", "value": true }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 12 },
+    { "op": "add", "path": "/categories", "value": [4] },
+    { "op": "add", "path": "/deprecated", "value": true }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 13 },
+    { "op": "add", "path": "/categories", "value": [4] },
+    { "op": "add", "path": "/deprecated", "value": true }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 14 },
+    { "op": "add", "path": "/categories", "value": [4] },
+    { "op": "add", "path": "/deprecated", "value": true }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 15 },
+    { "op": "add", "path": "/categories", "value": [1] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 16 },
+    { "op": "add", "path": "/categories", "value": [0] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 18 },
+    { "op": "add", "path": "/categories", "value": [0, 5] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 19 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 20 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 22 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 23 },
+    { "op": "add", "path": "/categories", "value": [0] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 24 },
+    { "op": "add", "path": "/categories", "value": [4] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 25 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 26 },
+    { "op": "add", "path": "/categories", "value": [1] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 27 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 28 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 29 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 30 },
+    { "op": "add", "path": "/categories", "value": [1] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 31 },
+    { "op": "add", "path": "/categories", "value": [1] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 32 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 33 },
+    { "op": "add", "path": "/categories", "value": [1] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 34 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 35 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 36 },
+    { "op": "add", "path": "/categories", "value": [1] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 37 },
+    { "op": "add", "path": "/categories", "value": [3] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 38 },
+    { "op": "add", "path": "/categories", "value": [3] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 39 },
+    { "op": "add", "path": "/categories", "value": [4] },
+    { "op": "add", "path": "/deprecated", "value": true }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 40 },
+    { "op": "add", "path": "/categories", "value": [3] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 41 },
+    { "op": "add", "path": "/categories", "value": [3] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 42 },
+    { "op": "add", "path": "/categories", "value": [3] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 43 },
+    { "op": "add", "path": "/categories", "value": [3] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 44 },
+    { "op": "add", "path": "/categories", "value": [3] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 45 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 46 },
+    { "op": "add", "path": "/categories", "value": [1] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 47 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 49 },
+    { "op": "add", "path": "/categories", "value": [3] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 50 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 51 },
+    { "op": "add", "path": "/categories", "value": [3] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 52 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": true }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 53 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 54 },
+    { "op": "add", "path": "/categories", "value": [3] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 55 },
+    { "op": "add", "path": "/categories", "value": [3] },
+    { "op": "add", "path": "/deprecated", "value": true }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 56 },
+    { "op": "add", "path": "/categories", "value": [3] },
+    { "op": "add", "path": "/deprecated", "value": true }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 57 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 58 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 59 },
+    { "op": "add", "path": "/categories", "value": [4] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 60 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 61 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 62 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 63 },
+    { "op": "add", "path": "/categories", "value": [0] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 64 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 65 },
+    { "op": "add", "path": "/categories", "value": [1] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 66 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 67 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 68 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 69 },
+    { "op": "add", "path": "/categories", "value": [4] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 70 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 71 },
+    { "op": "add", "path": "/categories", "value": [3] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 72 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 73 },
+    { "op": "add", "path": "/categories", "value": [2] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 74 },
+    { "op": "add", "path": "", "value": null }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 75 },
+    { "op": "add", "path": "/categories", "value": [3] },
+    { "op": "add", "path": "/deprecated", "value": false }
+  ]
+]

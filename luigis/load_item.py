@@ -34,10 +34,9 @@ class LoadItem(luigi.Task):
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
             ),
-            "profession": extract_batch.ExtractBatch(
-                entity_schema="../schema/gw2/v2/professions/profession.json",
+            "profession": extract_batch.ExtractBatchTask(
                 extract_datetime=self.extract_datetime,
-                id_schema="../schema/gw2/v2/professions/index.json",
+                json_schema_path="./schema/gw2/v2/professions/index.json",
                 output_dir=self.output_dir,
                 url_params={
                     "lang": self.lang_tag.value,

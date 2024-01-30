@@ -1,6 +1,0 @@
-{
-  "$id": "schema/gw2/v2/races/index.json",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "items": { "type": "string" },
-  "type": "array"
-}

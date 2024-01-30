@@ -30,7 +30,7 @@ class ExtractRace(luigi.Task):
             raise RuntimeError("Expected status code 200")
         races_json = races_response.json()
 
-        with open("../schema/gw2/v2/races/index.json") as race_schema_file:
+        with open("./schema/gw2/v2/races/index.json") as race_schema_file:
             schema = json.load(fp=race_schema_file)
         jsonschema.Draft202012Validator(schema=schema).validate(races_json)
 

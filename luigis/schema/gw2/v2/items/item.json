@@ -1,0 +1,61 @@
+{
+  "$id": "gw2/v2/items/items.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "chat_link": { "format": "uri", "minLength": 1, "type": "string" },
+    "default_skin": { "type": "integer" },
+    "description": { "minLength": 0, "type": "string" },
+    "details": { "type": "object" },
+    "flags": { "items": { "minLength": 1, "type": "string" }, "type": "array" },
+    "game_types": {
+      "items": { "minLength": 1, "type": "string" },
+      "type": "array"
+    },
+    "icon": { "format": "uri", "minLength": 1, "type": "string" },
+    "id": { "type": "integer" },
+    "name": { "minLength": 0, "type": "string" },
+    "level": { "type": "integer" },
+    "rarity": { "minLength": 1, "type": "string" },
+    "restrictions": {
+      "items": { "minLength": 1, "type": "string" },
+      "type": "array"
+    },
+    "type": { "minLength": 1, "type": "string" },
+    "upgrades_from": {
+      "items": {
+        "parameters": {
+          "upgrade": { "minLength": 1, "type": "string" },
+          "item_id": { "format": "integer" }
+        },
+        "required": ["upgrade", "item_id"],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "upgrades_into": {
+      "items": {
+        "parameters": {
+          "upgrade": { "minLength": 1, "type": "string" },
+          "item_id": { "format": "integer" }
+        },
+        "required": ["upgrade", "item_id"],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "vendor_value": { "type": "integer" }
+  },
+  "required": [
+    "chat_link",
+    "flags",
+    "game_types",
+    "id",
+    "name",
+    "level",
+    "rarity",
+    "restrictions",
+    "type",
+    "vendor_value"
+  ],
+  "type": "object"
+}

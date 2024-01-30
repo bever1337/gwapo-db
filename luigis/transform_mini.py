@@ -1,59 +1,79 @@
 import datetime
-import json
+import enum
 import luigi
 from os import path
 
 import common
 import extract_batch
+import transform_csv
 
 
-class TransformMini(luigi.Task):
+class MiniTable(enum.Enum):
+    Mini = "mini"
+    MiniUnlock = "mini_unlock"
+    MiniName = "mini_name"
+
+
+class TransformMini(transform_csv.TransformCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
     output_dir = luigi.PathParameter(absolute=True, exists=True)
+    table = luigi.EnumParameter(enum=MiniTable)
 
     def output(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.csv".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
+        target_dir = "_".join(["transform", self.table.value])
         target_path = path.join(
             self.output_dir,
-            "transform_mini",
+            target_dir,
             target_filename,
         )
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        return extract_batch.ExtractBatch(
-            entity_schema="../schema/gw2/v2/minis/mini.json",
+        return extract_batch.ExtractBatchTask(
             extract_datetime=self.extract_datetime,
-            id_schema="../schema/gw2/v2/minis/index.json",
+            json_schema_path="./schema/gw2/v2/minis/index.json",
+            json_patch_path="./patch/mini.json",
             output_dir=self.output_dir,
             url_params={"lang": self.lang_tag.value},
             url="https://api.guildwars2.com/v2/minis",
         )
 
-    def run(self):
-        with open("transformations_mini.json", "r") as ro_transform:
-            transform_json = json.load(fp=ro_transform)
-
-        transform_dict = {}
-        for mini_transform in transform_json:
-            mini_transform_id = mini_transform["id"]
-            transform_dict[mini_transform_id] = mini_transform
-
-        with (
-            self.input().open("r") as r_input_file,
-            self.output().open("w") as w_output_file,
-        ):
-            for mini_line in r_input_file:
-                mini = json.loads(mini_line)
-                mini_id = mini["id"]
-
-                transform = transform_dict.get(mini_id)
-                if transform != None:
-                    mini["item_id"] = transform["item_id"]
-                    mini["name"] = transform["name"]
-
-                w_output_file.write("".join([json.dumps(mini), "\n"]))
+    def get_rows(self, mini):
+        mini_id = mini["id"]
+        match self.table:
+            case MiniTable.Mini:
+                return [
+                    {
+                        "icon": mini["icon"],
+                        "mini_id": mini_id,
+                        "presentation_order": mini["order"],
+                    }
+                ]
+            case MiniTable.MiniName:
+                return [
+                    {
+                        "app_name": "gw2",
+                        "lang_tag": self.lang_tag.value,
+                        "mini_id": mini_id,
+                        "original": mini["name"],
+                    }
+                ]
+            case MiniTable.MiniUnlock:
+                mini_unlock = mini.get("unlock")
+                if mini_unlock == None:
+                    return []
+                return [
+                    {
+                        "app_name": "gw2",
+                        "lang_tag": self.lang_tag.value,
+                        "mini_id": mini_id,
+                        "original": mini["description"],
+                    }
+                ]
+            case _:
+                raise RuntimeError("Unexpected table name")

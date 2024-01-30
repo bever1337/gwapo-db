@@ -1,17 +1,17 @@
 import datetime
-import json
 import luigi
 from os import path
 
 import common
-import load_lang
+import load_csv
 import transform_color
 
 
-class LoadColor(luigi.Task):
+class LoadColorTask(load_csv.LoadCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
     output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
+    table = luigi.EnumParameter(enum=transform_color.ColorTable)
 
     def output(self):
         target_filename = "{timestamp:s}__lang_{lang_tag:s}.txt".format(
@@ -27,136 +27,74 @@ class LoadColor(luigi.Task):
 
     def requires(self):
         return transform_color.TransformColor(
-            extract_datetime=self.extract_datetime, lang_tag=self.lang_tag
+            extract_datetime=self.extract_datetime,
+            lang_tag=self.lang_tag,
+            output_dir=self.output_dir,
+            table=self.table,
         )
 
-    def run(self):
-        with (
-            self.input().open("r") as r_input_file,
-            common.get_conn() as connection,
-            connection.cursor() as cursor,
-        ):
-            cursor.execute(query="BEGIN")
-            try:
-                for color_line in r_input_file:
-                    color = json.loads(color_line)
-                    color_id: int = color["id"]
 
-                    color_categories = color["categories"]
-                    color_hue = (color_categories[0:1] or [None])[0]
-                    color_material = (color_categories[1:2] or [None])[0]
-                    color_rarity = (color_categories[2:3] or [None])[0]
-                    cursor.execute(
-                        **upsert_color(
-                            color_id=color_id,
-                            hue=color_hue,
-                            material=color_material,
-                            rarity=color_rarity,
-                        )
-                    )
+class LoadColor(LoadColorTask):
+    table = transform_color.ColorTable.Color
 
-                    cursor.execute(
-                        **load_lang.upsert_operating_copy(
-                            app_name="gw2",
-                            lang_tag=self.lang_tag.value,
-                            original=color["name"],
-                        )
-                    )
-                    cursor.execute(
-                        **upsert_color_name(
-                            app_name="gw2",
-                            color_id=color_id,
-                            lang_tag=self.lang_tag.value,
-                            original=color["name"],
-                        )
-                    )
+    precopy_sql = """
+CREATE TEMPORARY TABLE tempo_color (
+  LIKE gwapese.color
+) ON COMMIT DROP;
+ALTER TABLE tempo_color
+  DROP COLUMN sysrange_lower,
+  DROP COLUMN sysrange_upper;"""
 
-                    color_base: list[int] = color["base_rgb"]
-                    cursor.execute(
-                        **upsert_color_base(
-                            blue=color_base[2],
-                            color_id=color_id,
-                            green=color_base[1],
-                            red=color_base[0],
-                        )
-                    )
+    copy_sql = """
+COPY tempo_color FROM STDIN (FORMAT 'csv', HEADER);"""
 
-                    for material in ["cloth", "fur", "leather", "metal"]:
-                        sample = color[material]
-                        cursor.execute(
-                            **upsert_color_sample(color_id=color_id, material=material)
-                        )
-                        cursor.execute(
-                            **upsert_color_sample_adjustment(
-                                brightness=sample["brightness"],
-                                color_id=color_id,
-                                contrast=sample["contrast"],
-                                material=material,
-                            )
-                        )
-                        cursor.execute(
-                            **upsert_color_sample_shift(
-                                color_id=color_id,
-                                hue=sample["hue"],
-                                lightness=sample["lightness"],
-                                material=material,
-                                saturation=sample["saturation"],
-                            )
-                        )
-                        sample_rgb = sample["rgb"]
-                        cursor.execute(
-                            **upsert_color_sample_reference(
-                                blue=sample_rgb[2],
-                                color_id=color_id,
-                                green=sample_rgb[1],
-                                material=material,
-                                red=sample_rgb[0],
-                            )
-                        )
-
-                cursor.execute(query="COMMIT")
-                connection.commit()
-                with self.output().open("w") as w_output:
-                    w_output.write("ok")
-
-            except Exception as exception_instance:
-                cursor.execute(query="ROLLBACK")
-                raise exception_instance
-
-
-def upsert_color(color_id: int, hue: str, material: str, rarity: str):
-    return {
-        "query": """
+    postcopy_sql = """
 MERGE INTO gwapese.color AS target_color
-USING (
-  VALUES (%s::integer, %s::text, %s::text, %s::text)) AS
-    source_color (color_id, hue, material, rarity) ON
-    target_color.color_id = source_color.color_id
-  WHEN MATCHED AND target_color.hue != source_color.hue
+USING tempo_color AS source_color
+ON target_color.color_id = source_color.color_id
+WHEN MATCHED AND target_color.hue != source_color.hue
     OR target_color.material != source_color.material
     OR target_color.rarity != source_color.rarity THEN
     UPDATE SET
-      (hue, material, rarity) = (source_color.hue,
+    (hue, material, rarity) = (source_color.hue,
         source_color.material, source_color.rarity)
-  WHEN NOT MATCHED THEN
+WHEN NOT MATCHED THEN
     INSERT (color_id, hue, material, rarity)
-      VALUES (source_color.color_id,
+    VALUES (source_color.color_id,
         source_color.hue,
         source_color.material,
         source_color.rarity);
-""",
-        "params": (color_id, hue, material, rarity),
-    }
+    """
 
 
-def upsert_color_name(app_name: str, color_id: int, lang_tag: str, original: str):
-    return {
-        "query": """
+class LoadColorName(LoadColorTask):
+    table = transform_color.ColorTable.ColorName
+
+    precopy_sql = """
+CREATE TEMPORARY TABLE tempo_color_name (
+  LIKE gwapese.color_name
+) ON COMMIT DROP;
+ALTER TABLE tempo_color_name
+  DROP COLUMN sysrange_lower,
+  DROP COLUMN sysrange_upper;"""
+
+    copy_sql = """
+COPY tempo_color_name FROM STDIN (FORMAT 'csv', HEADER);"""
+
+    postcopy_sql = """
+MERGE INTO gwapese.operating_copy AS target_operating_copy
+USING tempo_color_name AS source_operating_copy
+ON target_operating_copy.app_name = source_operating_copy.app_name
+  AND target_operating_copy.lang_tag = source_operating_copy.lang_tag
+  AND target_operating_copy.original = source_operating_copy.original
+WHEN NOT MATCHED THEN
+    INSERT (app_name, lang_tag, original)
+      VALUES (source_operating_copy.app_name,
+        source_operating_copy.lang_tag,
+        source_operating_copy.original);
 MERGE INTO gwapese.color_name AS target_color_name
-USING (
-VALUES (%s::text, %s::integer, %s::text, %s::text)) AS
-  source_color_name (app_name, color_id, lang_tag, original)
-  ON target_color_name.app_name = source_color_name.app_name
+USING tempo_color_name AS source_color_name
+ON target_color_name.app_name = source_color_name.app_name
   AND target_color_name.lang_tag = source_color_name.lang_tag
   AND target_color_name.color_id = source_color_name.color_id
 WHEN MATCHED AND target_color_name.original !=
@@ -169,18 +107,26 @@ WHEN NOT MATCHED THEN
       source_color_name.color_id,
       source_color_name.lang_tag,
       source_color_name.original);
-""",
-        "params": (app_name, color_id, lang_tag, original),
-    }
+"""
 
 
-def upsert_color_base(blue: int, color_id: int, green: int, red: int) -> dict[str, str]:
-    return {
-        "query": """
+class LoadColorBase(LoadColorTask):
+    table = transform_color.ColorTable.ColorBase
+
+    precopy_sql = """
+CREATE TEMPORARY TABLE tempo_color_base (
+  LIKE gwapese.color_base
+) ON COMMIT DROP;
+ALTER TABLE tempo_color_base
+  DROP COLUMN sysrange_lower,
+  DROP COLUMN sysrange_upper;"""
+
+    copy_sql = """
+COPY tempo_color_base FROM STDIN (FORMAT 'csv', HEADER);"""
+
+    postcopy_sql = """
 MERGE INTO gwapese.color_base AS target_color_base
-USING (
-VALUES (%s::smallint, %s::integer, %s::smallint, %s::smallint)) AS
-  source_color_base (blue, color_id, green, red)
+USING tempo_color_base AS source_color_base
   ON target_color_base.color_id = source_color_base.color_id
 WHEN MATCHED AND target_color_base.blue != source_color_base.blue
   OR target_color_base.green != source_color_base.green
@@ -192,37 +138,51 @@ WHEN NOT MATCHED THEN
   INSERT (blue, color_id, green, red)
     VALUES (source_color_base.blue, source_color_base.color_id,
     source_color_base.green, source_color_base.red);
-""",
-        "params": (blue, color_id, green, red),
-    }
+"""
 
 
-def upsert_color_sample(color_id: int, material: str) -> dict[str, str]:
-    return {
-        "query": """
+class LoadColorSample(LoadColorTask):
+    table = transform_color.ColorTable.ColorSample
+
+    precopy_sql = """
+CREATE TEMPORARY TABLE tempo_color_sample (
+  LIKE gwapese.color_sample
+) ON COMMIT DROP;
+ALTER TABLE tempo_color_sample
+  DROP COLUMN sysrange_lower,
+  DROP COLUMN sysrange_upper;"""
+
+    copy_sql = """
+COPY tempo_color_sample FROM STDIN (FORMAT 'csv', HEADER);"""
+
+    postcopy_sql = """
 MERGE INTO gwapese.color_sample AS target_color_sample
-USING (
-VALUES (%s::integer, %s::text)) AS source_color_sample (color_id, material)
+USING tempo_color_sample AS source_color_sample
   ON target_color_sample.color_id = source_color_sample.color_id
   AND target_color_sample.material = source_color_sample.material
 WHEN NOT MATCHED THEN
   INSERT (color_id, material)
     VALUES (source_color_sample.color_id, source_color_sample.material);
-""",
-        "params": (color_id, material),
-    }
+"""
 
 
-def upsert_color_sample_adjustment(
-    brightness: int, color_id: int, contrast: float, material: str
-) -> dict[str, str]:
-    return {
-        "query": """
+class LoadColorSampleAdjustment(LoadColorTask):
+    table = transform_color.ColorTable.ColorSampleAdjustment
+
+    precopy_sql = """
+CREATE TEMPORARY TABLE tempo_color_sample_adjustment (
+  LIKE gwapese.color_sample_adjustment
+) ON COMMIT DROP;
+ALTER TABLE tempo_color_sample_adjustment
+  DROP COLUMN sysrange_lower,
+  DROP COLUMN sysrange_upper;"""
+
+    copy_sql = """
+COPY tempo_color_sample_adjustment FROM STDIN (FORMAT 'csv', HEADER);"""
+
+    postcopy_sql = """
 MERGE INTO gwapese.color_sample_adjustment AS target_adjustment
-USING (
-VALUES (%s::smallint, %s::integer, CAST(%s AS double precision),
-  %s::text)) AS source_adjustment (brightness, color_id,
-  contrast, material)
+USING tempo_color_sample_adjustment AS source_adjustment
   ON target_adjustment.color_id = source_adjustment.color_id
   AND target_adjustment.material = source_adjustment.material
 WHEN MATCHED AND target_adjustment.brightness != source_adjustment.brightness
@@ -234,20 +194,26 @@ WHEN NOT MATCHED THEN
   INSERT (brightness, color_id, contrast, material)
     VALUES (source_adjustment.brightness, source_adjustment.color_id,
     source_adjustment.contrast, source_adjustment.material);
-""",
-        "params": (brightness, color_id, contrast, material),
-    }
+"""
 
 
-def upsert_color_sample_shift(
-    color_id: int, hue: int, lightness: float, material: str, saturation: float
-) -> dict[str, str]:
-    return {
-        "query": """
+class LoadColorSampleShift(LoadColorTask):
+    table = transform_color.ColorTable.ColorSampleShift
+
+    precopy_sql = """
+CREATE TEMPORARY TABLE tempo_color_sample_shift (
+  LIKE gwapese.color_sample_shift
+) ON COMMIT DROP;
+ALTER TABLE tempo_color_sample_shift
+  DROP COLUMN sysrange_lower,
+  DROP COLUMN sysrange_upper;"""
+
+    copy_sql = """
+COPY tempo_color_sample_shift FROM STDIN (FORMAT 'csv', HEADER);"""
+
+    postcopy_sql = """
 MERGE INTO gwapese.color_sample_shift AS target_shift
-USING (
-VALUES (%s::integer, %s::smallint, CAST(%s AS double precision),
-  %s::text, CAST(%s AS double precision))) AS source_shift
+USING tempo_color_sample_shift AS source_shift
   (color_id, hue, lightness, material, saturation)
   ON target_shift.color_id = source_shift.color_id
   AND target_shift.material = source_shift.material
@@ -261,20 +227,26 @@ WHEN NOT MATCHED THEN
   INSERT (color_id, hue, lightness, material, saturation)
     VALUES (source_shift.color_id, source_shift.hue,
     source_shift.lightness, source_shift.material, source_shift.saturation);
-""",
-        "params": (color_id, hue, lightness, material, saturation),
-    }
+"""
 
 
-def upsert_color_sample_reference(
-    blue: int, color_id: int, green: int, material: str, red: int
-) -> dict[str, str]:
-    return {
-        "query": """
+class LoadColorSampleReference(LoadColorTask):
+    table = transform_color.ColorTable.ColorSampleReference
+
+    precopy_sql = """
+CREATE TEMPORARY TABLE tempo_color_sample_reference (
+  LIKE gwapese.color_sample_reference
+) ON COMMIT DROP;
+ALTER TABLE tempo_color_sample_reference
+  DROP COLUMN sysrange_lower,
+  DROP COLUMN sysrange_upper;"""
+
+    copy_sql = """
+COPY tempo_color_sample_reference FROM STDIN (FORMAT 'csv', HEADER);"""
+
+    postcopy_sql = """
 MERGE INTO gwapese.color_sample_reference AS target_reference
-USING (
-VALUES (%s::smallint, %s::integer, %s::smallint, %s, %s::smallint)
-) AS source_reference (blue, color_id, green, material, red)
+USING tempo_color_sample_reference AS source_reference
 ON target_reference.color_id = source_reference.color_id
   AND target_reference.material = source_reference.material
 WHEN MATCHED AND target_reference.blue != source_reference.blue
@@ -287,6 +259,4 @@ WHEN NOT MATCHED THEN
   INSERT (blue, color_id, green, material, red)
     VALUES (source_reference.blue, source_reference.color_id,
     source_reference.green, source_reference.material, source_reference.red);
-""",
-        "params": (blue, color_id, green, material, red),
-    }
+"""

@@ -1,74 +1,85 @@
 import datetime
-import jsonschema
-import json
+import enum
 import luigi
 from os import path
 
 import common
 import extract_batch
+import transform_csv
 
 
-class TransformGlider(luigi.Task):
+class GliderTable(enum.Enum):
+    Glider = "glider"
+    GliderDescription = "glider_description"
+    GliderDyeSlot = "glider_dye_slot"
+    GliderName = "glider_name"
+
+
+class TransformGlider(transform_csv.TransformCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
+    output_dir = luigi.PathParameter(absolute=True, exists=True)
+    table = luigi.EnumParameter(enum=GliderTable)
 
     def output(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.ndjson".format(
+        target_filename = "{timestamp:s}__lang_{lang_tag:s}.csv".format(
             timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
             lang_tag=self.lang_tag.value,
         )
+        target_dir = "_".join(["transform", self.table.value])
         target_path = path.join(
             self.output_dir,
-            "transform_glider",
+            target_dir,
             target_filename,
         )
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        return extract_batch.ExtractBatch(
-            entity_schema="../schema/gw2/v2/gliders/glider.json",
+        return extract_batch.ExtractBatchTask(
             extract_datetime=self.extract_datetime,
-            id_schema="../schema/gw2/v2/gliders/index.json",
+            json_schema_path="./schema/gw2/v2/gliders/index.json",
             output_dir=self.output_dir,
             url_params={"lang": self.lang_tag.value},
             url="https://api.guildwars2.com/v2/gliders",
         )
 
-    def run(self):
-        validator = jsonschema.Draft202012Validator(schema=stricter_glider_schema)
-
-        with (
-            self.input().open("r") as r_input_file,
-            self.output().open("w") as w_output_file,
-        ):
-            for glider_line in r_input_file:
-                glider = json.loads(glider_line)
-                glider["unlock_items"] = glider.get("unlock_items", [])
-                validator.validate(glider)
-                w_output_file.write("".join([json.dumps(glider), "\n"]))
-
-
-stricter_glider_schema = {
-    "$id": "schema/gw2/v2/gliders/glider.json",
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "properties": {
-        "default_dyes": {"items": {"type": "integer"}, "type": "array"},
-        "description": {"type": "string"},
-        "icon": {"format": "uri", "minLength": 1, "type": "string"},
-        "id": {"type": "integer"},
-        "order": {"type": "integer"},
-        "name": {"minLength": 1, "type": "string"},
-        "unlock_items": {"items": {"type": "integer"}, "type": "array"},
-    },
-    "required": [
-        "default_dyes",
-        "description",
-        "icon",
-        "id",
-        "order",
-        "name",
-        "unlock_items",
-    ],
-    "type": "object",
-}
+    def run(self, glider):
+        glider_id = glider["id"]
+        match self.table:
+            case GliderTable.Glider:
+                return [
+                    {
+                        "glider_id": glider_id,
+                        "icon": glider["icon"],
+                        "presentation_order": glider["order"],
+                    }
+                ]
+            case GliderTable.GliderDescription:
+                return [
+                    {
+                        "app_name": "gw2",
+                        "glider_id": glider_id,
+                        "lang_tag": self.lang_tag.value,
+                        "original": glider["description"],
+                    }
+                ]
+            case GliderTable.GliderDyeSlot:
+                return [
+                    {
+                        "color_id": color_id,
+                        "glider_id": glider_id,
+                        "slot_index": index,
+                    }
+                    for index, color_id in enumerate(glider["default_dyes"])
+                ]
+            case GliderTable.GliderName:
+                return [
+                    {
+                        "app_name": "gw2",
+                        "glider_id": glider_id,
+                        "lang_tag": self.lang_tag.value,
+                        "original": glider["name"],
+                    }
+                ]
+            case _:
+                raise RuntimeError("Unexpected table name")

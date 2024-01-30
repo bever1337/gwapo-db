@@ -26,10 +26,9 @@ class LoadProfession(luigi.Task):
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        return extract_batch.ExtractBatch(
-            entity_schema="../schema/gw2/v2/professions/profession.json",
+        return extract_batch.ExtractBatchTask(
             extract_datetime=self.extract_datetime,
-            id_schema="../schema/gw2/v2/professions/index.json",
+            json_schema_path="./schema/gw2/v2/professions/index.json",
             output_dir=self.output_dir,
             url_params={"lang": self.lang_tag.value, "v": "2019-12-19T00:00:00.000Z"},
             url="https://api.guildwars2.com/v2/professions",

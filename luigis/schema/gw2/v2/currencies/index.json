@@ -1,0 +1,21 @@
+{
+  "$id": "gw2/v2/currencies/index.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "items": { "type": "integer" },
+      "type": "array"
+    },
+    {
+      "properties": {
+        "description": { "type": "string" },
+        "icon": { "type": "string", "format": "uri" },
+        "id": { "type": "integer" },
+        "order": { "type": "integer" },
+        "name": { "type": "string" }
+      },
+      "required": ["description", "icon", "id", "order", "name"],
+      "type": "object"
+    }
+  ]
+}

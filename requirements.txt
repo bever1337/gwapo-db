@@ -6,6 +6,7 @@ docutils==0.20.1
 fqdn==1.5.1
 idna==3.6
 isoduration==20.11.0
+jsonpatch==1.33
 jsonpointer==2.4
 jsonschema==4.20.0
 jsonschema-specifications==2023.12.1

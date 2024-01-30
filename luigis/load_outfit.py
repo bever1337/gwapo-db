@@ -26,10 +26,9 @@ class LoadOutfit(luigi.Task):
         return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        return extract_batch.ExtractBatch(
-            entity_schema="../schema/gw2/v2/outfits/outfit.json",
+        return extract_batch.ExtractBatchTask(
             extract_datetime=self.extract_datetime,
-            id_schema="../schema/gw2/v2/outfits/index.json",
+            json_schema_path="./schema/gw2/v2/outfits/index.json",
             output_dir=self.output_dir,
             url_params={"lang": self.lang_tag.value},
             url="https://api.guildwars2.com/v2/outfits",
