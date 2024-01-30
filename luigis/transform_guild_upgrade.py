@@ -43,7 +43,7 @@ class TransformGuildUpgrade(transform_csv.TransformCsvTask):
             url="https://api.guildwars2.com/v2/guild/upgrades",
         )
 
-    def run(self, guild_upgrade):
+    def get_rows(self, guild_upgrade):
         guild_upgrade_id = guild_upgrade["id"]
         match self.table:
             case GuildUpgradeTable.GuildUpgrade:

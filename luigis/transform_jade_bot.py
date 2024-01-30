@@ -42,7 +42,7 @@ class TransformJadeBot(transform_csv.TransformCsvTask):
             url="https://api.guildwars2.com/v2/jadebots",
         )
 
-    def run(self, jade_bot):
+    def get_rows(self, jade_bot):
         jade_bot_id = jade_bot["id"]
         match self.table:
             case JadeBotTable.JadeBot:

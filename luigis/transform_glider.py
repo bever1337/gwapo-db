@@ -43,7 +43,7 @@ class TransformGlider(transform_csv.TransformCsvTask):
             url="https://api.guildwars2.com/v2/gliders",
         )
 
-    def run(self, glider):
+    def get_rows(self, glider):
         glider_id = glider["id"]
         match self.table:
             case GliderTable.Glider:
