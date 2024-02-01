@@ -1,124 +1,54 @@
 import datetime
-import json
 import luigi
 from os import path
+from psycopg import sql
 
 import common
+import load_csv
 import load_lang
 import transform_glider
 
 
-class LoadGlider(luigi.Task):
+class LoadGliderTask(load_csv.LoadCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
     output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
+    table = luigi.EnumParameter(enum=transform_glider.GliderTable)
 
     def output(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.txt".format(
-            timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
-            lang_tag=self.lang_tag.value,
+        output_folder_name = "_".join(["load", self.table.value])
+        return common.from_output_params(
+            output_dir=path.join(self.output_dir, output_folder_name),
+            extract_datetime=self.extract_datetime,
+            params={"lang": self.lang_tag.value},
+            ext="txt",
         )
-        target_path = path.join(
-            self.output_dir,
-            "load_glider",
-            target_filename,
-        )
-        return luigi.LocalTarget(path=target_path)
 
     def requires(self):
         return transform_glider.TransformGlider(
             extract_datetime=self.extract_datetime,
             lang_tag=self.lang_tag,
             output_dir=self.output_dir,
+            table=self.table,
         )
 
-    def run(self):
-        with (
-            self.input().open("r") as r_input_file,
-            common.get_conn() as connection,
-            connection.cursor() as cursor,
-        ):
-            cursor.execute(query="BEGIN")
-            try:
-                for glider_line in r_input_file:
-                    glider = json.loads(glider_line)
-                    glider_id = glider["id"]
-                    cursor.execute(
-                        **upsert_glider(
-                            glider_id=glider_id,
-                            icon=glider["icon"],
-                            presentation_order=glider["order"],
-                        )
-                    )
 
-                    glider_description = glider["description"]
-                    if glider_description != "":
-                        cursor.execute(
-                            **load_lang.upsert_operating_copy(
-                                app_name="gw2",
-                                lang_tag=self.lang_tag.value,
-                                original=glider_description,
-                            )
-                        )
-                        cursor.execute(
-                            **upsert_glider_description(
-                                app_name="gw2",
-                                glider_id=glider_id,
-                                lang_tag=self.lang_tag.value,
-                                original=glider_description,
-                            )
-                        )
+class LoadGlider(LoadGliderTask):
+    table = transform_glider.GliderTable.Glider
 
-                    glider_dye_slots: list[int] = glider["default_dyes"]
-                    slot_indices = [index for index in range(len(glider_dye_slots))]
-                    cursor.execute(
-                        **prune_glider_dye_slots(
-                            glider_id=glider_id, slot_indices=slot_indices
-                        )
-                    )
-                    for slot_index, color_id in enumerate(glider_dye_slots):
-                        cursor.execute(
-                            **upsert_glider_dye_slot(
-                                color_id=color_id,
-                                glider_id=glider_id,
-                                slot_index=slot_index,
-                            )
-                        )
+    precopy_sql = load_csv.create_temporary_table.format(
+        temp_table_name=sql.Identifier("tempo_glider"),
+        table_name=sql.Identifier("glider"),
+    )
 
-                    glider_name = glider["name"]
-                    cursor.execute(
-                        **load_lang.upsert_operating_copy(
-                            app_name="gw2",
-                            lang_tag=self.lang_tag.value,
-                            original=glider_name,
-                        )
-                    )
-                    cursor.execute(
-                        **upsert_glider_name(
-                            app_name="gw2",
-                            glider_id=glider_id,
-                            lang_tag=self.lang_tag.value,
-                            original=glider_name,
-                        )
-                    )
+    copy_sql = load_csv.copy_from_stdin.format(
+        temp_table_name=sql.Identifier("tempo_glider")
+    )
 
-                cursor.execute(query="COMMIT")
-                connection.commit()
-                with self.output().open("w") as w_output:
-                    w_output.write("ok")
-
-            except Exception as exception_instance:
-                cursor.execute(query="ROLLBACK")
-                raise exception_instance
-
-
-def upsert_glider(glider_id: int, icon: str, presentation_order: str) -> dict[str]:
-    return {
-        "query": """
+    postcopy_sql = sql.SQL(
+        """
 MERGE INTO gwapese.glider AS target_glider
-USING (
-  VALUES (%(glider_id)s::integer, %(icon)s::text, %(presentation_order)s::integer)
-) AS source_glider (glider_id, icon, presentation_order)
+USING tempo_glider AS source_glider
 ON
   target_glider.glider_id = source_glider.glider_id
 WHEN MATCHED
@@ -132,106 +62,97 @@ WHEN NOT MATCHED THEN
     VALUES (source_glider.glider_id,
       source_glider.icon,
       source_glider.presentation_order);
-""",
-        "params": {
-            "glider_id": glider_id,
-            "icon": icon,
-            "presentation_order": presentation_order,
-        },
-    }
+"""
+    )
 
 
-def upsert_glider_description(
-    app_name: str, glider_id: int, lang_tag: str, original: str
-):
-    return {
-        "query": """
-MERGE INTO gwapese.glider_description AS target_glider_description
-USING (
-VALUES (%(app_name)s::text, %(glider_id)s::integer,
-  %(lang_tag)s::text, %(original)s::text)
-) AS
-  source_glider_description (app_name, glider_id, lang_tag, original)
-  ON target_glider_description.app_name = source_glider_description.app_name
-  AND target_glider_description.lang_tag = source_glider_description.lang_tag
-  AND target_glider_description.glider_id = source_glider_description.glider_id
-WHEN MATCHED
-  AND target_glider_description.original != source_glider_description.original THEN
-  UPDATE SET
-    original = source_glider_description.original
-WHEN NOT MATCHED THEN
-  INSERT (app_name, glider_id, lang_tag, original)
-    VALUES (source_glider_description.app_name,
-      source_glider_description.glider_id,
-      source_glider_description.lang_tag,
-      source_glider_description.original);""",
-        "params": {
-            "app_name": app_name,
-            "glider_id": glider_id,
-            "lang_tag": lang_tag,
-            "original": original,
-        },
-    }
+class LoadGliderDescription(LoadGliderTask):
+    table = transform_glider.GliderTable.GliderDescription
+
+    precopy_sql = load_csv.create_temporary_table.format(
+        temp_table_name=sql.Identifier("tempo_glider_description"),
+        table_name=sql.Identifier("glider_description"),
+    )
+
+    copy_sql = load_csv.copy_from_stdin.format(
+        temp_table_name=sql.Identifier("tempo_glider_description")
+    )
+
+    postcopy_sql = sql.Composed(
+        [
+            load_lang.merge_into_operating_copy.format(
+                table_name=sql.Identifier("tempo_glider_description")
+            ),
+            load_lang.merge_into_placed_copy.format(
+                table_name=sql.Identifier("glider_description"),
+                temp_table_name=sql.Identifier("tempo_glider_description"),
+                pk_name=sql.Identifier("glider_id"),
+            ),
+        ]
+    )
 
 
-def prune_glider_dye_slots(glider_id: int, slot_indices: list[int]) -> dict:
-    return {
-        "query": """
+class LoadGliderDyeSlot(LoadGliderTask):
+    table = transform_glider.GliderTable.GliderDyeSlot
+
+    precopy_sql = load_csv.create_temporary_table.format(
+        temp_table_name=sql.Identifier("tempo_glider_dye_slot"),
+        table_name=sql.Identifier("glider_dye_slot"),
+    )
+
+    copy_sql = load_csv.copy_from_stdin.format(
+        temp_table_name=sql.Identifier("tempo_glider_dye_slot")
+    )
+
+    postcopy_sql = sql.Composed(
+        [
+            sql.SQL(
+                """
 DELETE FROM gwapese.glider_dye_slot
-WHERE glider_id = %(glider_id)s::integer
-  AND NOT slot_index = ANY (%(slot_indices)s::integer[]);
-""",
-        "params": {"glider_id": glider_id, "slot_indices": slot_indices},
-    }
-
-
-def upsert_glider_dye_slot(color_id: int, glider_id: int, slot_index: int) -> dict:
-    return {
-        "query": """
+WHERE NOT EXISTS (
+  SELECT FROM tempo_glider_dye_slot
+  WHERE gwapese.glider_dye_slot.glider_id = tempo_glider_dye_slot.glider_id
+    AND gwapese.glider_dye_slot.slot_index = tempo_glider_dye_slot.slot_index
+);
+"""
+            ),
+            sql.SQL(
+                """
 MERGE INTO gwapese.glider_dye_slot AS target_glider_dye_slot
-USING (
-  VALUES (%(color_id)s::integer, %(glider_id)s::integer, %(slot_index)s::integer)
-) AS
-  source_glider_dye_slot (color_id, glider_id, slot_index)
+USING tempo_glider_dye_slot AS source_glider_dye_slot
   ON target_glider_dye_slot.glider_id = source_glider_dye_slot.glider_id
   AND target_glider_dye_slot.slot_index = source_glider_dye_slot.slot_index
 WHEN NOT MATCHED THEN
   INSERT (color_id, glider_id, slot_index)
     VALUES (source_glider_dye_slot.color_id, source_glider_dye_slot.glider_id,
       source_glider_dye_slot.slot_index);
-""",
-        "params": {
-            "color_id": color_id,
-            "glider_id": glider_id,
-            "slot_index": slot_index,
-        },
-    }
+"""
+            ),
+        ]
+    )
 
 
-def upsert_glider_name(app_name: str, glider_id: int, lang_tag: str, original: str):
-    return {
-        "query": """
-MERGE INTO gwapese.glider_name AS target_glider_name
-USING (
-VALUES (%(app_name)s::text, %(glider_id)s::integer, %(lang_tag)s::text, %(original)s::text)) AS
-  source_glider_name (app_name, glider_id, lang_tag, original)
-  ON target_glider_name.app_name = source_glider_name.app_name
-  AND target_glider_name.lang_tag = source_glider_name.lang_tag
-  AND target_glider_name.glider_id = source_glider_name.glider_id
-WHEN MATCHED
-  AND target_glider_name.original != source_glider_name.original THEN
-  UPDATE SET
-    original = source_glider_name.original
-WHEN NOT MATCHED THEN
-  INSERT (app_name, glider_id, lang_tag, original)
-    VALUES (source_glider_name.app_name,
-      source_glider_name.glider_id,
-      source_glider_name.lang_tag,
-      source_glider_name.original);""",
-        "params": {
-            "app_name": app_name,
-            "glider_id": glider_id,
-            "lang_tag": lang_tag,
-            "original": original,
-        },
-    }
+class LoadGliderName(LoadGliderTask):
+    table = transform_glider.GliderTable.GliderName
+
+    precopy_sql = load_csv.create_temporary_table.format(
+        temp_table_name=sql.Identifier("tempo_glider_name"),
+        table_name=sql.Identifier("glider_name"),
+    )
+
+    copy_sql = load_csv.copy_from_stdin.format(
+        temp_table_name=sql.Identifier("tempo_glider_name")
+    )
+
+    postcopy_sql = sql.Composed(
+        [
+            load_lang.merge_into_operating_copy.format(
+                table_name=sql.Identifier("tempo_glider_name")
+            ),
+            load_lang.merge_into_placed_copy.format(
+                table_name=sql.Identifier("glider_name"),
+                temp_table_name=sql.Identifier("tempo_glider_name"),
+                pk_name=sql.Identifier("glider_id"),
+            ),
+        ]
+    )

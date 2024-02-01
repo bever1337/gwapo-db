@@ -139,7 +139,7 @@ WHERE
 
 SELECT
   item_id,
-  race_name,
+  race_id,
   sysrange_lower,
   sysrange_upper
 FROM
@@ -149,7 +149,7 @@ WHERE
 
 SELECT
   item_id,
-  race_name,
+  race_id,
   sysrange_lower,
   sysrange_upper
 FROM

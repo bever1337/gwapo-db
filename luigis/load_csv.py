@@ -1,18 +1,37 @@
 import luigi
+from psycopg import sql
 
 import common
 
 
+create_temporary_table = sql.SQL(
+    """
+CREATE TEMPORARY TABLE {temp_table_name} (
+    LIKE gwapese.{table_name}
+) ON COMMIT DROP;
+ALTER TABLE {temp_table_name}
+    DROP COLUMN IF EXISTS sysrange_lower,
+    DROP COLUMN IF EXISTS sysrange_upper;
+"""
+)
+
+copy_from_stdin = sql.SQL(
+    """
+COPY {temp_table_name} FROM STDIN (FORMAT 'csv', HEADER);
+"""
+)
+
+
 class LoadCsvTask(luigi.Task):
-    precopy_sql = luigi.Parameter()
-    copy_sql = luigi.Parameter()
-    postcopy_sql = luigi.Parameter()
+    precopy_sql: None | sql.SQL = None
+    copy_sql: None | sql.SQL = None
+    postcopy_sql: None | sql.SQL = None
 
     def output(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def requires(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def run(self):
         with (

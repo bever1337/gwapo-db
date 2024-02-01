@@ -5,6 +5,8 @@ import luigi
 import os
 import requests
 
+import common
+
 
 class ExtractIdTask(luigi.Task):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
@@ -20,10 +22,12 @@ class ExtractIdTask(luigi.Task):
         schema_id_as_filename = schema_id_no_ext.replace(os.path.sep, "_")
         output_folder = "_".join(["extract", "id", schema_id_as_filename])
 
-        formatted_datetime = self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z")
-        output_filename = os.path.extsep.join([formatted_datetime, "ndjson"])
-        output_path = os.path.join(self.output_dir, output_folder, output_filename)
-        return luigi.LocalTarget(path=output_path)
+        return common.from_output_params(
+            output_dir=os.path.join(self.output_dir, output_folder),
+            extract_datetime=self.extract_datetime,
+            params={},
+            ext="ndjson",
+        )
 
     def run(self):
         response = requests.get(url=self.url)

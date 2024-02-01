@@ -131,4 +131,118 @@ FROM
 WHERE
   FALSE;
 
+SELECT
+  skin_id,
+  skin_type,
+  slot,
+  sysrange_lower,
+  sysrange_upper,
+  weight_class
+FROM
+  gwapese.skin_armor
+WHERE
+  FALSE;
+
+SELECT
+  skin_id,
+  skin_type,
+  slot,
+  sysrange_lower,
+  sysrange_upper,
+  weight_class
+FROM
+  gwapese.skin_armor_history
+WHERE
+  FALSE;
+
+SELECT
+  color_id,
+  material,
+  skin_id,
+  slot_index,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.skin_armor_dye_slot
+WHERE
+  FALSE;
+
+SELECT
+  color_id,
+  material,
+  skin_id,
+  slot_index,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.skin_armor_dye_slot_history
+WHERE
+  FALSE;
+
+SELECT
+  skin_id,
+  skin_type,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.skin_back
+WHERE
+  FALSE;
+
+SELECT
+  skin_id,
+  skin_type,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.skin_back_history
+WHERE
+  FALSE;
+
+SELECT
+  skin_id,
+  skin_type,
+  sysrange_lower,
+  sysrange_upper,
+  tool
+FROM
+  gwapese.skin_gathering
+WHERE
+  FALSE;
+
+SELECT
+  skin_id,
+  skin_type,
+  sysrange_lower,
+  sysrange_upper,
+  tool
+FROM
+  gwapese.skin_gathering_history
+WHERE
+  FALSE;
+
+SELECT
+  damage_type,
+  skin_id,
+  skin_type,
+  sysrange_lower,
+  sysrange_upper,
+  weapon_type
+FROM
+  gwapese.skin_weapon
+WHERE
+  FALSE;
+
+SELECT
+  damage_type,
+  skin_id,
+  skin_type,
+  sysrange_lower,
+  sysrange_upper,
+  weapon_type
+FROM
+  gwapese.skin_weapon_history
+WHERE
+  FALSE;
+
 ROLLBACK;

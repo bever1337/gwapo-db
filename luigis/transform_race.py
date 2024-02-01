@@ -8,17 +8,16 @@ import extract_batch
 import transform_csv
 
 
-class JadeBotTable(enum.Enum):
-    JadeBot = "jade_bot"
-    JadeBotDescription = "jade_bot_description"
-    JadeBotName = "jade_bot_name"
+class RaceTable(enum.Enum):
+    Race = "race"
+    RaceName = "race_name"
 
 
-class TransformJadeBot(transform_csv.TransformCsvTask):
+class TransformRace(transform_csv.TransformCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
     output_dir = luigi.PathParameter(absolute=True, exists=True)
-    table = luigi.EnumParameter(enum=JadeBotTable)
+    table = luigi.EnumParameter(enum=RaceTable)
 
     def output(self):
         output_folder_name = "_".join(["transform", self.table.value])
@@ -32,33 +31,24 @@ class TransformJadeBot(transform_csv.TransformCsvTask):
     def requires(self):
         return extract_batch.ExtractBatchTask(
             extract_datetime=self.extract_datetime,
-            json_schema_path="./schema/gw2/v2/jadebots/index.json",
+            json_schema_path="./schema/gw2/v2/races/index.json",
             output_dir=self.output_dir,
             url_params={"lang": self.lang_tag.value},
-            url="https://api.guildwars2.com/v2/jadebots",
+            url="https://api.guildwars2.com/v2/races",
         )
 
-    def get_rows(self, jade_bot):
-        jade_bot_id = jade_bot["id"]
+    def get_rows(self, race):
+        race_id = race["id"]
         match self.table:
-            case JadeBotTable.JadeBot:
-                return [{"jade_bot_id": jade_bot_id}]
-            case JadeBotTable.JadeBotDescription:
+            case RaceTable.Race:
+                return [{"race_id": race_id}]
+            case RaceTable.RaceName:
                 return [
                     {
                         "app_name": "gw2",
-                        "jade_bot_id": jade_bot_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": jade_bot["description"],
-                    }
-                ]
-            case JadeBotTable.JadeBotName:
-                return [
-                    {
-                        "app_name": "gw2",
-                        "jade_bot_id": jade_bot_id,
-                        "lang_tag": self.lang_tag.value,
-                        "original": jade_bot["name"],
+                        "original": race["name"],
+                        "race_id": race_id,
                     }
                 ]
             case _:

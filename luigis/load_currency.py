@@ -1,9 +1,11 @@
 import datetime
 import luigi
 from os import path
+from psycopg import sql
 
 import common
 import load_csv
+import load_lang
 import transform_currency
 
 
@@ -14,17 +16,13 @@ class LoadCurrencyTask(load_csv.LoadCsvTask):
     table = luigi.EnumParameter(enum=transform_currency.CurrencyTable)
 
     def output(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.txt".format(
-            timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
-            lang_tag=self.lang_tag.value,
+        output_folder_name = "_".join(["load", self.table.value])
+        return common.from_output_params(
+            output_dir=path.join(self.output_dir, output_folder_name),
+            extract_datetime=self.extract_datetime,
+            params={"lang": self.lang_tag.value},
+            ext="txt",
         )
-        target_dir = "_".join(["load", self.table.value])
-        target_path = path.join(
-            self.output_dir,
-            target_dir,
-            target_filename,
-        )
-        return luigi.LocalTarget(path=target_path)
 
     def requires(self):
         return transform_currency.TransformCurrency(
@@ -35,21 +33,20 @@ class LoadCurrencyTask(load_csv.LoadCsvTask):
         )
 
 
-class LoadCurrencyTable(LoadCurrencyTask):
+class LoadCurrency(LoadCurrencyTask):
     table = transform_currency.CurrencyTable.Currency
 
-    precopy_sql = """
-CREATE TEMPORARY TABLE tempo_currency (
-  LIKE gwapese.currency
-) ON COMMIT DROP;
-ALTER TABLE tempo_currency
-  DROP COLUMN sysrange_lower,
-  DROP COLUMN sysrange_upper;"""
+    precopy_sql = load_csv.create_temporary_table.format(
+        temp_table_name=sql.Identifier("tempo_currency"),
+        table_name=sql.Identifier("currency"),
+    )
 
-    copy_sql = """
-COPY tempo_currency FROM STDIN (FORMAT 'csv', HEADER);"""
+    copy_sql = load_csv.copy_from_stdin.format(
+        temp_table_name=sql.Identifier("tempo_currency")
+    )
 
-    postcopy_sql = """
+    postcopy_sql = sql.SQL(
+        """
 MERGE INTO gwapese.currency AS target_currency
 USING tempo_currency AS source_currency
 ON
@@ -70,30 +67,37 @@ WHEN NOT MATCHED THEN
     VALUES (source_currency.currency_id,
       source_currency.deprecated,
       source_currency.icon,
-      source_currency.presentation_order);"""
+      source_currency.presentation_order);
+"""
+    )
 
 
-class LoadCurrencyCategoryTable(LoadCurrencyTask):
+class LoadCurrencyCategory(LoadCurrencyTask):
     table = transform_currency.CurrencyTable.CurrencyCategory
 
-    precopy_sql = """
-CREATE TEMPORARY TABLE tempo_currency_category (
-  LIKE gwapese.currency_category
-) ON COMMIT DROP;
-ALTER TABLE tempo_currency_category
-  DROP COLUMN sysrange_lower,
-  DROP COLUMN sysrange_upper;"""
+    precopy_sql = load_csv.create_temporary_table.format(
+        temp_table_name=sql.Identifier("tempo_currency_category"),
+        table_name=sql.Identifier("currency_category"),
+    )
 
-    copy_sql = """
-COPY tempo_currency_category FROM STDIN (FORMAT 'csv', HEADER);"""
+    copy_sql = load_csv.copy_from_stdin.format(
+        temp_table_name=sql.Identifier("tempo_currency_category")
+    )
 
-    postcopy_sql = """
+    postcopy_sql = sql.Composed(
+        [
+            sql.SQL(
+                """
 DELETE FROM gwapese.currency_category
 WHERE NOT EXISTS (
   SELECT FROM tempo_currency_category
   WHERE gwapese.currency_category.category = tempo_currency_category.category
     AND gwapese.currency_category.currency_id = tempo_currency_category.currency_id
 );
+"""
+            ),
+            sql.SQL(
+                """
 MERGE INTO gwapese.currency_category
 USING tempo_currency_category
 ON gwapese.currency_category.category = tempo_currency_category.category
@@ -101,88 +105,60 @@ ON gwapese.currency_category.category = tempo_currency_category.category
 WHEN NOT MATCHED THEN
   INSERT (category, currency_id)
     VALUES (tempo_currency_category.category,
-      tempo_currency_category.currency_id);"""
+      tempo_currency_category.currency_id);
+"""
+            ),
+        ]
+    )
 
 
-class LoadCurrencyDescriptionTable(LoadCurrencyTask):
+class LoadCurrencyDescription(LoadCurrencyTask):
     table = transform_currency.CurrencyTable.CurrencyDescription
 
-    precopy_sql = """
-CREATE TEMPORARY TABLE tempo_currency_description (
-  LIKE gwapese.currency_description
-) ON COMMIT DROP;
-ALTER TABLE tempo_currency_description
-  DROP COLUMN sysrange_lower,
-  DROP COLUMN sysrange_upper;"""
+    precopy_sql = load_csv.create_temporary_table.format(
+        temp_table_name=sql.Identifier("tempo_currency_description"),
+        table_name=sql.Identifier("currency_description"),
+    )
 
-    copy_sql = """
-COPY tempo_currency_description FROM STDIN (FORMAT 'csv', HEADER);"""
+    copy_sql = load_csv.copy_from_stdin.format(
+        temp_table_name=sql.Identifier("tempo_currency_description")
+    )
 
-    postcopy_sql = """
-MERGE INTO gwapese.operating_copy AS target_operating_copy
-USING tempo_currency_description AS source_operating_copy
-ON target_operating_copy.app_name = source_operating_copy.app_name
-  AND target_operating_copy.lang_tag = source_operating_copy.lang_tag
-  AND target_operating_copy.original = source_operating_copy.original
-WHEN NOT MATCHED THEN
-    INSERT (app_name, lang_tag, original)
-      VALUES (source_operating_copy.app_name,
-        source_operating_copy.lang_tag,
-        source_operating_copy.original);
-MERGE INTO gwapese.currency_description AS target_currency_description
-USING tempo_currency_description AS source_currency_description
-ON target_currency_description.app_name = source_currency_description.app_name
-  AND target_currency_description.lang_tag = source_currency_description.lang_tag
-  AND target_currency_description.currency_id = source_currency_description.currency_id
-WHEN MATCHED
-  AND target_currency_description.original != source_currency_description.original THEN
-  UPDATE SET
-    original = source_currency_description.original
-WHEN NOT MATCHED THEN
-  INSERT (app_name, currency_id, lang_tag, original)
-    VALUES (source_currency_description.app_name,
-      source_currency_description.currency_id,
-      source_currency_description.lang_tag,
-      source_currency_description.original);"""
+    postcopy_sql = sql.Composed(
+        [
+            load_lang.merge_into_operating_copy.format(
+                table_name=sql.Identifier("tempo_currency_description")
+            ),
+            load_lang.merge_into_placed_copy.format(
+                table_name=sql.Identifier("currency_description"),
+                temp_table_name=sql.Identifier("tempo_currency_description"),
+                pk_name=sql.Identifier("currency_id"),
+            ),
+        ]
+    )
 
 
-class LoadCurrencyNameTable(LoadCurrencyTask):
+class LoadCurrencyName(LoadCurrencyTask):
     table = transform_currency.CurrencyTable.CurrencyName
 
-    precopy_sql = """
-CREATE TEMPORARY TABLE tempo_currency_name (
-  LIKE gwapese.currency_name
-) ON COMMIT DROP;
-ALTER TABLE tempo_currency_name
-  DROP COLUMN sysrange_lower,
-  DROP COLUMN sysrange_upper;"""
+    precopy_sql = load_csv.create_temporary_table.format(
+        temp_table_name=sql.Identifier("tempo_currency_name"),
+        table_name=sql.Identifier("currency_name"),
+    )
 
-    copy_sql = """
-COPY tempo_currency_name FROM STDIN (FORMAT 'csv', HEADER);"""
+    copy_sql = load_csv.copy_from_stdin.format(
+        temp_table_name=sql.Identifier("tempo_currency_name")
+    )
 
-    postcopy_sql = """
-MERGE INTO gwapese.operating_copy AS target_operating_copy
-USING tempo_currency_name AS source_operating_copy
-ON target_operating_copy.app_name = source_operating_copy.app_name
-  AND target_operating_copy.lang_tag = source_operating_copy.lang_tag
-  AND target_operating_copy.original = source_operating_copy.original
-WHEN NOT MATCHED THEN
-    INSERT (app_name, lang_tag, original)
-      VALUES (source_operating_copy.app_name,
-        source_operating_copy.lang_tag,
-        source_operating_copy.original);
-MERGE INTO gwapese.currency_name AS target_currency_name
-USING tempo_currency_name AS source_currency_name
-ON target_currency_name.app_name = source_currency_name.app_name
-  AND target_currency_name.lang_tag = source_currency_name.lang_tag
-  AND target_currency_name.currency_id = source_currency_name.currency_id
-WHEN MATCHED
-  AND target_currency_name.original != source_currency_name.original THEN
-  UPDATE SET
-    original = source_currency_name.original
-WHEN NOT MATCHED THEN
-  INSERT (app_name, currency_id, lang_tag, original)
-    VALUES (source_currency_name.app_name,
-      source_currency_name.currency_id,
-      source_currency_name.lang_tag,
-      source_currency_name.original);"""
+    postcopy_sql = sql.Composed(
+        [
+            load_lang.merge_into_operating_copy.format(
+                table_name=sql.Identifier("tempo_currency_name")
+            ),
+            load_lang.merge_into_placed_copy.format(
+                table_name=sql.Identifier("currency_name"),
+                temp_table_name=sql.Identifier("tempo_currency_name"),
+                pk_name=sql.Identifier("currency_id"),
+            ),
+        ]
+    )

@@ -8,17 +8,17 @@ import extract_batch
 import transform_csv
 
 
-class MountSkinTable(enum.Enum):
-    MountSkin = "mount_skin"
-    MountSkinDyeSlot = "mount_skin_dye_slot"
-    MountSkinName = "mount_skin_name"
+class SkiffTable(enum.Enum):
+    Skiff = "skiff"
+    SkiffDyeSlot = "skiff_dye_slot"
+    SkiffName = "skiff_name"
 
 
-class TransformMountSkin(transform_csv.TransformCsvTask):
+class TransformSkiff(transform_csv.TransformCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
     output_dir = luigi.PathParameter(absolute=True, exists=True)
-    table = luigi.EnumParameter(enum=MountSkinTable)
+    table = luigi.EnumParameter(enum=SkiffTable)
 
     def output(self):
         output_folder_name = "_".join(["transform", self.table.value])
@@ -32,41 +32,35 @@ class TransformMountSkin(transform_csv.TransformCsvTask):
     def requires(self):
         return extract_batch.ExtractBatchTask(
             extract_datetime=self.extract_datetime,
-            json_schema_path="./schema/gw2/v2/mounts/skins/index.json",
+            json_schema_path="./schema/gw2/v2/skiffs/index.json",
             output_dir=self.output_dir,
             url_params={"lang": self.lang_tag.value},
-            url="https://api.guildwars2.com/v2/mounts/skins",
+            url="https://api.guildwars2.com/v2/skiffs",
         )
 
-    def get_rows(self, mount_skin):
-        mount_skin_id = mount_skin["id"]
+    def get_rows(self, skiff):
+        skiff_id = skiff["id"]
 
         match self.table:
-            case MountSkinTable.MountSkin:
-                return [
-                    {
-                        "icon": mount_skin["icon"],
-                        "mount_id": mount_skin["mount"],
-                        "mount_skin_id": mount_skin_id,
-                    }
-                ]
-            case MountSkinTable.MountSkinDyeSlot:
+            case SkiffTable.Skiff:
+                return [{"icon": skiff["icon"], "skiff_id": skiff_id}]
+            case SkiffTable.SkiffDyeSlot:
                 return [
                     {
                         "color_id": dye_slot["color_id"],
                         "material": dye_slot["material"],
-                        "mount_skin_id": mount_skin_id,
+                        "skiff_id": skiff_id,
                         "slot_index": slot_index,
                     }
-                    for slot_index, dye_slot in enumerate(mount_skin["dye_slots"])
+                    for slot_index, dye_slot in enumerate(skiff["dye_slots"])
                 ]
-            case MountSkinTable.MountSkinName:
+            case SkiffTable.SkiffName:
                 return [
                     {
                         "app_name": "gw2",
-                        "mount_skin_id": mount_skin_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": mount_skin["name"],
+                        "original": skiff["name"],
+                        "skiff_id": skiff_id,
                     }
                 ]
             case _:

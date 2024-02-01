@@ -123,12 +123,12 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.item_race_restriction (
   item_id integer NOT NULL,
-  race_name text NOT NULL,
-  CONSTRAINT item_race_restriction_pk PRIMARY KEY (item_id, race_name),
+  race_id text NOT NULL,
+  CONSTRAINT item_race_restriction_pk PRIMARY KEY (item_id, race_id),
   CONSTRAINT item_identifies_item_race_restriction_fk FOREIGN KEY (item_id)
     REFERENCES gwapese.item (item_id) ON DELETE CASCADE,
-  CONSTRAINT race_enumerates_item_race_restriction_fk FOREIGN KEY (race_name)
-    REFERENCES gwapese.race (race_name) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT race_enumerates_item_race_restriction_fk FOREIGN KEY (race_id)
+    REFERENCES gwapese.race (race_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'item_race_restriction');

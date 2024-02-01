@@ -8,11 +8,7 @@ lang [schema history] 2023-12-08T05:50:13Z gwapobot <gwapobot@example.com> # Add
 currency [schema history lang] 2023-12-08T04:29:19Z gwapobot <gwapobot@example.com> # Add currency schema
 race [schema history] 2023-12-09T20:19:23Z gwapobot <gwapobot@example.com> # Add races
 color [schema history lang] 2023-12-10T18:35:11Z gwapobot <gwapobot@example.com> # Add color
-skin [schema history lang race] 2023-12-09T20:09:21Z gwapobot <gwapobot@example.com> # Add skin
-skin_armor [schema history lang race color skin] 2024-01-04T04:00:55Z bever1337 <gwapobot@example.com> # Adds armor skins
-skin_back [schema history lang race skin] 2024-01-04T04:01:49Z bever1337 <gwapobot@example.com> # Adds back skins
-skin_gathering [schema history lang race skin] 2024-01-04T04:01:33Z bever1337 <gwapobot@example.com> # Adds gathering skins
-skin_weapon [schema history lang race skin] 2024-01-04T04:01:15Z bever1337 <gwapobot@example.com> # Adds weapon skins
+skin [schema history lang race color] 2023-12-09T20:09:21Z gwapobot <gwapobot@example.com> # Add skin
 mini [schema history lang] 2024-01-20T05:25:08Z bever1337 <gwapobot@example.com> # Adds minis
 novelty [schema history lang] 2024-01-20T05:41:00Z bever1337 <gwapobot@example.com> # Adds novelties
 glider [schema history lang] 2024-01-20T05:47:48Z bever1337 <gwapobot@example.com> # Adds gliders

@@ -1,88 +1,54 @@
 import datetime
-import json
 import luigi
 from os import path
+from psycopg import sql
 
 import common
-import extract_batch
+import load_csv
 import load_lang
+import transform_outfit
 
 
-class LoadOutfit(luigi.Task):
+class LoadOutfitTask(load_csv.LoadCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
     output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
+    table = luigi.EnumParameter(enum=transform_outfit.OutfitTable)
 
     def output(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.txt".format(
-            timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
-            lang_tag=self.lang_tag.value,
+        output_folder_name = "_".join(["load", self.table.value])
+        return common.from_output_params(
+            output_dir=path.join(self.output_dir, output_folder_name),
+            extract_datetime=self.extract_datetime,
+            params={"lang": self.lang_tag.value},
+            ext="txt",
         )
-        target_path = path.join(
-            self.output_dir,
-            "load_outfit",
-            target_filename,
-        )
-        return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        return extract_batch.ExtractBatchTask(
+        return transform_outfit.TransformOutfit(
             extract_datetime=self.extract_datetime,
-            json_schema_path="./schema/gw2/v2/outfits/index.json",
+            lang_tag=self.lang_tag,
             output_dir=self.output_dir,
-            url_params={"lang": self.lang_tag.value},
-            url="https://api.guildwars2.com/v2/outfits",
+            table=self.table,
         )
 
-    def run(self):
-        with (
-            self.input().open("r") as ro_input_file,
-            common.get_conn() as connection,
-            connection.cursor() as cursor,
-        ):
-            cursor.execute(query="BEGIN")
-            try:
-                for outfit_line in ro_input_file:
-                    outfit = json.loads(outfit_line)
-                    outfit_id = outfit["id"]
-                    cursor.execute(
-                        **upsert_outfit(icon=outfit["icon"], outfit_id=outfit_id)
-                    )
 
-                    outfit_name = outfit["name"]
-                    cursor.execute(
-                        **load_lang.upsert_operating_copy(
-                            app_name="gw2",
-                            lang_tag=self.lang_tag.value,
-                            original=outfit_name,
-                        )
-                    )
-                    cursor.execute(
-                        **upsert_outfit_name(
-                            app_name="gw2",
-                            outfit_id=outfit_id,
-                            lang_tag=self.lang_tag.value,
-                            original=outfit_name,
-                        )
-                    )
+class LoadOutfit(LoadOutfitTask):
+    table = transform_outfit.OutfitTable.Outfit
 
-                cursor.execute(query="COMMIT")
-                connection.commit()
-                with self.output().open("w") as w_output:
-                    w_output.write("ok")
+    precopy_sql = load_csv.create_temporary_table.format(
+        temp_table_name=sql.Identifier("tempo_outfit"),
+        table_name=sql.Identifier("outfit"),
+    )
 
-            except Exception as exception_instance:
-                cursor.execute(query="ROLLBACK")
-                raise exception_instance
+    copy_sql = load_csv.copy_from_stdin.format(
+        temp_table_name=sql.Identifier("tempo_outfit")
+    )
 
-
-def upsert_outfit(icon: str, outfit_id: int) -> dict[str]:
-    return {
-        "query": """
+    postcopy_sql = sql.SQL(
+        """
 MERGE INTO gwapese.outfit AS target_outfit
-USING (
-  VALUES (%(icon)s::text, %(outfit_id)s::integer)
-) AS source_outfit (icon, outfit_id)
+USING tempo_outfit AS source_outfit
 ON
   target_outfit.outfit_id = source_outfit.outfit_id
 WHEN MATCHED
@@ -93,35 +59,31 @@ WHEN NOT MATCHED THEN
   INSERT (icon, outfit_id)
     VALUES (source_outfit.icon,
       source_outfit.outfit_id);
-""",
-        "params": {"icon": icon, "outfit_id": outfit_id},
-    }
+"""
+    )
 
 
-def upsert_outfit_name(app_name: str, lang_tag: str, outfit_id: int, original: str):
-    return {
-        "query": """
-MERGE INTO gwapese.outfit_name AS target_outfit_name
-USING (
-VALUES (%(app_name)s::text, %(lang_tag)s::text, %(outfit_id)s::integer, %(original)s::text)) AS
-  source_outfit_name (app_name, lang_tag, outfit_id, original)
-  ON target_outfit_name.app_name = source_outfit_name.app_name
-  AND target_outfit_name.lang_tag = source_outfit_name.lang_tag
-  AND target_outfit_name.outfit_id = source_outfit_name.outfit_id
-WHEN MATCHED
-  AND target_outfit_name.original != source_outfit_name.original THEN
-  UPDATE SET
-    original = source_outfit_name.original
-WHEN NOT MATCHED THEN
-  INSERT (app_name, lang_tag, outfit_id, original)
-    VALUES (source_outfit_name.app_name,
-      source_outfit_name.lang_tag,
-      source_outfit_name.outfit_id,
-      source_outfit_name.original);""",
-        "params": {
-            "app_name": app_name,
-            "lang_tag": lang_tag,
-            "outfit_id": outfit_id,
-            "original": original,
-        },
-    }
+class LoadOutfitName(LoadOutfitTask):
+    table = transform_outfit.OutfitTable.OutfitName
+
+    precopy_sql = load_csv.create_temporary_table.format(
+        temp_table_name=sql.Identifier("tempo_outfit_name"),
+        table_name=sql.Identifier("outfit_name"),
+    )
+
+    copy_sql = load_csv.copy_from_stdin.format(
+        temp_table_name=sql.Identifier("tempo_outfit_name")
+    )
+
+    postcopy_sql = sql.Composed(
+        [
+            load_lang.merge_into_operating_copy.format(
+                table_name=sql.Identifier("tempo_outfit_name")
+            ),
+            load_lang.merge_into_placed_copy.format(
+                table_name=sql.Identifier("outfit_name"),
+                temp_table_name=sql.Identifier("tempo_outfit_name"),
+                pk_name=sql.Identifier("outfit_id"),
+            ),
+        ]
+    )

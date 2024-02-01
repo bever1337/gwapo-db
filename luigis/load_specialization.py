@@ -1,100 +1,53 @@
 import datetime
-import json
 import luigi
 from os import path
+from psycopg import sql
 
 import common
-import extract_batch
+import load_csv
 import load_lang
+import transform_specialization
 
 
-class LoadSpecialization(luigi.Task):
+class LoadSpecializationTask(load_csv.LoadCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
     output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
+    table = luigi.EnumParameter(enum=transform_specialization.SpecializationTable)
 
     def output(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.txt".format(
-            timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
-            lang_tag=self.lang_tag.value,
+        output_folder_name = "_".join(["load", self.table.value])
+        return common.from_output_params(
+            output_dir=path.join(self.output_dir, output_folder_name),
+            extract_datetime=self.extract_datetime,
+            params={"lang": self.lang_tag.value},
+            ext="txt",
         )
-        target_path = path.join(
-            self.output_dir,
-            "load_specialization",
-            target_filename,
-        )
-        return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        return extract_batch.ExtractBatchTask(
+        return transform_specialization.TransformSpecialization(
             extract_datetime=self.extract_datetime,
-            json_schema_path="./schema/gw2/v2/specializations/index.json",
             output_dir=self.output_dir,
-            url_params={"lang": self.lang_tag.value},
-            url="https://api.guildwars2.com/v2/specializations",
+            table=self.table,
         )
 
-    def run(self):
-        with (
-            self.input().open("r") as ro_input_file,
-            common.get_conn() as connection,
-            connection.cursor() as cursor,
-        ):
-            cursor.execute(query="BEGIN")
-            try:
-                for specialization_line in ro_input_file:
-                    specialization = json.loads(specialization_line)
-                    specialization_id = specialization["id"]
-                    cursor.execute(
-                        **upsert_specialization(
-                            background=specialization["background"],
-                            elite=specialization["elite"],
-                            icon=specialization["icon"],
-                            profession_id=specialization["profession"],
-                            specialization_id=specialization_id,
-                        )
-                    )
 
-                    specialization_name = specialization["name"]
-                    cursor.execute(
-                        **load_lang.upsert_operating_copy(
-                            app_name="gw2",
-                            lang_tag=self.lang_tag.value,
-                            original=specialization_name,
-                        )
-                    )
-                    cursor.execute(
-                        **upsert_specialization_name(
-                            app_name="gw2",
-                            lang_tag=self.lang_tag.value,
-                            original=specialization_name,
-                            specialization_id=specialization_id,
-                        )
-                    )
+class LoadSpecialization(LoadSpecializationTask):
+    table = transform_specialization.SpecializationTable.Specialization
 
-                cursor.execute(query="COMMIT")
-                connection.commit()
-                with self.output().open("w") as w_output:
-                    w_output.write("ok")
+    precopy_sql = load_csv.create_temporary_table.format(
+        temp_table_name=sql.Identifier("tempo_specialization"),
+        table_name=sql.Identifier("specialization"),
+    )
 
-            except Exception as exception_instance:
-                cursor.execute(query="ROLLBACK")
-                raise exception_instance
+    copy_sql = load_csv.copy_from_stdin.format(
+        temp_table_name=sql.Identifier("tempo_specialization")
+    )
 
-
-def upsert_specialization(
-    background: str, elite: bool, icon: str, profession_id: str, specialization_id: int
-) -> dict[str]:
-    return {
-        "query": """
+    postcopy_sql = sql.SQL(
+        """
 MERGE INTO gwapese.specialization AS target_specialization
-USING (
-  VALUES (%(background)s::text,
-    %(elite)s::boolean,
-    %(icon)s::text,
-    %(profession_id)s::text,
-    %(specialization_id)s::integer)
-) AS source_specialization (background, elite, icon, profession_id, specialization_id)
+USING tempo_specialization AS source_specialization
 ON target_specialization.profession_id = source_specialization.profession_id
   AND target_specialization.specialization_id = source_specialization.specialization_id
 WHEN MATCHED
@@ -112,46 +65,31 @@ WHEN NOT MATCHED THEN
       source_specialization.icon,
       source_specialization.profession_id,
       source_specialization.specialization_id);
-""",
-        "params": {
-            "background": background,
-            "elite": elite,
-            "icon": icon,
-            "profession_id": profession_id,
-            "specialization_id": specialization_id,
-        },
-    }
+"""
+    )
 
 
-def upsert_specialization_name(
-    app_name: str, lang_tag: str, original: str, specialization_id: int
-):
-    return {
-        "query": """
-MERGE INTO gwapese.specialization_name AS target_specialization_name
-USING (
-  VALUES (%(app_name)s::text,
-    %(lang_tag)s::text,
-    %(original)s::text,
-    %(specialization_id)s::integer)
-) AS source_specialization_name (app_name, lang_tag, original, specialization_id)
-  ON target_specialization_name.app_name = source_specialization_name.app_name
-  AND target_specialization_name.lang_tag = source_specialization_name.lang_tag
-  AND target_specialization_name.specialization_id = source_specialization_name.specialization_id
-WHEN MATCHED
-  AND target_specialization_name.original != source_specialization_name.original THEN
-  UPDATE SET
-    original = source_specialization_name.original
-WHEN NOT MATCHED THEN
-  INSERT (app_name, lang_tag, original, specialization_id)
-    VALUES (source_specialization_name.app_name,
-      source_specialization_name.lang_tag,
-      source_specialization_name.original,
-      source_specialization_name.specialization_id);""",
-        "params": {
-            "app_name": app_name,
-            "lang_tag": lang_tag,
-            "original": original,
-            "specialization_id": specialization_id,
-        },
-    }
+class LoadSpecializationName(LoadSpecializationTask):
+    table = transform_specialization.SpecializationTable.SpecializationName
+
+    precopy_sql = load_csv.create_temporary_table.format(
+        temp_table_name=sql.Identifier("tempo_specialization_name"),
+        table_name=sql.Identifier("specialization_name"),
+    )
+
+    copy_sql = load_csv.copy_from_stdin.format(
+        temp_table_name=sql.Identifier("tempo_specialization_name")
+    )
+
+    postcopy_sql = sql.Composed(
+        [
+            load_lang.merge_into_operating_copy.format(
+                table_name=sql.Identifier("tempo_specialization_name")
+            ),
+            load_lang.merge_into_placed_copy.format(
+                table_name=sql.Identifier("specialization_name"),
+                temp_table_name=sql.Identifier("tempo_specialization_name"),
+                pk_name=sql.Identifier("specialization_id"),
+            ),
+        ]
+    )

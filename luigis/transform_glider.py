@@ -22,17 +22,13 @@ class TransformGlider(transform_csv.TransformCsvTask):
     table = luigi.EnumParameter(enum=GliderTable)
 
     def output(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.csv".format(
-            timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
-            lang_tag=self.lang_tag.value,
+        output_folder_name = "_".join(["transform", self.table.value])
+        return common.from_output_params(
+            output_dir=path.join(self.output_dir, output_folder_name),
+            extract_datetime=self.extract_datetime,
+            params={"lang": self.lang_tag.value},
+            ext="csv",
         )
-        target_dir = "_".join(["transform", self.table.value])
-        target_path = path.join(
-            self.output_dir,
-            target_dir,
-            target_filename,
-        )
-        return luigi.LocalTarget(path=target_path)
 
     def requires(self):
         return extract_batch.ExtractBatchTask(

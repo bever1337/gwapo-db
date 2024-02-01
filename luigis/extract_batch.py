@@ -9,6 +9,7 @@ import os
 import requests
 import time
 
+import common
 import extract_id
 
 
@@ -27,18 +28,16 @@ class ExtractBatchTask(luigi.Task):
             json_schema = json.load(fp=json_schema_file)
         schema_id: str = json_schema["$id"]
         schema_id_no_ext, _ = os.path.splitext(schema_id)
-        schema_id_as_filename = schema_id_no_ext.replace(os.path.sep, "_")
-        output_folder = "_".join(["extract", "batch", schema_id_as_filename])
+        schema_id_sanitized = schema_id_no_ext.replace(os.path.sep, "_")
+        output_folder = "_".join(["extract", "batch", schema_id_sanitized])
+        output_dir = os.path.join(self.output_dir, output_folder)
 
-        formatted_datetime = self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z")
-        filename_params = "__".join(
-            ["_".join([key, str(value)]) for key, value in self.url_params.items()]
+        return common.from_output_params(
+            output_dir=output_dir,
+            extract_datetime=self.extract_datetime,
+            params=self.url_params,
+            ext="ndjson",
         )
-        datetimed_filename_params = "__".join([formatted_datetime, filename_params])
-        output_filename = os.path.extsep.join([datetimed_filename_params, "ndjson"])
-
-        output_path = os.path.join(self.output_dir, output_folder, output_filename)
-        return luigi.LocalTarget(path=output_path)
 
     def requires(self):
         return extract_id.ExtractIdTask(

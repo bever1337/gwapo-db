@@ -1,171 +1,108 @@
 import datetime
-import json
 import luigi
 from os import path
+from psycopg import sql
 
 import common
-import extract_batch
+import load_csv
 import load_lang
+import transform_jade_bot
 
 
-class LoadJadeBot(luigi.Task):
+class LoadJadeBotTask(load_csv.LoadCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
     output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
+    table = luigi.EnumParameter(enum=transform_jade_bot.JadeBotTable)
 
     def output(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.txt".format(
-            timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
-            lang_tag=self.lang_tag.value,
+        output_folder_name = "_".join(["load", self.table.value])
+        return common.from_output_params(
+            output_dir=path.join(self.output_dir, output_folder_name),
+            extract_datetime=self.extract_datetime,
+            params={"lang": self.lang_tag.value},
+            ext="txt",
         )
-        target_path = path.join(
-            self.output_dir,
-            "load_jade_bot",
-            target_filename,
-        )
-        return luigi.LocalTarget(path=target_path)
 
     def requires(self):
-        return extract_batch.ExtractBatchTask(
+        return transform_jade_bot.TransformJadeBot(
             extract_datetime=self.extract_datetime,
-            json_schema_path="./schema/gw2/v2/jadebots/index.json",
+            lang_tag=self.lang_tag,
             output_dir=self.output_dir,
-            url_params={"lang": self.lang_tag.value},
-            url="https://api.guildwars2.com/v2/jadebots",
+            table=self.table,
         )
 
-    def run(self):
-        with (
-            self.input().open("r") as ro_input_file,
-            common.get_conn() as connection,
-            connection.cursor() as cursor,
-        ):
-            cursor.execute(query="BEGIN")
-            try:
-                for jade_bot_line in ro_input_file:
-                    jade_bot = json.loads(jade_bot_line)
-                    jade_bot_id = jade_bot["id"]
-                    cursor.execute(**upsert_jade_bot(jade_bot_id=jade_bot_id))
 
-                    jade_bot_description = jade_bot["description"]
-                    cursor.execute(
-                        **load_lang.upsert_operating_copy(
-                            app_name="gw2",
-                            lang_tag=self.lang_tag.value,
-                            original=jade_bot_description,
-                        )
-                    )
-                    cursor.execute(
-                        **upsert_jade_bot_description(
-                            app_name="gw2",
-                            jade_bot_id=jade_bot_id,
-                            lang_tag=self.lang_tag.value,
-                            original=jade_bot_description,
-                        )
-                    )
+class LoadJadeBot(LoadJadeBotTask):
+    table = transform_jade_bot.JadeBotTable.JadeBot
 
-                    jade_bot_name = jade_bot["name"]
-                    cursor.execute(
-                        **load_lang.upsert_operating_copy(
-                            app_name="gw2",
-                            lang_tag=self.lang_tag.value,
-                            original=jade_bot_name,
-                        )
-                    )
-                    cursor.execute(
-                        **upsert_jade_bot_name(
-                            app_name="gw2",
-                            jade_bot_id=jade_bot_id,
-                            lang_tag=self.lang_tag.value,
-                            original=jade_bot_name,
-                        )
-                    )
+    precopy_sql = load_csv.create_temporary_table.format(
+        temp_table_name=sql.Identifier("tempo_jade_bot"),
+        table_name=sql.Identifier("jade_bot"),
+    )
 
-                cursor.execute(query="COMMIT")
-                connection.commit()
+    copy_sql = load_csv.copy_from_stdin.format(
+        temp_table_name=sql.Identifier("tempo_jade_bot")
+    )
 
-                with self.output().open("w") as w_output:
-                    w_output.write("ok")
-
-            except Exception as exception_instance:
-                cursor.execute(query="ROLLBACK")
-                raise exception_instance
-
-
-def upsert_jade_bot(jade_bot_id: int) -> dict[str]:
-    return {
-        "query": """
+    postcopy_sql = sql.SQL(
+        """
 MERGE INTO gwapese.jade_bot AS target_jade_bot
-USING (
-  VALUES (%(jade_bot_id)s::integer)
-) AS source_jade_bot (jade_bot_id)
-ON
-  target_jade_bot.jade_bot_id = source_jade_bot.jade_bot_id
+USING tempo_jade_bot AS source_jade_bot
+ON target_jade_bot.jade_bot_id = source_jade_bot.jade_bot_id
 WHEN NOT MATCHED THEN
-  INSERT (jade_bot_id)
-    VALUES (source_jade_bot.jade_bot_id);
-""",
-        "params": {"jade_bot_id": jade_bot_id},
-    }
+  INSERT (jade_bot_id) VALUES (source_jade_bot.jade_bot_id);
+"""
+    )
 
 
-def upsert_jade_bot_description(
-    app_name: str, jade_bot_id: int, lang_tag: str, original: str
-):
-    return {
-        "query": """
-MERGE INTO gwapese.jade_bot_description AS target_jade_bot_description
-USING (
-VALUES (%(app_name)s::text, %(jade_bot_id)s::integer,
-  %(lang_tag)s::text, %(original)s::text)
-) AS
-  source_jade_bot_description (app_name, jade_bot_id, lang_tag, original)
-  ON target_jade_bot_description.app_name = source_jade_bot_description.app_name
-  AND target_jade_bot_description.lang_tag = source_jade_bot_description.lang_tag
-  AND target_jade_bot_description.jade_bot_id = source_jade_bot_description.jade_bot_id
-WHEN MATCHED
-  AND target_jade_bot_description.original != source_jade_bot_description.original THEN
-  UPDATE SET
-    original = source_jade_bot_description.original
-WHEN NOT MATCHED THEN
-  INSERT (app_name, jade_bot_id, lang_tag, original)
-    VALUES (source_jade_bot_description.app_name,
-      source_jade_bot_description.jade_bot_id,
-      source_jade_bot_description.lang_tag,
-      source_jade_bot_description.original);""",
-        "params": {
-            "app_name": app_name,
-            "jade_bot_id": jade_bot_id,
-            "lang_tag": lang_tag,
-            "original": original,
-        },
-    }
+class LoadJadeBotDescription(LoadJadeBotTask):
+    table = transform_jade_bot.JadeBotTable.JadeBotDescription
+
+    precopy_sql = load_csv.create_temporary_table.format(
+        temp_table_name=sql.Identifier("tempo_jade_bot_description"),
+        table_name=sql.Identifier("jade_bot_description"),
+    )
+
+    copy_sql = load_csv.copy_from_stdin.format(
+        temp_table_name=sql.Identifier("tempo_jade_bot_description")
+    )
+
+    postcopy_sql = sql.Composed(
+        [
+            load_lang.merge_into_operating_copy.format(
+                table_name=sql.Identifier("tempo_jade_bot_description")
+            ),
+            load_lang.merge_into_placed_copy.format(
+                table_name=sql.Identifier("jade_bot_description"),
+                temp_table_name=sql.Identifier("tempo_jade_bot_description"),
+                pk_name=sql.Identifier("jade_bot_id"),
+            ),
+        ]
+    )
 
 
-def upsert_jade_bot_name(app_name: str, jade_bot_id: int, lang_tag: str, original: str):
-    return {
-        "query": """
-MERGE INTO gwapese.jade_bot_name AS target_jade_bot_name
-USING (
-VALUES (%(app_name)s::text, %(jade_bot_id)s::integer, %(lang_tag)s::text, %(original)s::text)) AS
-  source_jade_bot_name (app_name, jade_bot_id, lang_tag, original)
-  ON target_jade_bot_name.app_name = source_jade_bot_name.app_name
-  AND target_jade_bot_name.lang_tag = source_jade_bot_name.lang_tag
-  AND target_jade_bot_name.jade_bot_id = source_jade_bot_name.jade_bot_id
-WHEN MATCHED
-  AND target_jade_bot_name.original != source_jade_bot_name.original THEN
-  UPDATE SET
-    original = source_jade_bot_name.original
-WHEN NOT MATCHED THEN
-  INSERT (app_name, jade_bot_id, lang_tag, original)
-    VALUES (source_jade_bot_name.app_name,
-      source_jade_bot_name.jade_bot_id,
-      source_jade_bot_name.lang_tag,
-      source_jade_bot_name.original);""",
-        "params": {
-            "app_name": app_name,
-            "jade_bot_id": jade_bot_id,
-            "lang_tag": lang_tag,
-            "original": original,
-        },
-    }
+class LoadJadeBotName(LoadJadeBotTask):
+    table = transform_jade_bot.JadeBotTable.JadeBotName
+
+    precopy_sql = load_csv.create_temporary_table.format(
+        temp_table_name=sql.Identifier("tempo_jade_bot_name"),
+        table_name=sql.Identifier("jade_bot_name"),
+    )
+
+    copy_sql = load_csv.copy_from_stdin.format(
+        temp_table_name=sql.Identifier("tempo_jade_bot_name")
+    )
+
+    postcopy_sql = sql.Composed(
+        [
+            load_lang.merge_into_operating_copy.format(
+                table_name=sql.Identifier("tempo_jade_bot_name")
+            ),
+            load_lang.merge_into_placed_copy.format(
+                table_name=sql.Identifier("jade_bot_name"),
+                temp_table_name=sql.Identifier("tempo_jade_bot_name"),
+                pk_name=sql.Identifier("jade_bot_id"),
+            ),
+        ]
+    )

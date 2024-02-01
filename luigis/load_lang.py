@@ -1,8 +1,45 @@
 import datetime
 import luigi
 from os import path
+from psycopg import sql
 
 import common
+
+
+merge_into_operating_copy = sql.SQL(
+    """
+MERGE INTO gwapese.operating_copy AS target_operating_copy
+USING {table_name} AS source_operating_copy
+ON target_operating_copy.app_name = source_operating_copy.app_name
+  AND target_operating_copy.lang_tag = source_operating_copy.lang_tag
+  AND target_operating_copy.original = source_operating_copy.original
+WHEN NOT MATCHED THEN
+    INSERT (app_name, lang_tag, original)
+      VALUES (source_operating_copy.app_name,
+        source_operating_copy.lang_tag,
+        source_operating_copy.original);
+"""
+)
+
+merge_into_placed_copy = sql.SQL(
+    """
+MERGE INTO gwapese.{table_name} AS merge_target
+USING {temp_table_name} AS merge_source
+  ON merge_target.app_name = merge_source.app_name
+  AND merge_target.lang_tag = merge_source.lang_tag
+  AND merge_target.{pk_name} = merge_source.{pk_name}
+WHEN MATCHED
+  AND merge_target.original != merge_source.original THEN
+  UPDATE SET
+    original = merge_source.original
+WHEN NOT MATCHED THEN
+  INSERT (app_name, lang_tag, original, {pk_name})
+    VALUES (merge_source.app_name,
+      merge_source.lang_tag,
+      merge_source.original,
+      merge_source.{pk_name});
+"""
+)
 
 
 class LoadLang(luigi.Task):
