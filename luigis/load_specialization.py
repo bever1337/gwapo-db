@@ -35,15 +35,6 @@ class LoadSpecializationTask(load_csv.LoadCsvTask):
 class LoadSpecialization(LoadSpecializationTask):
     table = transform_specialization.SpecializationTable.Specialization
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_specialization"),
-        table_name=sql.Identifier("specialization"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_specialization")
-    )
-
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.specialization AS target_specialization
@@ -71,15 +62,6 @@ WHEN NOT MATCHED THEN
 
 class LoadSpecializationName(LoadSpecializationTask):
     table = transform_specialization.SpecializationTable.SpecializationName
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_specialization_name"),
-        table_name=sql.Identifier("specialization_name"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_specialization_name")
-    )
 
     postcopy_sql = sql.Composed(
         [

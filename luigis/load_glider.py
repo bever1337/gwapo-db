@@ -9,6 +9,23 @@ import load_lang
 import transform_glider
 
 
+class SeedGlider(luigi.WrapperTask):
+    extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
+
+    def requires(self):
+        args = {
+            "extract_datetime": self.extract_datetime,
+            "lang_tag": self.lang_tag,
+            "output_dir": self.output_dir,
+        }
+        yield LoadGlider(**args)
+        yield LoadGliderDescription(**args)
+        yield LoadGliderDyeSlot(**args)
+        yield LoadGliderName(**args)
+
+
 class LoadGliderTask(load_csv.LoadCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
@@ -24,26 +41,9 @@ class LoadGliderTask(load_csv.LoadCsvTask):
             ext="txt",
         )
 
-    def requires(self):
-        return transform_glider.TransformGlider(
-            extract_datetime=self.extract_datetime,
-            lang_tag=self.lang_tag,
-            output_dir=self.output_dir,
-            table=self.table,
-        )
-
 
 class LoadGlider(LoadGliderTask):
     table = transform_glider.GliderTable.Glider
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_glider"),
-        table_name=sql.Identifier("glider"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_glider")
-    )
 
     postcopy_sql = sql.SQL(
         """
@@ -65,18 +65,19 @@ WHEN NOT MATCHED THEN
 """
     )
 
+    def requires(self):
+        return {
+            self.table.value: transform_glider.TransformGlider(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            )
+        }
+
 
 class LoadGliderDescription(LoadGliderTask):
     table = transform_glider.GliderTable.GliderDescription
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_glider_description"),
-        table_name=sql.Identifier("glider_description"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_glider_description")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -91,18 +92,24 @@ class LoadGliderDescription(LoadGliderTask):
         ]
     )
 
+    def requires(self):
+        return {
+            self.table.value: transform_glider.TransformGlider(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_glider.GliderTable.Glider: LoadGlider(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }
+
 
 class LoadGliderDyeSlot(LoadGliderTask):
     table = transform_glider.GliderTable.GliderDyeSlot
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_glider_dye_slot"),
-        table_name=sql.Identifier("glider_dye_slot"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_glider_dye_slot")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -131,18 +138,24 @@ WHEN NOT MATCHED THEN
         ]
     )
 
+    def requires(self):
+        return {
+            self.table.value: transform_glider.TransformGlider(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_glider.GliderTable.Glider: LoadGlider(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }
+
 
 class LoadGliderName(LoadGliderTask):
     table = transform_glider.GliderTable.GliderName
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_glider_name"),
-        table_name=sql.Identifier("glider_name"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_glider_name")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -156,3 +169,18 @@ class LoadGliderName(LoadGliderTask):
             ),
         ]
     )
+
+    def requires(self):
+        return {
+            self.table.value: transform_glider.TransformGlider(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_glider.GliderTable.Glider: LoadGlider(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }

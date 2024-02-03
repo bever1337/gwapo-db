@@ -36,15 +36,6 @@ class LoadJadeBotTask(load_csv.LoadCsvTask):
 class LoadJadeBot(LoadJadeBotTask):
     table = transform_jade_bot.JadeBotTable.JadeBot
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_jade_bot"),
-        table_name=sql.Identifier("jade_bot"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_jade_bot")
-    )
-
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.jade_bot AS target_jade_bot
@@ -58,15 +49,6 @@ WHEN NOT MATCHED THEN
 
 class LoadJadeBotDescription(LoadJadeBotTask):
     table = transform_jade_bot.JadeBotTable.JadeBotDescription
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_jade_bot_description"),
-        table_name=sql.Identifier("jade_bot_description"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_jade_bot_description")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -84,15 +66,6 @@ class LoadJadeBotDescription(LoadJadeBotTask):
 
 class LoadJadeBotName(LoadJadeBotTask):
     table = transform_jade_bot.JadeBotTable.JadeBotName
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_jade_bot_name"),
-        table_name=sql.Identifier("jade_bot_name"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_jade_bot_name")
-    )
 
     postcopy_sql = sql.Composed(
         [

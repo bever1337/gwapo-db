@@ -36,15 +36,6 @@ class LoadMountTask(load_csv.LoadCsvTask):
 class LoadMount(LoadMountTask):
     table = transform_mount.MountTable.Mount
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_mount"),
-        table_name=sql.Identifier("mount"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_mount")
-    )
-
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.mount AS target_mount
@@ -59,15 +50,6 @@ WHEN NOT MATCHED THEN
 
 class LoadMountName(LoadMountTask):
     table = transform_mount.MountTable.MountName
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_mount_name"),
-        table_name=sql.Identifier("mount_name"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_mount_name")
-    )
 
     postcopy_sql = sql.Composed(
         [

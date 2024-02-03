@@ -10,6 +10,22 @@ import load_lang
 import transform_finisher
 
 
+class SeedFinisher(luigi.WrapperTask):
+    extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
+
+    def requires(self):
+        args = {
+            "extract_datetime": self.extract_datetime,
+            "lang_tag": self.lang_tag,
+            "output_dir": self.output_dir,
+        }
+        yield LoadFinisher(**args)
+        yield LoadFinisherDetail(**args)
+        yield LoadFinisherName(**args)
+
+
 class LoadFinisherTask(load_csv.LoadCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
@@ -25,59 +41,40 @@ class LoadFinisherTask(load_csv.LoadCsvTask):
             ext="txt",
         )
 
-    def requires(self):
-        return transform_finisher.TransformFinisher(
-            extract_datetime=self.extract_datetime,
-            load_lang=self.lang_tag,
-            output_dir=self.output_dir,
-            table=self.table,
-        )
-
 
 class LoadFinisher(LoadFinisherTask):
     table = transform_finisher.FinisherTable.Finisher
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_finisher"),
-        table_name=sql.Identifier("finisher"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_finisher")
-    )
-
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.finisher AS target_finisher
-USING tempo_finisher AS source_finisher
-ON
-  target_finisher.finisher_id = source_finisher.finisher_id
+USING tempo_finisher AS source_finisher ON target_finisher.finisher_id =
+  source_finisher.finisher_id
 WHEN MATCHED
   AND target_finisher.icon != source_finisher.icon
-  OR  target_finisher.presentation_order != source_finisher.presentation_order THEN
+  OR target_finisher.presentation_order != source_finisher.presentation_order THEN
   UPDATE SET
-    (icon, presentation_order) =
-      (source_finisher.icon, source_finisher.presentation_order)
+    (icon, presentation_order) = (source_finisher.icon, source_finisher.presentation_order)
 WHEN NOT MATCHED THEN
   INSERT (finisher_id, icon, presentation_order)
-    VALUES (source_finisher.finisher_id,
-      source_finisher.icon,
+    VALUES (source_finisher.finisher_id, source_finisher.icon,
       source_finisher.presentation_order);
 """
     )
 
+    def requires(self):
+        return {
+            self.table.value: transform_finisher.TransformFinisher(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            )
+        }
+
 
 class LoadFinisherDetail(LoadFinisherTask):
     table = transform_finisher.FinisherTable.FinisherDetail
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_finisher_detail"),
-        table_name=sql.Identifier("finisher_detail"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_finisher_detail")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -92,18 +89,24 @@ class LoadFinisherDetail(LoadFinisherTask):
         ]
     )
 
+    def requires(self):
+        return {
+            self.table.value: transform_finisher.TransformFinisher(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_finisher.FinisherTable.Finisher: LoadFinisher(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }
+
 
 class LoadFinisherName(LoadFinisherTask):
     table = transform_finisher.FinisherTable.FinisherName
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_finisher_name"),
-        table_name=sql.Identifier("finisher_name"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_finisher_name")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -117,3 +120,18 @@ class LoadFinisherName(LoadFinisherTask):
             ),
         ]
     )
+
+    def requires(self):
+        return {
+            self.table.value: transform_finisher.TransformFinisher(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_finisher.FinisherTable.Finisher: LoadFinisher(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }

@@ -107,7 +107,7 @@ class TransformColor(transform_csv.TransformCsvTask):
                     }
                     for material in materials
                 ]
-            case ColorTable.ColorSampleReference:
+            case ColorTable.ColorSampleReference | ColorTable.ColorSampleReferencePerception:
                 return [
                     {
                         "blue": color[material]["rgb"][2],
@@ -118,7 +118,5 @@ class TransformColor(transform_csv.TransformCsvTask):
                     }
                     for material in materials
                 ]
-            case ColorTable.ColorSampleReferencePerception:
-                return []
             case _:
                 raise RuntimeError("Unexpected table")

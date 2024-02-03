@@ -62,7 +62,6 @@ class ExtractBatchTask(luigi.Task):
             ]
 
         progress = 0
-        self.set_progress_percentage(progress)
         self.set_status_message(
             "Progress: {current:d} / {total:d}".format(current=progress, total=0)
         )

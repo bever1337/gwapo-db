@@ -36,15 +36,6 @@ class LoadSkinTask(load_csv.LoadCsvTask):
 class LoadSkin(LoadSkinTask):
     table = transform_skin.SkinTable.Skin
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_skin"),
-        table_name=sql.Identifier("skin"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_skin")
-    )
-
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.skin AS target_skin
@@ -67,15 +58,6 @@ WHEN NOT MATCHED THEN
 class LoadSkinDescription(LoadSkinTask):
     table = transform_skin.SkinTable.SkinDescription
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_skin_description"),
-        table_name=sql.Identifier("skin_description"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_skin_description")
-    )
-
     postcopy_sql = sql.Composed(
         [
             load_lang.merge_into_operating_copy.format(
@@ -92,15 +74,6 @@ class LoadSkinDescription(LoadSkinTask):
 
 class LoadSkinFlag(LoadSkinTask):
     table = transform_skin.SkinTable.SkinFlag
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_skin_flag"),
-        table_name=sql.Identifier("skin_flag"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_skin_flag")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -133,15 +106,6 @@ WHEN NOT MATCHED THEN
 class LoadSkinName(LoadSkinTask):
     table = transform_skin.SkinTable.SkinName
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_skin_name"),
-        table_name=sql.Identifier("skin_name"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_skin_name")
-    )
-
     postcopy_sql = sql.Composed(
         [
             load_lang.merge_into_operating_copy.format(
@@ -158,15 +122,6 @@ class LoadSkinName(LoadSkinTask):
 
 class LoadSkinRestriction(LoadSkinTask):
     table = transform_skin.SkinTable.SkinRestriction
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_skin_restriction"),
-        table_name=sql.Identifier("skin_restriction"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_skin_restriction")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -199,15 +154,6 @@ WHEN NOT MATCHED THEN
 class LoadSkinType(LoadSkinTask):
     table = transform_skin.SkinTable.SkinType
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_skin_type"),
-        table_name=sql.Identifier("skin_type"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_skin_type")
-    )
-
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.skin_type AS target_skin_type
@@ -223,15 +169,6 @@ WHEN NOT MATCHED THEN
 
 class LoadSkinArmor(LoadSkinTask):
     table = transform_skin.SkinTable.SkinArmor
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_skin_armor"),
-        table_name=sql.Identifier("skin_armor"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_skin_armor")
-    )
 
     postcopy_sql = sql.SQL(
         """
@@ -256,15 +193,6 @@ WHEN NOT MATCHED THEN
 
 class LoadSkinArmorDyeSlot(LoadSkinTask):
     table = transform_skin.SkinTable.SkinArmorDyeSlot
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_skin_armor_dye_slot"),
-        table_name=sql.Identifier("skin_armor_dye_slot"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_skin_armor_dye_slot")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -305,15 +233,6 @@ WHEN NOT MATCHED THEN
 class LoadSkinBack(LoadSkinTask):
     table = transform_skin.SkinTable.SkinBack
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_skin_back"),
-        table_name=sql.Identifier("skin_back"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_skin_back")
-    )
-
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.skin_back AS target_skin_back
@@ -329,15 +248,6 @@ WHEN NOT MATCHED THEN
 
 class LoadSkinGathering(LoadSkinTask):
     table = transform_skin.SkinTable.SkinGathering
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_skin_gathering"),
-        table_name=sql.Identifier("skin_gathering"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_skin_gathering")
-    )
 
     postcopy_sql = sql.SQL(
         """
@@ -357,15 +267,6 @@ WHEN NOT MATCHED THEN
 
 class LoadSkinWeapon(LoadSkinTask):
     table = transform_skin.SkinTable.SkinWeapon
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_skin_weapon"),
-        table_name=sql.Identifier("skin_weapon"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_skin_weapon")
-    )
 
     postcopy_sql = sql.SQL(
         """

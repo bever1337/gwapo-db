@@ -1,7 +1,6 @@
 import csv
 import datetime
 import enum
-import jsonschema
 import json
 import luigi
 from os import path
@@ -9,6 +8,8 @@ from psycopg import sql
 
 import common
 import extract_batch
+import load_profession
+import load_race
 import transform_csv
 
 
@@ -35,18 +36,30 @@ class TransformItem(transform_csv.TransformCsvTask):
         return common.from_output_params(
             output_dir=path.join(self.output_dir, output_folder_name),
             extract_datetime=self.extract_datetime,
-            params={"lang": self.lang_tag.value, "v": "2019-12-19T00:00:00.000Z"},
+            params={"lang": self.lang_tag.value},
             ext="csv",
         )
 
     def requires(self):
-        return extract_batch.ExtractBatchTask(
-            extract_datetime=self.extract_datetime,
-            json_schema_path="./schema/gw2/v2/items/index.json",
-            output_dir=self.output_dir,
-            url_params={"lang": self.lang_tag.value},
-            url="https://api.guildwars2.com/v2/items",
-        )
+        return {
+            "item": extract_batch.ExtractBatchTask(
+                extract_datetime=self.extract_datetime,
+                json_schema_path="./schema/gw2/v2/items/index.json",
+                output_dir=self.output_dir,
+                url_params={"lang": self.lang_tag.value},
+                url="https://api.guildwars2.com/v2/items",
+            ),
+            "race": load_race.LoadRace(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+            "profession": load_profession.LoadProfession(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }
 
     def get_rows(self, item, profession_ids: list[str], race_ids: list[str]):
         item_id = item["id"]
@@ -111,7 +124,24 @@ class TransformItem(transform_csv.TransformCsvTask):
             case ItemTable.ItemType:
                 return [{"item_id": item_id, "item_type": item["type"]}]
             case ItemTable.ItemUpgrade:
-                return []
+                return [
+                    *[
+                        {
+                            "from_item_id": upgrade_from["item_id"],
+                            "to_item_id": item_id,
+                            "upgrade": upgrade_from["upgrade"],
+                        }
+                        for upgrade_from in item.get("upgrades_from", [])
+                    ],
+                    *[
+                        {
+                            "from_item_id": item_id,
+                            "to_item_id": upgrade_into["item_id"],
+                            "upgrade": upgrade_into["upgrade"],
+                        }
+                        for upgrade_into in item.get("upgrades_into", [])
+                    ],
+                ]
             case _:
                 raise RuntimeError("Unexpected table")
 
@@ -128,9 +158,10 @@ class TransformItem(transform_csv.TransformCsvTask):
                     for profession_row in profession_rows
                     for profession_id in profession_row
                 ]
+        print("OK", race_ids, profession_ids)
 
         with (
-            self.input().open("r") as r_input_file,
+            self.input().get("item").open("r") as r_input_file,
             self.output().open("w") as w_output_file,
         ):
             csv_writer = None

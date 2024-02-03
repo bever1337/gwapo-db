@@ -36,15 +36,6 @@ class LoadMountSkinTask(load_csv.LoadCsvTask):
 class LoadMountSkin(LoadMountSkinTask):
     table = transform_mount_skin.MountSkinTable.MountSkin
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_mount_skin"),
-        table_name=sql.Identifier("mount_skin"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_mount_skin")
-    )
-
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.mount_skin AS target_mount_skin
@@ -67,15 +58,6 @@ WHEN NOT MATCHED THEN
 
 class LoadMountSkinDyeSlot(LoadMountSkinTask):
     table = transform_mount_skin.MountSkinTable.MountSkinDyeSlot
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_mount_skin_dye_slot"),
-        table_name=sql.Identifier("mount_skin_dye_slot"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_mount_skin_dye_slot")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -109,15 +91,6 @@ WHEN NOT MATCHED THEN
 
 class LoadMountSkinName(LoadMountSkinTask):
     table = transform_mount_skin.MountSkinTable.MountSkinName
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_mount_skin_name"),
-        table_name=sql.Identifier("mount_skin_name"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_mount_skin_name")
-    )
 
     postcopy_sql = sql.Composed(
         [

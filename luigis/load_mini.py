@@ -36,15 +36,6 @@ class LoadMiniTask(load_csv.LoadCsvTask):
 class LoadMini(LoadMiniTask):
     table = transform_mini.MiniTable.Mini
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_mini"),
-        table_name=sql.Identifier("mini"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_mini")
-    )
-
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.mini AS target_mini
@@ -67,15 +58,6 @@ WHEN NOT MATCHED THEN
 class LoadMiniName(LoadMiniTask):
     table = transform_mini.MiniTable.MiniName
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_mini_name"),
-        table_name=sql.Identifier("mini_name"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_mini_name")
-    )
-
     postcopy_sql = sql.Composed(
         [
             load_lang.merge_into_operating_copy.format(
@@ -92,15 +74,6 @@ class LoadMiniName(LoadMiniTask):
 
 class LoadMiniUnlock(LoadMiniTask):
     table = transform_mini.MiniTable.MiniUnlock
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_mini_unlock"),
-        table_name=sql.Identifier("mini_unlock"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_mini_unlock")
-    )
 
     postcopy_sql = sql.Composed(
         [

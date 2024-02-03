@@ -9,6 +9,21 @@ import load_lang
 import transform_race
 
 
+class SeedRace(luigi.WrapperTask):
+    extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
+
+    def requires(self):
+        args = {
+            "extract_datetime": self.extract_datetime,
+            "lang_tag": self.lang_tag,
+            "output_dir": self.output_dir,
+        }
+        yield LoadRace(**args)
+        yield LoadRaceName(**args)
+
+
 class LoadRaceTask(load_csv.LoadCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
@@ -24,26 +39,9 @@ class LoadRaceTask(load_csv.LoadCsvTask):
             ext="txt",
         )
 
-    def requires(self):
-        return transform_race.TransformRace(
-            extract_datetime=self.extract_datetime,
-            lang_tag=self.lang_tag,
-            output_dir=self.output_dir,
-            table=self.table,
-        )
-
 
 class LoadRace(LoadRaceTask):
     table = transform_race.RaceTable.Race
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_race"),
-        table_name=sql.Identifier("race"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_race")
-    )
 
     postcopy_sql = sql.SQL(
         """
@@ -56,18 +54,19 @@ WHEN NOT MATCHED THEN
 """
     )
 
+    def requires(self):
+        return {
+            self.table.value: transform_race.TransformRace(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            )
+        }
+
 
 class LoadRaceName(LoadRaceTask):
     table = transform_race.RaceTable.RaceName
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_race_name"),
-        table_name=sql.Identifier("race_name"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_race_name")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -81,3 +80,18 @@ class LoadRaceName(LoadRaceTask):
             ),
         ]
     )
+
+    def requires(self):
+        return {
+            self.table.value: transform_race.TransformRace(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_race.RaceTable.Race.value: LoadRace(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }

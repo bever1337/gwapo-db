@@ -142,29 +142,6 @@ CREATE TABLE gwapese.color_sample_reference_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'color_sample_reference', 'color_sample_reference_history');
 
-CREATE TABLE gwapese.color_sample_reference_perception (
-  blue smallint NOT NULL,
-  color_id integer NOT NULL,
-  green smallint NOT NULL,
-  material text NOT NULL,
-  perceived_lightness double precision NOT NULL,
-  red smallint NOT NULL,
-  CONSTRAINT color_sample_reference_perception_pk PRIMARY KEY (color_id, material),
-  CONSTRAINT color_base_defines_color_sample_reference_perception_fk FOREIGN
-    KEY (color_id, material, red, green, blue) REFERENCES
-    gwapese.color_sample_reference (color_id, material, red, green, blue) ON
-    DELETE CASCADE ON UPDATE CASCADE
-);
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_sample_reference_perception');
-
-CREATE TABLE gwapese.color_sample_reference_perception_history (
-  LIKE gwapese.color_sample_reference_perception
-);
-
-CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'color_sample_reference_perception', 'color_sample_reference_perception_history');
-
 CREATE OR REPLACE FUNCTION gwapese.rgb_to_hex (IN in_red smallint, IN in_green
   smallint, IN in_blue smallint)
   RETURNS varchar (
@@ -178,7 +155,8 @@ BEGIN
     '0');
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION gwapese.srgb_to_lin (IN in_color_channel double precision)
   RETURNS double precision
@@ -191,7 +169,8 @@ BEGIN
   END CASE;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION gwapese.rgb_to_y (IN in_red double precision, IN
   in_green double precision, IN in_blue double precision)
@@ -207,7 +186,8 @@ BEGIN
       gwapese.srgb_to_lin (in_blue) AS blue_linear);
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION gwapese.y_to_lstar (IN in_y double precision)
   RETURNS double precision
@@ -220,7 +200,8 @@ BEGIN
   END CASE;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION gwapese.rgb_to_lightness (IN in_red smallint, IN
   in_green smallint, IN in_blue smallint)
@@ -232,6 +213,31 @@ BEGIN
     precision) / 255.0));
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE TABLE gwapese.color_sample_reference_perception (
+  blue smallint NOT NULL,
+  color_id integer NOT NULL,
+  green smallint NOT NULL,
+  material text NOT NULL,
+  perceived_lightness double precision GENERATED ALWAYS AS
+    (gwapese.rgb_to_lightness (red, green, blue)) STORED NOT NULL,
+  red smallint NOT NULL,
+  CONSTRAINT color_sample_reference_perception_pk PRIMARY KEY (color_id, material),
+  CONSTRAINT c_s_r_identifies_color_sample_reference_perception_fk FOREIGN KEY
+    (color_id, material, red, green, blue) REFERENCES
+    gwapese.color_sample_reference (color_id, material, red, green, blue) ON
+    DELETE CASCADE ON UPDATE CASCADE
+);
+
+CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_sample_reference_perception');
+
+CREATE TABLE gwapese.color_sample_reference_perception_history (
+  LIKE gwapese.color_sample_reference_perception
+);
+
+CALL temporal_tables.create_historicize_trigger ('gwapese',
+  'color_sample_reference_perception', 'color_sample_reference_perception_history');
 
 COMMIT;

@@ -9,6 +9,23 @@ import load_lang
 import transform_currency
 
 
+class SeedCurrency(luigi.WrapperTask):
+    extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
+
+    def requires(self):
+        args = {
+            "extract_datetime": self.extract_datetime,
+            "lang_tag": self.lang_tag,
+            "output_dir": self.output_dir,
+        }
+        yield LoadCurrency(**args)
+        yield LoadCurrencyCategory(**args)
+        yield LoadCurrencyDescription(**args)
+        yield LoadCurrencyName(**args)
+
+
 class LoadCurrencyTask(load_csv.LoadCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
@@ -24,65 +41,42 @@ class LoadCurrencyTask(load_csv.LoadCsvTask):
             ext="txt",
         )
 
-    def requires(self):
-        return transform_currency.TransformCurrency(
-            extract_datetime=self.extract_datetime,
-            lang_tag=self.lang_tag,
-            output_dir=self.output_dir,
-            table=self.table,
-        )
-
 
 class LoadCurrency(LoadCurrencyTask):
     table = transform_currency.CurrencyTable.Currency
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_currency"),
-        table_name=sql.Identifier("currency"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_currency")
-    )
-
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.currency AS target_currency
-USING tempo_currency AS source_currency
-ON
-  target_currency.currency_id = source_currency.currency_id
+USING tempo_currency AS source_currency ON target_currency.currency_id =
+  source_currency.currency_id
 WHEN MATCHED
-  AND source_currency IS DISTINCT FROM (
-    target_currency.currency_id,
-    target_currency.deprecated,
-    target_currency.icon,
+  AND source_currency IS DISTINCT FROM (target_currency.currency_id,
+    target_currency.deprecated, target_currency.icon,
     target_currency.presentation_order) THEN
   UPDATE SET
-    (deprecated, icon, presentation_order) =
-      (source_currency.deprecated,
-        source_currency.icon,
-        source_currency.presentation_order)
+    (deprecated, icon, presentation_order) = (source_currency.deprecated,
+      source_currency.icon, source_currency.presentation_order)
 WHEN NOT MATCHED THEN
   INSERT (currency_id, deprecated, icon, presentation_order)
-    VALUES (source_currency.currency_id,
-      source_currency.deprecated,
-      source_currency.icon,
-      source_currency.presentation_order);
+    VALUES (source_currency.currency_id, source_currency.deprecated,
+      source_currency.icon, source_currency.presentation_order);
 """
     )
+
+    def requires(self):
+        return {
+            self.table.value: transform_currency.TransformCurrency(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            )
+        }
 
 
 class LoadCurrencyCategory(LoadCurrencyTask):
     table = transform_currency.CurrencyTable.CurrencyCategory
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_currency_category"),
-        table_name=sql.Identifier("currency_category"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_currency_category")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -90,39 +84,46 @@ class LoadCurrencyCategory(LoadCurrencyTask):
                 """
 DELETE FROM gwapese.currency_category
 WHERE NOT EXISTS (
-  SELECT FROM tempo_currency_category
-  WHERE gwapese.currency_category.category = tempo_currency_category.category
-    AND gwapese.currency_category.currency_id = tempo_currency_category.currency_id
-);
+    SELECT
+    FROM
+      tempo_currency_category
+    WHERE
+      gwapese.currency_category.category = tempo_currency_category.category
+      AND gwapese.currency_category.currency_id = tempo_currency_category.currency_id);
 """
             ),
             sql.SQL(
                 """
 MERGE INTO gwapese.currency_category
-USING tempo_currency_category
-ON gwapese.currency_category.category = tempo_currency_category.category
+USING tempo_currency_category ON gwapese.currency_category.category =
+  tempo_currency_category.category
   AND gwapese.currency_category.currency_id = tempo_currency_category.currency_id
 WHEN NOT MATCHED THEN
   INSERT (category, currency_id)
-    VALUES (tempo_currency_category.category,
-      tempo_currency_category.currency_id);
+    VALUES (tempo_currency_category.category, tempo_currency_category.currency_id);
 """
             ),
         ]
     )
 
+    def requires(self):
+        return {
+            self.table.value: transform_currency.TransformCurrency(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_currency.CurrencyTable.Currency: LoadCurrency(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }
+
 
 class LoadCurrencyDescription(LoadCurrencyTask):
     table = transform_currency.CurrencyTable.CurrencyDescription
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_currency_description"),
-        table_name=sql.Identifier("currency_description"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_currency_description")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -137,18 +138,24 @@ class LoadCurrencyDescription(LoadCurrencyTask):
         ]
     )
 
+    def requires(self):
+        return {
+            self.table.value: transform_currency.TransformCurrency(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_currency.CurrencyTable.Currency: LoadCurrency(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }
+
 
 class LoadCurrencyName(LoadCurrencyTask):
     table = transform_currency.CurrencyTable.CurrencyName
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_currency_name"),
-        table_name=sql.Identifier("currency_name"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_currency_name")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -162,3 +169,18 @@ class LoadCurrencyName(LoadCurrencyTask):
             ),
         ]
     )
+
+    def requires(self):
+        return {
+            self.table.value: transform_currency.TransformCurrency(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_currency.CurrencyTable.Currency: LoadCurrency(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }

@@ -9,6 +9,23 @@ import load_lang
 import transform_guild_upgrade
 
 
+class SeedGuildUpgrade(luigi.WrapperTask):
+    extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
+
+    def requires(self):
+        args = {
+            "extract_datetime": self.extract_datetime,
+            "lang_tag": self.lang_tag,
+            "output_dir": self.output_dir,
+        }
+        yield LoadGuildUpgrade(**args)
+        yield LoadGuildUpgradeDescription(**args)
+        yield LoadGuildUpgradeName(**args)
+        yield LoadGuildUpgradePrerequisite(**args)
+
+
 class LoadGuildUpgradeTask(load_csv.LoadCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
@@ -24,86 +41,50 @@ class LoadGuildUpgradeTask(load_csv.LoadCsvTask):
             ext="txt",
         )
 
-    def requires(self):
-        return transform_guild_upgrade.TransformGuildUpgrade(
-            extract_datetime=self.extract_datetime,
-            lang_tag=self.lang_tag,
-            output_dir=self.output_dir,
-            table=self.table,
-        )
-
 
 class LoadGuildUpgrade(LoadGuildUpgradeTask):
     table = transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_guild_upgrade"),
-        table_name=sql.Identifier("guild_upgrade"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_guild_upgrade")
-    )
-
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.guild_upgrade AS target_guild_upgrade
-USING tempo_guild_upgrade AS source_guild_upgrade
-ON
+USING tempo_guild_upgrade AS source_guild_upgrade ON
   target_guild_upgrade.guild_upgrade_id = source_guild_upgrade.guild_upgrade_id
 WHEN MATCHED
-  AND (
-    source_guild_upgrade.build_time,
-    source_guild_upgrade.experience,
-    source_guild_upgrade.guild_upgrade_type,
-    source_guild_upgrade.icon,
-    source_guild_upgrade.required_level
-  ) IS DISTINCT FROM (
-    target_guild_upgrade.build_time,
-    target_guild_upgrade.experience,
-    target_guild_upgrade.guild_upgrade_type,
-    target_guild_upgrade.icon,
-    target_guild_upgrade.required_level
-  ) THEN
+  AND (source_guild_upgrade.build_time, source_guild_upgrade.experience,
+    source_guild_upgrade.guild_upgrade_type, source_guild_upgrade.icon,
+    source_guild_upgrade.required_level) IS DISTINCT FROM
+    (target_guild_upgrade.build_time, target_guild_upgrade.experience,
+    target_guild_upgrade.guild_upgrade_type, target_guild_upgrade.icon,
+    target_guild_upgrade.required_level) THEN
   UPDATE SET
-    (build_time,
-      experience,
-      guild_upgrade_type,
-      icon,
-      required_level) =
-      (source_guild_upgrade.build_time,
-        source_guild_upgrade.experience,
-        source_guild_upgrade.guild_upgrade_type,
-        source_guild_upgrade.icon,
-        source_guild_upgrade.required_level)
+    (build_time, experience, guild_upgrade_type, icon, required_level) =
+      (source_guild_upgrade.build_time, source_guild_upgrade.experience,
+      source_guild_upgrade.guild_upgrade_type, source_guild_upgrade.icon,
+      source_guild_upgrade.required_level)
 WHEN NOT MATCHED THEN
-  INSERT (build_time,
-    experience,
-    guild_upgrade_id,
-    guild_upgrade_type,
-    icon,
+  INSERT (build_time, experience, guild_upgrade_id, guild_upgrade_type, icon,
     required_level)
-    VALUES (source_guild_upgrade.build_time,
-      source_guild_upgrade.experience,
+    VALUES (source_guild_upgrade.build_time, source_guild_upgrade.experience,
       source_guild_upgrade.guild_upgrade_id,
-      source_guild_upgrade.guild_upgrade_type,
-      source_guild_upgrade.icon,
+      source_guild_upgrade.guild_upgrade_type, source_guild_upgrade.icon,
       source_guild_upgrade.required_level);
 """
     )
 
+    def requires(self):
+        return {
+            self.table.value: transform_guild_upgrade.TransformGuildUpgrade(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            )
+        }
+
 
 class LoadGuildUpgradeDescription(LoadGuildUpgradeTask):
     table = transform_guild_upgrade.GuildUpgradeTable.GuildUpgradeDescription
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_guild_upgrade_description"),
-        table_name=sql.Identifier("guild_upgrade_description"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_guild_upgrade_description")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -118,18 +99,24 @@ class LoadGuildUpgradeDescription(LoadGuildUpgradeTask):
         ]
     )
 
+    def requires(self):
+        return {
+            self.table.value: transform_guild_upgrade.TransformGuildUpgrade(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade: LoadGuildUpgrade(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }
+
 
 class LoadGuildUpgradeName(LoadGuildUpgradeTask):
     table = transform_guild_upgrade.GuildUpgradeTable.GuildUpgradeName
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_guild_upgrade_name"),
-        table_name=sql.Identifier("guild_upgrade_name"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_guild_upgrade_name")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -144,18 +131,24 @@ class LoadGuildUpgradeName(LoadGuildUpgradeTask):
         ]
     )
 
+    def requires(self):
+        return {
+            self.table.value: transform_guild_upgrade.TransformGuildUpgrade(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade: LoadGuildUpgrade(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }
+
 
 class LoadGuildUpgradePrerequisite(LoadGuildUpgradeTask):
     table = transform_guild_upgrade.GuildUpgradeTable.GuildUpgradePrerequisite
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_guild_upgrade_prerequisite"),
-        table_name=sql.Identifier("guild_upgrade_prerequisite"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_guild_upgrade_prerequisite")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -163,22 +156,24 @@ class LoadGuildUpgradePrerequisite(LoadGuildUpgradeTask):
                 """
 DELETE FROM gwapese.guild_upgrade_prerequisite
 WHERE NOT EXISTS (
-  SELECT FROM tempo_guild_upgrade_prerequisite
-  WHERE gwapese.guild_upgrade_prerequisite.guild_upgrade_id
-        = tempo_guild_upgrade_prerequisite.guild_upgrade_id
-    AND gwapese.guild_upgrade_prerequisite.prerequisite_guild_upgrade_id
-        = tempo_guild_upgrade_prerequisite.prerequisite_guild_upgrade_id
-);
+    SELECT
+    FROM
+      tempo_guild_upgrade_prerequisite
+    WHERE
+      gwapese.guild_upgrade_prerequisite.guild_upgrade_id =
+	tempo_guild_upgrade_prerequisite.guild_upgrade_id
+      AND gwapese.guild_upgrade_prerequisite.prerequisite_guild_upgrade_id =
+	tempo_guild_upgrade_prerequisite.prerequisite_guild_upgrade_id);
 """
             ),
             sql.SQL(
                 """
 MERGE INTO gwapese.guild_upgrade_prerequisite
-USING tempo_guild_upgrade_prerequisite AS src
-ON gwapese.guild_upgrade_prerequisite.prerequisite_guild_upgrade_id
-    = tempo_guild_upgrade_prerequisite.prerequisite_guild_upgrade_id
-  AND gwapese.guild_upgrade_prerequisite.guild_upgrade_id
-    = tempo_guild_upgrade_prerequisite.guild_upgrade_id
+USING tempo_guild_upgrade_prerequisite ON
+  gwapese.guild_upgrade_prerequisite.prerequisite_guild_upgrade_id =
+  tempo_guild_upgrade_prerequisite.prerequisite_guild_upgrade_id
+  AND gwapese.guild_upgrade_prerequisite.guild_upgrade_id =
+    tempo_guild_upgrade_prerequisite.guild_upgrade_id
 WHEN NOT MATCHED THEN
   INSERT (guild_upgrade_id, prerequisite_guild_upgrade_id)
     VALUES (tempo_guild_upgrade_prerequisite.guild_upgrade_id,
@@ -187,3 +182,18 @@ WHEN NOT MATCHED THEN
             ),
         ]
     )
+
+    def requires(self):
+        return {
+            self.table.value: transform_guild_upgrade.TransformGuildUpgrade(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade: LoadGuildUpgrade(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }

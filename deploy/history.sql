@@ -11,7 +11,8 @@ BEGIN
   RETURN in_temporal_table_name || '_tt_fn';
 END;
 $quote_fmt_trigger_fn_name$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+IMMUTABLE;
 
 COMMENT ON FUNCTION temporal_tables.fmt_trigger_fn_name (text) IS 'WARNING: Function name is unescaped, unquoted, and potentially longer than an OID.';
 
@@ -23,7 +24,8 @@ BEGIN
   RETURN in_temporal_table_name || '_tt_tr';
 END;
 $quote_fmt_trigger_name$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+IMMUTABLE;
 
 COMMENT ON FUNCTION temporal_tables.fmt_trigger_name (text) IS 'WARNING: Function name is unescaped, unquoted, and potentially longer than an OID.';
 
@@ -37,7 +39,8 @@ BEGIN
     ADD COLUMN sysrange_upper timestamp(3) NOT NULL;', in_schema_name, in_table_name);
 END;
 $quote_fmt_alter_table_to_temporal$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION temporal_tables.fmt_create_temporal_fn (IN
   in_schema_name text, IN in_temporal_table_name text, IN in_history_table_name
@@ -77,7 +80,8 @@ BEGIN
     (in_temporal_table_name), in_history_table_name);
 END;
 $quote_fmt_create_temporal_fn$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION temporal_tables.fmt_create_table_trigger (IN
   in_schema_name text, IN in_temporal_table_name text)
@@ -92,7 +96,8 @@ BEGIN
       temporal_tables.fmt_trigger_fn_name (in_temporal_table_name));
 END;
 $quote_fmt_create_table_trigger$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION temporal_tables.fmt_drop_table_trigger (IN
   in_schema_name text, IN in_temporal_table_name text)
@@ -103,7 +108,8 @@ BEGIN
     (in_temporal_table_name), in_schema_name, in_temporal_table_name);
 END;
 $quote_fmt_drop_table_trigger$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION temporal_tables.fmt_drop_trigger_fn (IN
   in_schema_name text, IN in_temporal_table_name text)
@@ -114,7 +120,8 @@ BEGIN
     temporal_tables.fmt_trigger_fn_name (in_temporal_table_name));
 END;
 $quote_fmt_drop_trigger_fn$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+IMMUTABLE;
 
 CREATE OR REPLACE PROCEDURE temporal_tables.alter_table_to_temporal (IN
   in_schema_name text, IN in_table_name text)

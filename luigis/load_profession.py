@@ -9,6 +9,21 @@ import load_lang
 import transform_profession
 
 
+class SeedProfession(luigi.WrapperTask):
+    extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
+
+    def requires(self):
+        args = {
+            "extract_datetime": self.extract_datetime,
+            "lang_tag": self.lang_tag,
+            "output_dir": self.output_dir,
+        }
+        yield LoadProfession(**args)
+        yield LoadProfessionName(**args)
+
+
 class LoadProfessionTask(load_csv.LoadCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
@@ -24,26 +39,9 @@ class LoadProfessionTask(load_csv.LoadCsvTask):
             ext="txt",
         )
 
-    def requires(self):
-        return transform_profession.TransformProfession(
-            extract_datetime=self.extract_datetime,
-            lang_tag=self.lang_tag,
-            output_dir=self.output_dir,
-            table=self.table,
-        )
-
 
 class LoadProfession(LoadProfessionTask):
     table = transform_profession.ProfessionTable.Profession
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_profession"),
-        table_name=sql.Identifier("profession"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_profession")
-    )
 
     postcopy_sql = sql.SQL(
         """
@@ -68,18 +66,19 @@ WHEN NOT MATCHED THEN
 """
     )
 
+    def requires(self):
+        return {
+            self.table.value: transform_profession.TransformProfession(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            )
+        }
+
 
 class LoadProfessionName(LoadProfessionTask):
     table = transform_profession.ProfessionTable.ProfessionName
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_profession_name"),
-        table_name=sql.Identifier("profession_name"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_profession_name")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -93,3 +92,18 @@ class LoadProfessionName(LoadProfessionTask):
             ),
         ]
     )
+
+    def requires(self):
+        return {
+            self.table.value: transform_profession.TransformProfession(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_profession.ProfessionTable.Profession.value: LoadProfession(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }

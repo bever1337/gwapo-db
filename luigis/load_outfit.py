@@ -36,15 +36,6 @@ class LoadOutfitTask(load_csv.LoadCsvTask):
 class LoadOutfit(LoadOutfitTask):
     table = transform_outfit.OutfitTable.Outfit
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_outfit"),
-        table_name=sql.Identifier("outfit"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_outfit")
-    )
-
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.outfit AS target_outfit
@@ -65,15 +56,6 @@ WHEN NOT MATCHED THEN
 
 class LoadOutfitName(LoadOutfitTask):
     table = transform_outfit.OutfitTable.OutfitName
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_outfit_name"),
-        table_name=sql.Identifier("outfit_name"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_outfit_name")
-    )
 
     postcopy_sql = sql.Composed(
         [

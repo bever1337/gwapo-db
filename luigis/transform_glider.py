@@ -51,12 +51,15 @@ class TransformGlider(transform_csv.TransformCsvTask):
                     }
                 ]
             case GliderTable.GliderDescription:
+                glider_description = glider["description"]
+                if glider_description == "":
+                    return []
                 return [
                     {
                         "app_name": "gw2",
                         "glider_id": glider_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": glider["description"],
+                        "original": glider_description,
                     }
                 ]
             case GliderTable.GliderDyeSlot:

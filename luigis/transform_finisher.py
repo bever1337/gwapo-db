@@ -50,12 +50,15 @@ class TransformFinisher(transform_csv.TransformCsvTask):
                     }
                 ]
             case FinisherTable.FinisherDetail:
+                unlock_details = finisher["unlock_details"]
+                if unlock_details == "":
+                    return []
                 return [
                     {
                         "app_name": "gw2",
                         "finisher_id": finisher_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": finisher["unlock_details"],
+                        "original": unlock_details,
                     }
                 ]
 

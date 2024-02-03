@@ -9,7 +9,9 @@ import common
 merge_into_operating_copy = sql.SQL(
     """
 MERGE INTO gwapese.operating_copy AS target_operating_copy
-USING {table_name} AS source_operating_copy
+USING (
+  SELECT DISTINCT app_name, lang_tag, original FROM {table_name}
+) AS source_operating_copy
 ON target_operating_copy.app_name = source_operating_copy.app_name
   AND target_operating_copy.lang_tag = source_operating_copy.lang_tag
   AND target_operating_copy.original = source_operating_copy.original

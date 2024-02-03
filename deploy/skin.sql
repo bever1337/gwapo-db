@@ -121,7 +121,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.skin_armor (
   skin_id integer UNIQUE NOT NULL,
-  skin_type text GENERATED ALWAYS AS ('Armor') STORED,
+  skin_type text GENERATED ALWAYS AS ('Armor') STORED NOT NULL,
   slot text NOT NULL,
   weight_class text NOT NULL,
   CONSTRAINT skin_armor_pk PRIMARY KEY (skin_id, skin_type),
@@ -166,7 +166,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.skin_back (
   skin_id integer UNIQUE NOT NULL,
-  skin_type text GENERATED ALWAYS AS ('Back') STORED,
+  skin_type text GENERATED ALWAYS AS ('Back') STORED NOT NULL,
   CONSTRAINT skin_back_pk PRIMARY KEY (skin_id, skin_type),
   CONSTRAINT skin_identifies_skin_back_fk FOREIGN KEY (skin_id) REFERENCES
     gwapese.skin (skin_id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -185,7 +185,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 
 CREATE TABLE gwapese.skin_gathering (
   skin_id integer UNIQUE NOT NULL,
-  skin_type text GENERATED ALWAYS AS ('Gathering') STORED,
+  skin_type text GENERATED ALWAYS AS ('Gathering') STORED NOT NULL,
   tool text NOT NULL,
   CONSTRAINT skin_gathering_pk PRIMARY KEY (skin_id, skin_type),
   CONSTRAINT skin_identifies_skin_gathering_fk FOREIGN KEY (skin_id) REFERENCES
@@ -207,7 +207,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 CREATE TABLE gwapese.skin_weapon (
   damage_type text NOT NULL,
   skin_id integer UNIQUE NOT NULL,
-  skin_type text GENERATED ALWAYS AS ('Weapon') STORED,
+  skin_type text GENERATED ALWAYS AS ('Weapon') STORED NOT NULL,
   weapon_type text NOT NULL,
   CONSTRAINT skin_weapon_pk PRIMARY KEY (skin_id, skin_type),
   CONSTRAINT skin_identifies_skin_weapon_fk FOREIGN KEY (skin_id) REFERENCES

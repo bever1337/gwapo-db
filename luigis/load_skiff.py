@@ -35,15 +35,6 @@ class LoadSkiffTask(load_csv.LoadCsvTask):
 class LoadSkiff(LoadSkiffTask):
     table = transform_skiff.SkiffTable.Skiff
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_skiff"),
-        table_name=sql.Identifier("skiff"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_skiff")
-    )
-
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.skiff AS target_skiff
@@ -64,15 +55,6 @@ WHEN NOT MATCHED THEN
 
 class LoadSkiffDyeSlot(LoadSkiffTask):
     table = transform_skiff.SkiffTable.SkiffDyeSlot
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_skiff_dye_slot"),
-        table_name=sql.Identifier("skiff_dye_slot"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_skiff_dye_slot")
-    )
 
     postcopy_sql = sql.Composed(
         [
@@ -106,15 +88,6 @@ WHEN NOT MATCHED THEN
 
 class LoadSkiffName(LoadSkiffTask):
     table = transform_skiff.SkiffTable.SkiffName
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_skiff_name"),
-        table_name=sql.Identifier("skiff_name"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_skiff_name")
-    )
 
     postcopy_sql = sql.Composed(
         [

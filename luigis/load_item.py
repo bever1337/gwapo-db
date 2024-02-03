@@ -1,460 +1,437 @@
 import datetime
-import json
 import luigi
 from os import path
+from psycopg import sql
 
 import common
-import extract_batch
-import extract_race
+import load_csv
 import load_lang
+import load_profession
+import load_race
 import transform_item
+import transform_profession
+import transform_race
 
 
-class LoadItem(luigi.Task):
+class SeedItem(luigi.WrapperTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
     output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
 
-    def output(self):
-        target_filename = "{timestamp:s}__lang_{lang_tag:s}.txt".format(
-            lang_tag=self.lang_tag.value,
-            timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
-        )
-        target_path = path.join(
-            self.output_dir,
-            "load_item",
-            target_filename,
-        )
-        return luigi.LocalTarget(path=target_path)
-
     def requires(self):
-        return {
-            "item": transform_item.TransformItem(
-                extract_datetime=self.extract_datetime,
-                lang_tag=self.lang_tag,
-                output_dir=self.output_dir,
-            ),
-            "profession": extract_batch.ExtractBatchTask(
-                extract_datetime=self.extract_datetime,
-                json_schema_path="./schema/gw2/v2/professions/index.json",
-                output_dir=self.output_dir,
-                url_params={
-                    "lang": self.lang_tag.value,
-                    "v": "2019-12-19T00:00:00.000Z",
-                },
-                url="https://api.guildwars2.com/v2/professions",
-            ),
-            "race": extract_race.ExtractRace(extract_datetime=self.extract_datetime),
+        args = {
+            "extract_datetime": self.extract_datetime,
+            "lang_tag": self.lang_tag,
+            "output_dir": self.output_dir,
         }
-
-    def run(self):
-        self.set_status_message("Starting")
-
-        inputs = self.input()
-
-        with inputs["profession"].open("r") as ro_input_file:
-            professions: list[str] = [json.loads(line)["id"] for line in ro_input_file]
-
-        with inputs["race"].open("r") as ro_input_file:
-            race_names: list[str] = json.load(fp=ro_input_file)
-
-        with (
-            inputs["item"].open("r") as r_input_file,
-            common.get_conn() as connection,
-            connection.cursor() as cursor,
-        ):
-            cursor.execute(query="BEGIN")
-            # only optional keys are details and default_skin
-            try:
-                self.set_status_message("Count: {current:d}".format(current=0))
-                for index, item_line in enumerate(r_input_file):
-                    item = json.loads(item_line)
-                    item_id = item["id"]
-                    cursor.execute(
-                        **upsert_item(
-                            chat_link=item["chat_link"],
-                            icon=item["icon"],
-                            item_id=item_id,
-                            rarity=item["rarity"],
-                            required_level=item["level"],
-                            vendor_value=item["vendor_value"],
-                        )
-                    )
-
-                    item_description = item["description"]
-                    if item_description != None:
-                        cursor.execute(
-                            **load_lang.upsert_operating_copy(
-                                app_name="gw2",
-                                lang_tag=self.lang_tag.value,
-                                original=item_description,
-                            )
-                        )
-                        cursor.execute(
-                            **upsert_item_description(
-                                app_name="gw2",
-                                item_id=item_id,
-                                lang_tag=self.lang_tag.value,
-                                original=item_description,
-                            )
-                        )
-
-                    item_flags = item["flags"]
-                    cursor.execute(
-                        **prune_item_flags(flags=item_flags, item_id=item_id)
-                    )
-                    for item_flag in item_flags:
-                        cursor.execute(
-                            **upsert_item_flag(flag=item_flag, item_id=item_id)
-                        )
-
-                    game_types = item["game_types"]
-                    cursor.execute(
-                        **prune_item_game_types(game_types=game_types, item_id=item_id)
-                    )
-                    for game_type in game_types:
-                        cursor.execute(
-                            **upsert_item_game_type(
-                                game_type=game_type, item_id=item_id
-                            )
-                        )
-
-                    profession_restrictions = [
-                        restriction
-                        for restriction in item["restrictions"]
-                        if restriction in professions
-                    ]
-                    cursor.execute(
-                        **prune_item_profession_restrictions(
-                            item_id=item_id, profession_ids=profession_restrictions
-                        )
-                    )
-                    for profession_id in profession_restrictions:
-                        cursor.execute(
-                            **upsert_item_profession_restriction(
-                                profession_id=profession_id, item_id=item_id
-                            )
-                        )
-
-                    race_names_restrictions = [
-                        restriction
-                        for restriction in item["restrictions"]
-                        if restriction in race_names
-                    ]
-                    cursor.execute(
-                        **prune_item_race_restrictions(
-                            item_id=item_id, race_names=race_names_restrictions
-                        )
-                    )
-                    for race_name in race_names_restrictions:
-                        cursor.execute(
-                            **upsert_item_race_restriction(
-                                race_name=race_name, item_id=item_id
-                            )
-                        )
-
-                    item_name = item["name"]
-                    if item_name != None:
-                        cursor.execute(
-                            **load_lang.upsert_operating_copy(
-                                app_name="gw2",
-                                lang_tag=self.lang_tag.value,
-                                original=item_name,
-                            )
-                        )
-                        cursor.execute(
-                            **upsert_item_name(
-                                app_name="gw2",
-                                item_id=item_id,
-                                lang_tag=self.lang_tag.value,
-                                original=item_name,
-                            )
-                        )
-
-                    cursor.execute(
-                        **upsert_item_type(item_id=item_id, item_type=item["type"])
-                    )
-
-                    if index % 100 == 0:
-                        self.set_status_message(
-                            "Count: {current:d}".format(current=index)
-                        )
-
-                cursor.execute(query="COMMIT")
-                connection.commit()
-                with self.output().open("w") as w_output:
-                    w_output.write("ok")
-
-            except Exception as exception_instance:
-                cursor.execute(query="ROLLBACK")
-                raise exception_instance
+        yield LoadItem(**args)
+        yield LoadItemDescription(**args)
+        yield LoadItemFlag(**args)
+        yield LoadItemGameType(**args)
+        yield LoadItemName(**args)
+        yield LoadItemProfessionRestriction(**args)
+        yield LoadItemRaceRestriction(**args)
+        yield LoadItemType(**args)
+        yield LoadItemUpgrade(**args)
 
 
-def upsert_item(
-    chat_link: str,
-    icon: str,
-    item_id: int,
-    rarity: str,
-    required_level: int,
-    vendor_value: int,
-) -> dict[str]:
-    return {
-        "query": """
+class LoadItemTask(load_csv.LoadCsvTask):
+    extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
+    table = luigi.EnumParameter(enum=transform_item.ItemTable)
+
+    def output(self):
+        output_folder_name = "_".join(["load", self.table.value])
+        return common.from_output_params(
+            output_dir=path.join(self.output_dir, output_folder_name),
+            extract_datetime=self.extract_datetime,
+            params={"lang": self.lang_tag.value},
+            ext="txt",
+        )
+
+
+class LoadItem(LoadItemTask):
+    table = transform_item.ItemTable.Item
+
+    postcopy_sql = sql.SQL(
+        """
 MERGE INTO gwapese.item AS target_item
-USING (
-  VALUES (%(chat_link)s::text, %(icon)s, %(item_id)s::integer,
-    %(rarity)s::text, %(required_level)s::integer, %(vendor_value)s::bigint)
-) AS source_item (chat_link, icon, item_id, rarity, required_level, vendor_value)
-ON
-  target_item.item_id = source_item.item_id
+USING tempo_item AS source_item ON target_item.item_id = source_item.item_id
 WHEN MATCHED
   AND source_item IS DISTINCT FROM (target_item.chat_link, target_item.icon,
     target_item.item_id, target_item.rarity, target_item.required_level,
     target_item.vendor_value) THEN
   UPDATE SET
-    (chat_link, icon, rarity, required_level, vendor_value) = (
-      source_item.chat_link, source_item.icon, source_item.rarity,
+    (chat_link, icon, rarity, required_level, vendor_value) =
+      (source_item.chat_link, source_item.icon, source_item.rarity,
       source_item.required_level, source_item.vendor_value)
 WHEN NOT MATCHED THEN
   INSERT (chat_link, icon, item_id, rarity, required_level, vendor_value)
     VALUES (source_item.chat_link, source_item.icon, source_item.item_id,
-      source_item.rarity, source_item.required_level, source_item.vendor_value);
-""",
-        "params": {
-            "chat_link": chat_link,
-            "icon": icon,
-            "item_id": item_id,
-            "rarity": rarity,
-            "required_level": required_level,
-            "vendor_value": vendor_value,
-        },
-    }
+      source_item.rarity, source_item.required_level,
+      source_item.vendor_value);
+"""
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_item.TransformItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            )
+        }
 
 
-def upsert_item_description(
-    app_name: str, item_id: int, lang_tag: str, original: str
-) -> dict[str]:
-    return {
-        "query": """
-MERGE INTO gwapese.item_description AS target_item_description
-USING (
-VALUES (%(app_name)s::text, %(item_id)s::integer,
-  %(lang_tag)s::text, %(original)s::text)
-) AS source_item_description (app_name, item_id,
-  lang_tag, original)
-  ON target_item_description.app_name = source_item_description.app_name
-  AND target_item_description.item_id = source_item_description.item_id
-  AND target_item_description.lang_tag = source_item_description.lang_tag
-WHEN MATCHED
-  AND target_item_description.original != source_item_description.original THEN
-  UPDATE SET
-    original = source_item_description.original
-WHEN NOT MATCHED THEN
-  INSERT (app_name, item_id, lang_tag, original)
-    VALUES (source_item_description.app_name,
-      source_item_description.item_id,
-      source_item_description.lang_tag,
-      source_item_description.original);""",
-        "params": {
-            "app_name": app_name,
-            "item_id": item_id,
-            "lang_tag": lang_tag,
-            "original": original,
-        },
-    }
+class LoadItemDescription(LoadItemTask):
+    table = transform_item.ItemTable.ItemDescription
+
+    postcopy_sql = sql.Composed(
+        [
+            load_lang.merge_into_operating_copy.format(
+                table_name=sql.Identifier("tempo_item_description")
+            ),
+            load_lang.merge_into_placed_copy.format(
+                table_name=sql.Identifier("item_description"),
+                temp_table_name=sql.Identifier("tempo_item_description"),
+                pk_name=sql.Identifier("item_id"),
+            ),
+        ]
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_item.TransformItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_item.ItemTable.Item.value: LoadItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }
 
 
-def prune_item_flags(flags: list[str], item_id: int) -> dict[str]:
-    return {
-        "query": """
+class LoadItemFlag(LoadItemTask):
+    table = transform_item.ItemTable.ItemFlag
+
+    postcopy_sql = sql.Composed(
+        [
+            sql.SQL(
+                """
 DELETE FROM gwapese.item_flag
-WHERE item_id = %(item_id)s::integer
-  AND NOT flag = ANY (%(flags)s::text[]);
-""",
-        "params": {"flags": flags, "item_id": item_id},
-    }
-
-
-def upsert_item_flag(flag: str, item_id: int) -> dict[str]:
-    return {
-        "query": """
+WHERE NOT EXISTS (
+    SELECT
+    FROM
+      tempo_item_flag
+    WHERE
+      gwapese.item_flag.flag = tempo_item_flag.flag
+      AND gwapese.item_flag.item_id = tempo_item_flag.item_id);
+"""
+            ),
+            sql.SQL(
+                """
 MERGE INTO gwapese.item_flag AS target_item_flag
-USING (
-  VALUES (%(flag)s::text, %(item_id)s::integer)
-) AS source_item_flag (flag, item_id)
-ON
-  target_item_flag.flag = source_item_flag.flag
+USING tempo_item_flag AS source_item_flag ON target_item_flag.flag =
+  source_item_flag.flag
   AND target_item_flag.item_id = source_item_flag.item_id
 WHEN NOT MATCHED THEN
   INSERT (flag, item_id)
     VALUES (source_item_flag.flag, source_item_flag.item_id);
-""",
-        "params": {"flag": flag, "item_id": item_id},
-    }
+"""
+            ),
+        ]
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_item.TransformItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_item.ItemTable.Item.value: LoadItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }
 
 
-def prune_item_game_types(game_types: list[str], item_id: int) -> dict[str]:
-    return {
-        "query": """
+class LoadItemGameType(LoadItemTask):
+    table = transform_item.ItemTable.ItemGameType
+
+    postcopy_sql = sql.Composed(
+        [
+            sql.SQL(
+                """
 DELETE FROM gwapese.item_game_type
-WHERE item_id = %(item_id)s::integer
-  AND NOT game_type = ANY (%(game_types)s::text[]);
-""",
-        "params": {"game_types": game_types, "item_id": item_id},
-    }
-
-
-def upsert_item_game_type(game_type: str, item_id: int) -> dict[str]:
-    return {
-        "query": """
+WHERE NOT EXISTS (
+    SELECT
+    FROM
+      tempo_item_game_type
+    WHERE
+      gwapese.item_game_type.game_type = tempo_item_game_type.game_type
+      AND gwapese.item_game_type.item_id = tempo_item_game_type.item_id);
+"""
+            ),
+            sql.SQL(
+                """
 MERGE INTO gwapese.item_game_type AS target_item_game_type
-USING (
-  VALUES (%(game_type)s::text, %(item_id)s::integer)
-) AS source_item_game_type (game_type, item_id)
-ON
+USING tempo_item_game_type AS source_item_game_type ON
   target_item_game_type.game_type = source_item_game_type.game_type
   AND target_item_game_type.item_id = source_item_game_type.item_id
 WHEN NOT MATCHED THEN
   INSERT (game_type, item_id)
     VALUES (source_item_game_type.game_type, source_item_game_type.item_id);
-""",
-        "params": {"game_type": game_type, "item_id": item_id},
-    }
+"""
+            ),
+        ]
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_item.TransformItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_item.ItemTable.Item.value: LoadItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }
 
 
-def prune_item_profession_restrictions(
-    item_id: int, profession_ids: list[str]
-) -> dict[str]:
-    return {
-        "query": """
+class LoadItemName(LoadItemTask):
+    table = transform_item.ItemTable.ItemName
+
+    postcopy_sql = sql.Composed(
+        [
+            load_lang.merge_into_operating_copy.format(
+                table_name=sql.Identifier("tempo_item_name")
+            ),
+            load_lang.merge_into_placed_copy.format(
+                table_name=sql.Identifier("item_name"),
+                temp_table_name=sql.Identifier("tempo_item_name"),
+                pk_name=sql.Identifier("item_id"),
+            ),
+        ]
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_item.TransformItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_item.ItemTable.Item.value: LoadItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }
+
+
+class LoadItemProfessionRestriction(LoadItemTask):
+    table = transform_item.ItemTable.ItemProfessionRestriction
+
+    postcopy_sql = sql.Composed(
+        [
+            sql.SQL(
+                """
 DELETE FROM gwapese.item_profession_restriction
-WHERE item_id = %(item_id)s::integer
-  AND NOT profession_id = ANY (%(profession_ids)s::text[]);
-""",
-        "params": {"item_id": item_id, "profession_ids": profession_ids},
-    }
-
-
-def upsert_item_profession_restriction(profession_id: str, item_id: int) -> dict[str]:
-    return {
-        "query": """
+WHERE NOT EXISTS (
+    SELECT
+    FROM
+      tempo_item_profession_restriction
+    WHERE
+      gwapese.item_profession_restriction.item_id = tempo_item_profession_restriction.item_id
+      AND gwapese.item_profession_restriction.profession_id =
+	tempo_item_profession_restriction.profession_id);
+"""
+            ),
+            sql.SQL(
+                """
 MERGE INTO gwapese.item_profession_restriction AS target_item_profession_restriction
-USING (
-  VALUES (%(item_id)s::integer, %(profession_id)s::text)
-) AS source_item_profession_restriction (item_id, profession_id)
-ON
-  target_item_profession_restriction.profession_id
-    = source_item_profession_restriction.profession_id
-  AND target_item_profession_restriction.item_id
-    = source_item_profession_restriction.item_id
+USING tempo_item_profession_restriction AS source_item_profession_restriction
+  ON target_item_profession_restriction.profession_id =
+  source_item_profession_restriction.profession_id
+  AND target_item_profession_restriction.item_id =
+    source_item_profession_restriction.item_id
 WHEN NOT MATCHED THEN
   INSERT (item_id, profession_id)
     VALUES (source_item_profession_restriction.item_id,
       source_item_profession_restriction.profession_id);
-""",
-        "params": {"profession_id": profession_id, "item_id": item_id},
-    }
+"""
+            ),
+        ]
+    )
+
+    def requires(self):
+        return {
+            transform_profession.ProfessionTable.Profession.value: load_profession.LoadProfession(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+            self.table.value: transform_item.TransformItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_item.ItemTable.Item.value: LoadItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }
 
 
-def prune_item_race_restrictions(item_id: int, race_names: list[str]) -> dict[str]:
-    return {
-        "query": """
+class LoadItemRaceRestriction(LoadItemTask):
+    table = transform_item.ItemTable.ItemRaceRestriction
+
+    postcopy_sql = sql.Composed(
+        [
+            sql.SQL(
+                """
 DELETE FROM gwapese.item_race_restriction
-WHERE item_id = %(item_id)s::integer
-  AND NOT race_name = ANY (%(race_names)s::text[]);
-""",
-        "params": {"item_id": item_id, "race_names": race_names},
-    }
-
-
-def upsert_item_race_restriction(race_name: str, item_id: int) -> dict[str]:
-    return {
-        "query": """
+WHERE NOT EXISTS (
+    SELECT
+    FROM
+      tempo_item_race_restriction
+    WHERE
+      gwapese.item_race_restriction.item_id = tempo_item_race_restriction.item_id
+      AND gwapese.item_race_restriction.race_id = tempo_item_race_restriction.race_id);
+"""
+            ),
+            sql.SQL(
+                """
 MERGE INTO gwapese.item_race_restriction AS target_item_race_restriction
-USING (
-  VALUES (%(item_id)s::integer, %(race_name)s::text)
-) AS source_item_race_restriction (item_id, race_name)
-ON
+USING tempo_item_race_restriction AS source_item_race_restriction ON
   target_item_race_restriction.item_id = source_item_race_restriction.item_id
-  AND  target_item_race_restriction.race_name = source_item_race_restriction.race_name
+  AND target_item_race_restriction.race_id = source_item_race_restriction.race_id
 WHEN NOT MATCHED THEN
-  INSERT (item_id, race_name)
-    VALUES (source_item_race_restriction.item_id,
-      source_item_race_restriction.race_name);
-""",
-        "params": {"item_id": item_id, "race_name": race_name},
-    }
+  INSERT (item_id, race_id)
+    VALUES (source_item_race_restriction.item_id, source_item_race_restriction.race_id);
+"""
+            ),
+        ]
+    )
+
+    def requires(self):
+        return {
+            transform_race.RaceTable.Race.value: load_race.LoadRace(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+            self.table.value: transform_item.TransformItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_item.ItemTable.Item.value: LoadItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }
 
 
-def upsert_item_name(
-    app_name: str, item_id: int, lang_tag: str, original: str
-) -> dict[str]:
-    return {
-        "query": """
-MERGE INTO gwapese.item_name AS target_item_name
-USING (
-VALUES (%(app_name)s::text, %(item_id)s::integer,
-  %(lang_tag)s::text, %(original)s::text)
-) AS source_item_name (app_name, item_id,
-  lang_tag, original)
-  ON target_item_name.app_name = source_item_name.app_name
-  AND target_item_name.item_id = source_item_name.item_id
-  AND target_item_name.lang_tag = source_item_name.lang_tag
-WHEN MATCHED
-  AND target_item_name.original != source_item_name.original THEN
-  UPDATE SET
-    original = source_item_name.original
-WHEN NOT MATCHED THEN
-  INSERT (app_name, item_id, lang_tag, original)
-    VALUES (source_item_name.app_name,
-      source_item_name.item_id,
-      source_item_name.lang_tag,
-      source_item_name.original);""",
-        "params": {
-            "app_name": app_name,
-            "item_id": item_id,
-            "lang_tag": lang_tag,
-            "original": original,
-        },
-    }
+class LoadItemType(LoadItemTask):
+    table = transform_item.ItemTable.ItemType
 
-
-def upsert_item_type(item_id: int, item_type: str) -> dict[str]:
-    return {
-        "query": """
+    postcopy_sql = sql.SQL(
+        """
 MERGE INTO gwapese.item_type AS target_item_type
-USING (
-  VALUES (%(item_id)s::integer, %(item_type)s::text)
-) AS source_item_type (item_id, item_type)
-ON
-  target_item_type.item_id = source_item_type.item_id
+USING tempo_item_type AS source_item_type ON target_item_type.item_id =
+  source_item_type.item_id
 WHEN NOT MATCHED THEN
   INSERT (item_id, item_type)
     VALUES (source_item_type.item_id, source_item_type.item_type);
-""",
-        "params": {"item_id": item_id, "item_type": item_type},
-    }
+"""
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_item.TransformItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_item.ItemTable.Item.value: LoadItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }
 
 
-# def upsert_item_upgrade(from_item_id: int, to_item_id: int, upgrade: str) -> dict[str]:
-#     return {
-#         "query": """
-# MERGE INTO gwapese.item_upgrade AS target_item_upgrade
-# USING (
-#   VALUES (%(from_item_id)s::integer, %(to_item_id)s::integer, %(upgrade)s::text)
-# ) AS source_item_upgrade (from_item_id, to_item_id, upgrade)
-# ON
-#   target_item_upgrade.from_item_id = source_item_upgrade.from_item_id
-#   AND target_item_upgrade.to_item_id = source_item_upgrade.to_item_id
-#   AND target_item_upgrade.upgrade = source_item_upgrade.upgrade
-# WHEN NOT MATCHED THEN
-#   INSERT (from_item_id, to_item_id, upgrade)
-#     VALUES (source_item_upgrade.item_id,
-#       source_item_upgrade.to_item_id, source_item_upgrade.upgrade);
-# """,
-#         "params": {
-#             "from_item_id": from_item_id,
-#             "to_item_id": to_item_id,
-#             "upgrade": upgrade,
-#         },
-#     }
+class LoadItemUpgrade(LoadItemTask):
+    table = transform_item.ItemTable.ItemUpgrade
+
+    postcopy_sql = sql.SQL(
+        """
+MERGE INTO gwapese.item_upgrade AS target_item_upgrade
+USING (
+  SELECT
+    DISTINCT
+      from_item_id, to_item_id, upgrade
+    FROM
+      tempo_item_upgrade
+    WHERE
+      EXISTS (
+        SELECT
+          1
+        FROM
+          gwapese.item
+        WHERE
+          gwapese.item.item_id = tempo_item_upgrade.from_item_id)
+      AND EXISTS (
+        SELECT
+          1
+        FROM
+          gwapese.item
+        WHERE
+	        gwapese.item.item_id = tempo_item_upgrade.to_item_id)
+) AS source_item_upgrade ON target_item_upgrade.from_item_id =
+  source_item_upgrade.from_item_id
+  AND target_item_upgrade.to_item_id = source_item_upgrade.to_item_id
+  AND target_item_upgrade.upgrade = source_item_upgrade.upgrade
+WHEN NOT MATCHED THEN
+    INSERT
+      (from_item_id, to_item_id, upgrade)
+        VALUES (source_item_upgrade.from_item_id,
+        source_item_upgrade.to_item_id,
+	      source_item_upgrade.upgrade);
+"""
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_item.TransformItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_item.ItemTable.Item.value: LoadItem(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+        }

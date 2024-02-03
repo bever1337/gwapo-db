@@ -36,15 +36,6 @@ class LoadNoveltyTask(load_csv.LoadCsvTask):
 class LoadNovelty(LoadNoveltyTask):
     table = transform_novelty.NoveltyTable.Novelty
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_novelty"),
-        table_name=sql.Identifier("novelty"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_novelty")
-    )
-
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.novelty AS target_novelty
@@ -69,15 +60,6 @@ WHEN NOT MATCHED THEN
 class LoadNoveltyDescription(LoadNoveltyTask):
     table = transform_novelty.NoveltyTable.NoveltyDescription
 
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_novelty_description"),
-        table_name=sql.Identifier("novelty_description"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_novelty_description")
-    )
-
     postcopy_sql = sql.Composed(
         [
             load_lang.merge_into_operating_copy.format(
@@ -94,15 +76,6 @@ class LoadNoveltyDescription(LoadNoveltyTask):
 
 class LoadNoveltyName(LoadNoveltyTask):
     table = transform_novelty.NoveltyTable.NoveltyName
-
-    precopy_sql = load_csv.create_temporary_table.format(
-        temp_table_name=sql.Identifier("tempo_novelty_name"),
-        table_name=sql.Identifier("novelty_name"),
-    )
-
-    copy_sql = load_csv.copy_from_stdin.format(
-        temp_table_name=sql.Identifier("tempo_novelty_name")
-    )
 
     postcopy_sql = sql.Composed(
         [
