@@ -12,7 +12,7 @@ import transform_color
 import transform_glider
 
 
-class SeedGlider(luigi.WrapperTask):
+class WrapGlider(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
 
     def requires(self):

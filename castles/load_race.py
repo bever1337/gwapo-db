@@ -10,7 +10,7 @@ import load_lang
 import transform_race
 
 
-class SeedRace(luigi.WrapperTask):
+class WrapRace(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
 
     def requires(self):

@@ -10,7 +10,7 @@ import load_lang
 import transform_novelty
 
 
-class SeedNovelty(luigi.WrapperTask):
+class WrapNovelty(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
 
     def requires(self):

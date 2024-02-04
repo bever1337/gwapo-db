@@ -14,7 +14,7 @@ import transform_race
 import transform_skin
 
 
-class SeedSkin(luigi.WrapperTask):
+class WrapSkin(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
 
     def requires(self):

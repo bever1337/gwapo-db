@@ -10,7 +10,7 @@ import load_lang
 import transform_mount
 
 
-class SeedMount(luigi.WrapperTask):
+class WrapMount(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
 
     def requires(self):

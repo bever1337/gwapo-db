@@ -10,7 +10,7 @@ import load_lang
 import transform_mini
 
 
-class SeedMini(luigi.WrapperTask):
+class WrapMini(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
 
     def requires(self):

@@ -10,7 +10,7 @@ import load_lang
 import transform_jade_bot
 
 
-class SeedJadeBot(luigi.WrapperTask):
+class WrapJadeBot(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
 
     def requires(self):

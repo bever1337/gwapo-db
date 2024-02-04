@@ -11,7 +11,7 @@ import load_lang
 import transform_finisher
 
 
-class SeedFinisher(luigi.WrapperTask):
+class WrapFinisher(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
 
     def requires(self):

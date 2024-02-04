@@ -10,7 +10,7 @@ import load_lang
 import transform_currency
 
 
-class SeedCurrency(luigi.WrapperTask):
+class WrapCurrency(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
 
     def requires(self):

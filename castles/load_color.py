@@ -10,7 +10,7 @@ import load_lang
 import transform_color
 
 
-class SeedColor(luigi.WrapperTask):
+class WrapColor(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
 
     def requires(self):

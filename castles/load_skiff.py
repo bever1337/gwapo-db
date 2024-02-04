@@ -12,7 +12,7 @@ import transform_color
 import transform_skiff
 
 
-class SeedSkiff(luigi.WrapperTask):
+class WrapSkiff(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
 
     def requires(self):

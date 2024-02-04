@@ -10,7 +10,7 @@ import load_lang
 import transform_guild_upgrade
 
 
-class SeedGuildUpgrade(luigi.WrapperTask):
+class WrapGuildUpgrade(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
 
     def requires(self):

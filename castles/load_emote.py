@@ -9,7 +9,7 @@ import load_csv
 import transform_emote
 
 
-class SeedEmote(luigi.WrapperTask):
+class WrapEmote(luigi.WrapperTask):
     def requires(self):
         yield LoadEmote()
         yield LoadEmoteCommand()

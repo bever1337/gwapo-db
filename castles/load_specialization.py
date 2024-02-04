@@ -12,7 +12,7 @@ import transform_profession
 import transform_specialization
 
 
-class SeedSpecialization(luigi.WrapperTask):
+class WrapSpecialization(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
 
     def requires(self):

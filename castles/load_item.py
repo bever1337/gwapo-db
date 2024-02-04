@@ -14,7 +14,7 @@ import transform_profession
 import transform_race
 
 
-class SeedItem(luigi.WrapperTask):
+class WrapItem(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
 
     def requires(self):

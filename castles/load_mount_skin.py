@@ -14,7 +14,7 @@ import transform_mount_skin
 import transform_mount
 
 
-class SeedMountSkin(luigi.WrapperTask):
+class WrapMountSkin(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
 
     def requires(self):
