@@ -2,6 +2,7 @@
 -- requires: schema
 -- requires: history
 -- requires: lang
+-- requires: color
 -- requires: mount
 BEGIN;
 

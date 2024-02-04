@@ -46,11 +46,10 @@ class LoadRace(LoadRaceTask):
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.race AS target_race
-USING tempo_race AS source_race
-    ON target_race.race_id = source_race.race_id
+USING tempo_race AS source_race ON target_race.race_id = source_race.race_id
 WHEN NOT MATCHED THEN
-    INSERT (race_id)
-        VALUES (source_race.race_id);
+  INSERT (race_id)
+    VALUES (source_race.race_id);
 """
     )
 
@@ -93,5 +92,8 @@ class LoadRaceName(LoadRaceTask):
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
+            ),
+            "lang": load_lang.LoadLang(
+                extract_datetime=self.extract_datetime, output_dir=self.output_dir
             ),
         }

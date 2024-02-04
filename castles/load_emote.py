@@ -97,7 +97,7 @@ WHEN NOT MATCHED THEN
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_emote.EmoteTable.Emote: LoadEmote(
+            transform_emote.EmoteTable.Emote.value: LoadEmote(
                 extract_datetime=self.extract_datetime,
                 output_dir=self.output_dir,
             ),

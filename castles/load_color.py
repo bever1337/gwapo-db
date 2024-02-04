@@ -101,10 +101,13 @@ class LoadColorName(LoadColorTask):
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_color.ColorTable.Color: LoadColor(
+            transform_color.ColorTable.Color.value: LoadColor(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
+            ),
+            "lang": load_lang.LoadLang(
+                extract_datetime=self.extract_datetime, output_dir=self.output_dir
             ),
         }
 
@@ -139,7 +142,7 @@ WHEN NOT MATCHED THEN
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_color.ColorTable.Color: LoadColor(
+            transform_color.ColorTable.Color.value: LoadColor(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
@@ -170,7 +173,7 @@ WHEN NOT MATCHED THEN
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_color.ColorTable.Color: LoadColor(
+            transform_color.ColorTable.Color.value: LoadColor(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
@@ -207,7 +210,7 @@ WHEN NOT MATCHED THEN
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_color.ColorTable.ColorSample: LoadColorSample(
+            transform_color.ColorTable.ColorSample.value: LoadColorSample(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
@@ -246,7 +249,7 @@ WHEN NOT MATCHED THEN
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_color.ColorTable.ColorSample: LoadColorSample(
+            transform_color.ColorTable.ColorSample.value: LoadColorSample(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
@@ -285,7 +288,7 @@ WHEN NOT MATCHED THEN
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_color.ColorTable.ColorSample: LoadColorSample(
+            transform_color.ColorTable.ColorSample.value: LoadColorSample(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
@@ -344,7 +347,7 @@ WHEN NOT MATCHED THEN
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_color.ColorTable.ColorSampleReference: LoadColorSample(
+            transform_color.ColorTable.ColorSampleReference.value: LoadColorSampleReference(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,

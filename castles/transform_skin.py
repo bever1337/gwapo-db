@@ -109,7 +109,7 @@ class TransformSkin(transform_csv.TransformCsvTask):
                     {
                         "skin_id": skin_id,
                         "skin_type": "Gathering",
-                        "tool": skin["details"]["tool"],
+                        "tool": skin["details"]["type"],
                     }
                 ]
             case SkinTable.SkinName:

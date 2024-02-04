@@ -68,7 +68,7 @@ class TransformMini(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "lang_tag": self.lang_tag.value,
                         "mini_id": mini_id,
-                        "original": mini["description"],
+                        "original": mini_unlock,
                     }
                 ]
             case _:

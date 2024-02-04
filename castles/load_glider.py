@@ -4,8 +4,10 @@ from os import path
 from psycopg import sql
 
 import common
+import load_color
 import load_csv
 import load_lang
+import transform_color
 import transform_glider
 
 
@@ -48,20 +50,15 @@ class LoadGlider(LoadGliderTask):
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.glider AS target_glider
-USING tempo_glider AS source_glider
-ON
-  target_glider.glider_id = source_glider.glider_id
+USING tempo_glider AS source_glider ON target_glider.glider_id = source_glider.glider_id
 WHEN MATCHED
   AND target_glider.icon != source_glider.icon
   OR target_glider.presentation_order != source_glider.presentation_order THEN
   UPDATE SET
-    (icon, presentation_order) =
-      (source_glider.icon, source_glider.presentation_order)
+    (icon, presentation_order) = (source_glider.icon, source_glider.presentation_order)
 WHEN NOT MATCHED THEN
   INSERT (glider_id, icon, presentation_order)
-    VALUES (source_glider.glider_id,
-      source_glider.icon,
-      source_glider.presentation_order);
+    VALUES (source_glider.glider_id, source_glider.icon, source_glider.presentation_order);
 """
     )
 
@@ -100,10 +97,13 @@ class LoadGliderDescription(LoadGliderTask):
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_glider.GliderTable.Glider: LoadGlider(
+            transform_glider.GliderTable.Glider.value: LoadGlider(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
+            ),
+            "lang": load_lang.LoadLang(
+                extract_datetime=self.extract_datetime, output_dir=self.output_dir
             ),
         }
 
@@ -117,17 +117,19 @@ class LoadGliderDyeSlot(LoadGliderTask):
                 """
 DELETE FROM gwapese.glider_dye_slot
 WHERE NOT EXISTS (
-  SELECT FROM tempo_glider_dye_slot
-  WHERE gwapese.glider_dye_slot.glider_id = tempo_glider_dye_slot.glider_id
-    AND gwapese.glider_dye_slot.slot_index = tempo_glider_dye_slot.slot_index
-);
+    SELECT
+    FROM
+      tempo_glider_dye_slot
+    WHERE
+      gwapese.glider_dye_slot.glider_id = tempo_glider_dye_slot.glider_id
+      AND gwapese.glider_dye_slot.slot_index = tempo_glider_dye_slot.slot_index);
 """
             ),
             sql.SQL(
                 """
 MERGE INTO gwapese.glider_dye_slot AS target_glider_dye_slot
-USING tempo_glider_dye_slot AS source_glider_dye_slot
-  ON target_glider_dye_slot.glider_id = source_glider_dye_slot.glider_id
+USING tempo_glider_dye_slot AS source_glider_dye_slot ON
+  target_glider_dye_slot.glider_id = source_glider_dye_slot.glider_id
   AND target_glider_dye_slot.slot_index = source_glider_dye_slot.slot_index
 WHEN NOT MATCHED THEN
   INSERT (color_id, glider_id, slot_index)
@@ -146,7 +148,12 @@ WHEN NOT MATCHED THEN
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_glider.GliderTable.Glider: LoadGlider(
+            transform_color.ColorTable.Color.value: load_color.LoadColor(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+            transform_glider.GliderTable.Glider.value: LoadGlider(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
@@ -178,9 +185,12 @@ class LoadGliderName(LoadGliderTask):
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_glider.GliderTable.Glider: LoadGlider(
+            transform_glider.GliderTable.Glider.value: LoadGlider(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
+            ),
+            "lang": load_lang.LoadLang(
+                extract_datetime=self.extract_datetime, output_dir=self.output_dir
             ),
         }

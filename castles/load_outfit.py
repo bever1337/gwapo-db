@@ -9,6 +9,21 @@ import load_lang
 import transform_outfit
 
 
+class SeedOutfit(luigi.WrapperTask):
+    extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
+
+    def requires(self):
+        args = {
+            "extract_datetime": self.extract_datetime,
+            "lang_tag": self.lang_tag,
+            "output_dir": self.output_dir,
+        }
+        yield LoadOutfit(**args)
+        yield LoadOutfitName(**args)
+
+
 class LoadOutfitTask(load_csv.LoadCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
@@ -24,14 +39,6 @@ class LoadOutfitTask(load_csv.LoadCsvTask):
             ext="txt",
         )
 
-    def requires(self):
-        return transform_outfit.TransformOutfit(
-            extract_datetime=self.extract_datetime,
-            lang_tag=self.lang_tag,
-            output_dir=self.output_dir,
-            table=self.table,
-        )
-
 
 class LoadOutfit(LoadOutfitTask):
     table = transform_outfit.OutfitTable.Outfit
@@ -39,19 +46,26 @@ class LoadOutfit(LoadOutfitTask):
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.outfit AS target_outfit
-USING tempo_outfit AS source_outfit
-ON
-  target_outfit.outfit_id = source_outfit.outfit_id
+USING tempo_outfit AS source_outfit ON target_outfit.outfit_id = source_outfit.outfit_id
 WHEN MATCHED
   AND target_outfit.icon != source_outfit.icon THEN
   UPDATE SET
     icon = source_outfit.icon
 WHEN NOT MATCHED THEN
   INSERT (icon, outfit_id)
-    VALUES (source_outfit.icon,
-      source_outfit.outfit_id);
+    VALUES (source_outfit.icon, source_outfit.outfit_id);
 """
     )
+
+    def requires(self):
+        return {
+            self.table.value: transform_outfit.TransformOutfit(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            )
+        }
 
 
 class LoadOutfitName(LoadOutfitTask):
@@ -69,3 +83,21 @@ class LoadOutfitName(LoadOutfitTask):
             ),
         ]
     )
+
+    def requires(self):
+        return {
+            self.table.value: transform_outfit.TransformOutfit(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+                table=self.table,
+            ),
+            transform_outfit.OutfitTable.Outfit.value: LoadOutfit(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
+            ),
+            "lang": load_lang.LoadLang(
+                extract_datetime=self.extract_datetime, output_dir=self.output_dir
+            ),
+        }

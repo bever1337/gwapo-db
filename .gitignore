@@ -4,7 +4,7 @@ dist
 include
 node_modules
 .vscode
-luigis/castles/
+castles/artifacts/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

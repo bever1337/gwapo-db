@@ -114,6 +114,9 @@ class LoadItemDescription(LoadItemTask):
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
             ),
+            "lang": load_lang.LoadLang(
+                extract_datetime=self.extract_datetime, output_dir=self.output_dir
+            ),
         }
 
 
@@ -240,6 +243,9 @@ class LoadItemName(LoadItemTask):
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
             ),
+            "lang": load_lang.LoadLang(
+                extract_datetime=self.extract_datetime, output_dir=self.output_dir
+            ),
         }
 
 
@@ -280,16 +286,16 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            transform_profession.ProfessionTable.Profession.value: load_profession.LoadProfession(
-                extract_datetime=self.extract_datetime,
-                lang_tag=self.lang_tag,
-                output_dir=self.output_dir,
-            ),
             self.table.value: transform_item.TransformItem(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
                 table=self.table,
+            ),
+            transform_profession.ProfessionTable.Profession.value: load_profession.LoadProfession(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
             ),
             transform_item.ItemTable.Item.value: LoadItem(
                 extract_datetime=self.extract_datetime,
@@ -332,16 +338,16 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            transform_race.RaceTable.Race.value: load_race.LoadRace(
-                extract_datetime=self.extract_datetime,
-                lang_tag=self.lang_tag,
-                output_dir=self.output_dir,
-            ),
             self.table.value: transform_item.TransformItem(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
                 table=self.table,
+            ),
+            transform_race.RaceTable.Race.value: load_race.LoadRace(
+                extract_datetime=self.extract_datetime,
+                lang_tag=self.lang_tag,
+                output_dir=self.output_dir,
             ),
             transform_item.ItemTable.Item.value: LoadItem(
                 extract_datetime=self.extract_datetime,
@@ -407,7 +413,7 @@ USING (
         FROM
           gwapese.item
         WHERE
-	        gwapese.item.item_id = tempo_item_upgrade.to_item_id)
+	      gwapese.item.item_id = tempo_item_upgrade.to_item_id)
 ) AS source_item_upgrade ON target_item_upgrade.from_item_id =
   source_item_upgrade.from_item_id
   AND target_item_upgrade.to_item_id = source_item_upgrade.to_item_id

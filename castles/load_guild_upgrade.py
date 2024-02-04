@@ -107,10 +107,13 @@ class LoadGuildUpgradeDescription(LoadGuildUpgradeTask):
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade: LoadGuildUpgrade(
+            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade.value: LoadGuildUpgrade(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
+            ),
+            "lang": load_lang.LoadLang(
+                extract_datetime=self.extract_datetime, output_dir=self.output_dir
             ),
         }
 
@@ -139,10 +142,13 @@ class LoadGuildUpgradeName(LoadGuildUpgradeTask):
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade: LoadGuildUpgrade(
+            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade.value: LoadGuildUpgrade(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
+            ),
+            "lang": load_lang.LoadLang(
+                extract_datetime=self.extract_datetime, output_dir=self.output_dir
             ),
         }
 
@@ -191,7 +197,7 @@ WHEN NOT MATCHED THEN
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade: LoadGuildUpgrade(
+            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade.value: LoadGuildUpgrade(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,

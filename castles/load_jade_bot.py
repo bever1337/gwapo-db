@@ -3,14 +3,13 @@ import luigi
 from os import path
 from psycopg import sql
 
-
 import common
 import load_csv
 import load_lang
-import transform_finisher
+import transform_jade_bot
 
 
-class SeedFinisher(luigi.WrapperTask):
+class SeedJadeBot(luigi.WrapperTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
     output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
@@ -21,16 +20,16 @@ class SeedFinisher(luigi.WrapperTask):
             "lang_tag": self.lang_tag,
             "output_dir": self.output_dir,
         }
-        yield LoadFinisher(**args)
-        yield LoadFinisherDetail(**args)
-        yield LoadFinisherName(**args)
+        yield LoadJadeBot(**args)
+        yield LoadJadeBotDescription(**args)
+        yield LoadJadeBotName(**args)
 
 
-class LoadFinisherTask(load_csv.LoadCsvTask):
+class LoadJadeBotTask(load_csv.LoadCsvTask):
     extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
     output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
-    table = luigi.EnumParameter(enum=transform_finisher.FinisherTable)
+    table = luigi.EnumParameter(enum=transform_jade_bot.JadeBotTable)
 
     def output(self):
         output_folder_name = "_".join(["load", self.table.value])
@@ -42,29 +41,23 @@ class LoadFinisherTask(load_csv.LoadCsvTask):
         )
 
 
-class LoadFinisher(LoadFinisherTask):
-    table = transform_finisher.FinisherTable.Finisher
+class LoadJadeBot(LoadJadeBotTask):
+    table = transform_jade_bot.JadeBotTable.JadeBot
 
     postcopy_sql = sql.SQL(
         """
-MERGE INTO gwapese.finisher AS target_finisher
-USING tempo_finisher AS source_finisher ON target_finisher.finisher_id =
-  source_finisher.finisher_id
-WHEN MATCHED
-  AND target_finisher.icon != source_finisher.icon
-  OR target_finisher.presentation_order != source_finisher.presentation_order THEN
-  UPDATE SET
-    (icon, presentation_order) = (source_finisher.icon, source_finisher.presentation_order)
+MERGE INTO gwapese.jade_bot AS target_jade_bot
+USING tempo_jade_bot AS source_jade_bot ON target_jade_bot.jade_bot_id =
+  source_jade_bot.jade_bot_id
 WHEN NOT MATCHED THEN
-  INSERT (finisher_id, icon, presentation_order)
-    VALUES (source_finisher.finisher_id, source_finisher.icon,
-      source_finisher.presentation_order);
+  INSERT (jade_bot_id)
+    VALUES (source_jade_bot.jade_bot_id);
 """
     )
 
     def requires(self):
         return {
-            self.table.value: transform_finisher.TransformFinisher(
+            self.table.value: transform_jade_bot.TransformJadeBot(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
@@ -73,65 +66,71 @@ WHEN NOT MATCHED THEN
         }
 
 
-class LoadFinisherDetail(LoadFinisherTask):
-    table = transform_finisher.FinisherTable.FinisherDetail
+class LoadJadeBotDescription(LoadJadeBotTask):
+    table = transform_jade_bot.JadeBotTable.JadeBotDescription
 
     postcopy_sql = sql.Composed(
         [
             load_lang.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_finisher_detail")
+                table_name=sql.Identifier("tempo_jade_bot_description")
             ),
             load_lang.merge_into_placed_copy.format(
-                table_name=sql.Identifier("finisher_detail"),
-                temp_table_name=sql.Identifier("tempo_finisher_detail"),
-                pk_name=sql.Identifier("finisher_id"),
+                table_name=sql.Identifier("jade_bot_description"),
+                temp_table_name=sql.Identifier("tempo_jade_bot_description"),
+                pk_name=sql.Identifier("jade_bot_id"),
             ),
         ]
     )
 
     def requires(self):
         return {
-            self.table.value: transform_finisher.TransformFinisher(
+            self.table.value: transform_jade_bot.TransformJadeBot(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_finisher.FinisherTable.Finisher: LoadFinisher(
+            transform_jade_bot.JadeBotTable.JadeBot.value: LoadJadeBot(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
+            ),
+            "lang": load_lang.LoadLang(
+                extract_datetime=self.extract_datetime, output_dir=self.output_dir
             ),
         }
 
 
-class LoadFinisherName(LoadFinisherTask):
-    table = transform_finisher.FinisherTable.FinisherName
+class LoadJadeBotName(LoadJadeBotTask):
+    table = transform_jade_bot.JadeBotTable.JadeBotName
 
     postcopy_sql = sql.Composed(
         [
             load_lang.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_finisher_name")
+                table_name=sql.Identifier("tempo_jade_bot_name")
             ),
             load_lang.merge_into_placed_copy.format(
-                table_name=sql.Identifier("finisher_name"),
-                temp_table_name=sql.Identifier("tempo_finisher_name"),
-                pk_name=sql.Identifier("finisher_id"),
+                table_name=sql.Identifier("jade_bot_name"),
+                temp_table_name=sql.Identifier("tempo_jade_bot_name"),
+                pk_name=sql.Identifier("jade_bot_id"),
             ),
         ]
     )
 
     def requires(self):
         return {
-            self.table.value: transform_finisher.TransformFinisher(
+            self.table.value: transform_jade_bot.TransformJadeBot(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_finisher.FinisherTable.Finisher: LoadFinisher(
+            transform_jade_bot.JadeBotTable.JadeBot.value: LoadJadeBot(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
+            ),
+            "lang": load_lang.LoadLang(
+                extract_datetime=self.extract_datetime, output_dir=self.output_dir
             ),
         }

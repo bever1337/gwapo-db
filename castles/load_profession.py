@@ -46,23 +46,19 @@ class LoadProfession(LoadProfessionTask):
     postcopy_sql = sql.SQL(
         """
 MERGE INTO gwapese.profession AS target_profession
-USING tempo_profession AS source_profession
-ON
-  target_profession.profession_id = source_profession.profession_id
+USING tempo_profession AS source_profession ON target_profession.profession_id
+  = source_profession.profession_id
 WHEN MATCHED
-  AND target_profession.code != source_profession.code 
+  AND target_profession.code != source_profession.code
   OR target_profession.icon_big != source_profession.icon_big
   OR target_profession.icon != source_profession.icon THEN
   UPDATE SET
     (code, icon_big, icon) = (source_profession.code,
-      source_profession.icon_big,
-      source_profession.icon)
+      source_profession.icon_big, source_profession.icon)
 WHEN NOT MATCHED THEN
   INSERT (code, icon_big, icon, profession_id)
-    VALUES (source_profession.code,
-      source_profession.icon_big,
-      source_profession.icon,
-      source_profession.profession_id);
+    VALUES (source_profession.code, source_profession.icon_big,
+      source_profession.icon, source_profession.profession_id);
 """
     )
 
@@ -105,5 +101,8 @@ class LoadProfessionName(LoadProfessionTask):
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
+            ),
+            "lang": load_lang.LoadLang(
+                extract_datetime=self.extract_datetime, output_dir=self.output_dir
             ),
         }

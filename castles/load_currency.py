@@ -114,7 +114,7 @@ WHEN NOT MATCHED THEN
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_currency.CurrencyTable.Currency: LoadCurrency(
+            transform_currency.CurrencyTable.Currency.value: LoadCurrency(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
@@ -146,10 +146,13 @@ class LoadCurrencyDescription(LoadCurrencyTask):
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_currency.CurrencyTable.Currency: LoadCurrency(
+            transform_currency.CurrencyTable.Currency.value: LoadCurrency(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
+            ),
+            "lang": load_lang.LoadLang(
+                extract_datetime=self.extract_datetime, output_dir=self.output_dir
             ),
         }
 
@@ -178,9 +181,12 @@ class LoadCurrencyName(LoadCurrencyTask):
                 output_dir=self.output_dir,
                 table=self.table,
             ),
-            transform_currency.CurrencyTable.Currency: LoadCurrency(
+            transform_currency.CurrencyTable.Currency.value: LoadCurrency(
                 extract_datetime=self.extract_datetime,
                 lang_tag=self.lang_tag,
                 output_dir=self.output_dir,
+            ),
+            "lang": load_lang.LoadLang(
+                extract_datetime=self.extract_datetime, output_dir=self.output_dir
             ),
         }

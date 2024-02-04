@@ -2,7 +2,6 @@
 -- requires: schema
 -- requires: history
 -- requires: lang
--- requires: color
 BEGIN;
 
 CREATE TABLE gwapese.mount (
