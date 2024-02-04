@@ -1,7 +1,7 @@
-import datetime
 import luigi
 from os import path
 from psycopg import sql
+
 
 import common
 import config

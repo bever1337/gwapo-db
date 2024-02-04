@@ -50,7 +50,7 @@ CREATE TABLE gwapese.color_name (
     gwapese.color (color_id) ON DELETE CASCADE,
   CONSTRAINT operating_copy_precedes_color_name_fk FOREIGN KEY (app_name,
     lang_tag, original) REFERENCES gwapese.operating_copy (app_name, lang_tag,
-    original)
+    original) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_name');

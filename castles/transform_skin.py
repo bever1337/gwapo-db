@@ -1,4 +1,3 @@
-import datetime
 import enum
 import luigi
 from os import path
@@ -7,6 +6,7 @@ import common
 import config
 import extract_batch
 import transform_csv
+import transform_lang
 
 
 class SkinTable(enum.Enum):
@@ -94,7 +94,7 @@ class TransformSkin(transform_csv.TransformCsvTask):
                     {
                         "app_name": "gw2",
                         "lang_tag": self.lang_tag.value,
-                        "original": skin_description,
+                        "original": transform_lang.to_xhmtl_fragment(skin_description),
                         "skin_id": skin_id,
                     }
                 ]
@@ -118,7 +118,7 @@ class TransformSkin(transform_csv.TransformCsvTask):
                     {
                         "app_name": "gw2",
                         "lang_tag": self.lang_tag.value,
-                        "original": skin_name,
+                        "original": transform_lang.to_xhmtl_fragment(skin_name),
                         "skin_id": skin_id,
                     }
                 ]

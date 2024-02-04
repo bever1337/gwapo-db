@@ -1,4 +1,3 @@
-import datetime
 import enum
 import luigi
 from os import path
@@ -7,6 +6,7 @@ import common
 import config
 import extract_batch
 import transform_csv
+import transform_lang
 
 
 class SkiffTable(enum.Enum):
@@ -57,7 +57,7 @@ class TransformSkiff(transform_csv.TransformCsvTask):
                     {
                         "app_name": "gw2",
                         "lang_tag": self.lang_tag.value,
-                        "original": skiff["name"],
+                        "original": transform_lang.to_xhmtl_fragment(skiff["name"]),
                         "skiff_id": skiff_id,
                     }
                 ]

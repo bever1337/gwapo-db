@@ -35,7 +35,7 @@ CREATE TABLE gwapese.guild_upgrade_description (
     DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT operating_copy_precedes_guild_upgrade_description_fk FOREIGN KEY
     (app_name, lang_tag, original) REFERENCES gwapese.operating_copy (app_name,
-    lang_tag, original) ON DELETE CASCADE ON UPDATE RESTRICT
+    lang_tag, original) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'guild_upgrade_description');
@@ -58,7 +58,7 @@ CREATE TABLE gwapese.guild_upgrade_name (
     DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT operating_copy_precedes_guild_upgrade_name_fk FOREIGN KEY
     (app_name, lang_tag, original) REFERENCES gwapese.operating_copy (app_name,
-    lang_tag, original) ON DELETE CASCADE ON UPDATE RESTRICT
+    lang_tag, original) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'guild_upgrade_name');

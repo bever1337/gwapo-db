@@ -1,4 +1,3 @@
-import datetime
 import enum
 import luigi
 from os import path
@@ -7,6 +6,7 @@ import common
 import config
 import extract_batch
 import transform_csv
+import transform_lang
 
 
 class GliderTable(enum.Enum):
@@ -57,7 +57,9 @@ class TransformGlider(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "glider_id": glider_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": glider_description,
+                        "original": transform_lang.to_xhmtl_fragment(
+                            glider_description
+                        ),
                     }
                 ]
             case GliderTable.GliderDyeSlot:
@@ -75,7 +77,7 @@ class TransformGlider(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "glider_id": glider_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": glider["name"],
+                        "original": transform_lang.to_xhmtl_fragment(glider["name"]),
                     }
                 ]
             case _:

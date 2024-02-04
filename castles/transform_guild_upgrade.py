@@ -1,4 +1,3 @@
-import datetime
 import enum
 import luigi
 from os import path
@@ -7,6 +6,7 @@ import common
 import config
 import extract_batch
 import transform_csv
+import transform_lang
 
 
 class GuildUpgradeTable(enum.Enum):
@@ -60,7 +60,9 @@ class TransformGuildUpgrade(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "guild_upgrade_id": guild_upgrade_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": guild_upgrade["description"],
+                        "original": transform_lang.to_xhmtl_fragment(
+                            guild_upgrade["description"]
+                        ),
                     }
                 ]
             case GuildUpgradeTable.GuildUpgradeName:
@@ -69,7 +71,9 @@ class TransformGuildUpgrade(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "guild_upgrade_id": guild_upgrade_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": guild_upgrade["name"],
+                        "original": transform_lang.to_xhmtl_fragment(
+                            guild_upgrade["name"]
+                        ),
                     }
                 ]
             case GuildUpgradeTable.GuildUpgradePrerequisite:

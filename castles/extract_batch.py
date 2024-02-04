@@ -1,5 +1,4 @@
 import copy
-import datetime
 import itertools
 import jsonpatch
 import jsonschema

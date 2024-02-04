@@ -30,7 +30,7 @@ CREATE TABLE gwapese.skin_description (
   CONSTRAINT skin_description_pk PRIMARY KEY (app_name, lang_tag, skin_id),
   CONSTRAINT operating_copy_precedes_skin_description_fk FOREIGN KEY (app_name,
     lang_tag, original) REFERENCES gwapese.operating_copy (app_name, lang_tag,
-    original) ON DELETE CASCADE ON UPDATE RESTRICT,
+    original) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT skin_identifies_skin_description_fk FOREIGN KEY (skin_id)
     REFERENCES gwapese.skin (skin_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -69,7 +69,7 @@ CREATE TABLE gwapese.skin_name (
   CONSTRAINT skin_name_pk PRIMARY KEY (app_name, lang_tag, skin_id),
   CONSTRAINT operating_copy_precedes_skin_name_fk FOREIGN KEY (app_name,
     lang_tag, original) REFERENCES gwapese.operating_copy (app_name, lang_tag,
-    original) ON DELETE CASCADE ON UPDATE RESTRICT,
+    original) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT skin_identifies_skin_name_fk FOREIGN KEY (skin_id) REFERENCES
     gwapese.skin (skin_id) ON DELETE CASCADE ON UPDATE CASCADE
 );

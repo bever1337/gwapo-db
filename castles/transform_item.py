@@ -1,5 +1,4 @@
 import csv
-import datetime
 import enum
 import json
 import luigi
@@ -12,6 +11,7 @@ import extract_batch
 import load_profession
 import load_race
 import transform_csv
+import transform_lang
 
 
 class ItemTable(enum.Enum):
@@ -77,7 +77,7 @@ class TransformItem(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "item_id": item_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": item_description,
+                        "original": transform_lang.to_xhmtl_fragment(item_description),
                     }
                 ]
             case ItemTable.ItemFlag:
@@ -96,7 +96,7 @@ class TransformItem(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "item_id": item_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": item_name,
+                        "original": transform_lang.to_xhmtl_fragment(item_name),
                     }
                 ]
             case ItemTable.ItemProfessionRestriction:

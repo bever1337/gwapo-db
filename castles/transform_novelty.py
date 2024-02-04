@@ -1,4 +1,3 @@
-import datetime
 import enum
 import luigi
 from os import path
@@ -7,6 +6,7 @@ import common
 import config
 import extract_batch
 import transform_csv
+import transform_lang
 
 
 class NoveltyTable(enum.Enum):
@@ -56,7 +56,9 @@ class TransformNovelty(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "lang_tag": self.lang_tag.value,
                         "novelty_id": novelty_id,
-                        "original": novelty_description,
+                        "original": transform_lang.to_xhmtl_fragment(
+                            novelty_description
+                        ),
                     }
                 ]
             case NoveltyTable.NoveltyName:
@@ -65,7 +67,7 @@ class TransformNovelty(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "lang_tag": self.lang_tag.value,
                         "novelty_id": novelty_id,
-                        "original": novelty["name"],
+                        "original": transform_lang.to_xhmtl_fragment(novelty["name"]),
                     }
                 ]
             case _:

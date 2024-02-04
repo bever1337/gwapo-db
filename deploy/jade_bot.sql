@@ -29,7 +29,7 @@ CREATE TABLE gwapese.jade_bot_description (
     ON UPDATE CASCADE,
   CONSTRAINT operating_copy_precedes_jade_bot_description_fk FOREIGN KEY
     (app_name, lang_tag, original) REFERENCES gwapese.operating_copy (app_name,
-    lang_tag, original) ON DELETE CASCADE ON UPDATE RESTRICT
+    lang_tag, original) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'jade_bot_description');
@@ -52,7 +52,7 @@ CREATE TABLE gwapese.jade_bot_name (
     CASCADE,
   CONSTRAINT operating_copy_precedes_jade_bot_name_fk FOREIGN KEY (app_name,
     lang_tag, original) REFERENCES gwapese.operating_copy (app_name, lang_tag,
-    original) ON DELETE CASCADE ON UPDATE RESTRICT
+    original) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'jade_bot_name');

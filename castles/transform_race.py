@@ -1,4 +1,3 @@
-import datetime
 import enum
 import luigi
 from os import path
@@ -7,6 +6,7 @@ import common
 import config
 import extract_batch
 import transform_csv
+import transform_lang
 
 
 class RaceTable(enum.Enum):
@@ -45,7 +45,7 @@ class TransformRace(transform_csv.TransformCsvTask):
                     {
                         "app_name": "gw2",
                         "lang_tag": self.lang_tag.value,
-                        "original": race["name"],
+                        "original": transform_lang.to_xhmtl_fragment(race["name"]),
                         "race_id": race_id,
                     }
                 ]

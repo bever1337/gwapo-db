@@ -1,4 +1,3 @@
-import datetime
 import enum
 import luigi
 from os import path
@@ -7,6 +6,7 @@ import common
 import config
 import extract_batch
 import transform_csv
+import transform_lang
 
 
 class CurrencyTable(enum.Enum):
@@ -60,7 +60,9 @@ class TransformCurrency(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "currency_id": currency["id"],
                         "lang_tag": self.lang_tag.value,
-                        "original": currency["description"],
+                        "original": transform_lang.to_xhmtl_fragment(
+                            currency["description"]
+                        ),
                     }
                 ]
             case CurrencyTable.CurrencyName:
@@ -69,7 +71,7 @@ class TransformCurrency(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "currency_id": currency["id"],
                         "lang_tag": self.lang_tag.value,
-                        "original": currency["name"],
+                        "original": transform_lang.to_xhmtl_fragment(currency["name"]),
                     }
                 ]
             case _:

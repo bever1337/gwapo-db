@@ -1,4 +1,3 @@
-import datetime
 import enum
 import luigi
 from os import path
@@ -7,6 +6,7 @@ import common
 import config
 import extract_batch
 import transform_csv
+import transform_lang
 
 
 class MiniTable(enum.Enum):
@@ -54,7 +54,7 @@ class TransformMini(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "lang_tag": self.lang_tag.value,
                         "mini_id": mini_id,
-                        "original": mini["name"],
+                        "original": transform_lang.to_xhmtl_fragment(mini["name"]),
                     }
                 ]
             case MiniTable.MiniUnlock:
@@ -66,7 +66,7 @@ class TransformMini(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "lang_tag": self.lang_tag.value,
                         "mini_id": mini_id,
-                        "original": mini_unlock,
+                        "original": transform_lang.to_xhmtl_fragment(mini_unlock),
                     }
                 ]
             case _:

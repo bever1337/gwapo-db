@@ -1,4 +1,3 @@
-import datetime
 import enum
 import luigi
 from os import path
@@ -7,6 +6,7 @@ import common
 import config
 import extract_batch
 import transform_csv
+import transform_lang
 
 
 class MountSkinTable(enum.Enum):
@@ -64,7 +64,9 @@ class TransformMountSkin(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "mount_skin_id": mount_skin_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": mount_skin["name"],
+                        "original": transform_lang.to_xhmtl_fragment(
+                            mount_skin["name"]
+                        ),
                     }
                 ]
             case _:

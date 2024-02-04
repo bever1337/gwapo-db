@@ -1,4 +1,3 @@
-import datetime
 import enum
 import luigi
 from os import path
@@ -7,6 +6,7 @@ import common
 import config
 import extract_batch
 import transform_csv
+import transform_lang
 
 
 class ColorTable(enum.Enum):
@@ -76,7 +76,7 @@ class TransformColor(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "color_id": color_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": color["name"],
+                        "original": transform_lang.to_xhmtl_fragment(color["name"]),
                     }
                 ]
             case ColorTable.ColorSample:

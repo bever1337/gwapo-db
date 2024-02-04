@@ -52,7 +52,7 @@ CREATE TABLE gwapese.skiff_name (
     gwapese.skiff (skiff_id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT operating_copy_precedes_skiff_name_fk FOREIGN KEY (app_name,
     lang_tag, original) REFERENCES gwapese.operating_copy (app_name, lang_tag,
-    original) ON DELETE CASCADE ON UPDATE RESTRICT
+    original) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'skiff_name');

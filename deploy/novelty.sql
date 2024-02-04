@@ -31,7 +31,7 @@ CREATE TABLE gwapese.novelty_description (
     CASCADE,
   CONSTRAINT operating_copy_precedes_novelty_description_fk FOREIGN KEY
     (app_name, lang_tag, original) REFERENCES gwapese.operating_copy (app_name,
-    lang_tag, original) ON DELETE CASCADE ON UPDATE RESTRICT
+    lang_tag, original) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'novelty_description');
@@ -54,7 +54,7 @@ CREATE TABLE gwapese.novelty_name (
     CASCADE,
   CONSTRAINT operating_copy_precedes_novelty_name_fk FOREIGN KEY (app_name,
     lang_tag, original) REFERENCES gwapese.operating_copy (app_name, lang_tag,
-    original) ON DELETE CASCADE ON UPDATE RESTRICT
+    original) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'novelty_name');

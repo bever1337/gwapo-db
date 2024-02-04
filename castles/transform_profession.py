@@ -1,4 +1,3 @@
-import datetime
 import enum
 import luigi
 from os import path
@@ -7,6 +6,7 @@ import common
 import config
 import extract_batch
 import transform_csv
+import transform_lang
 
 
 class ProfessionTable(enum.Enum):
@@ -54,7 +54,9 @@ class TransformProfession(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "profession_id": profession_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": profession["name"],
+                        "original": transform_lang.to_xhmtl_fragment(
+                            profession["name"]
+                        ),
                     }
                 ]
             case _:

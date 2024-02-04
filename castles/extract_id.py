@@ -1,4 +1,3 @@
-import datetime
 import jsonschema
 import json
 import luigi

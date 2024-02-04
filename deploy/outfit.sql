@@ -29,7 +29,7 @@ CREATE TABLE gwapese.outfit_name (
     REFERENCES gwapese.outfit (outfit_id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT operating_copy_precedes_outfit_name_fk FOREIGN KEY (app_name,
     lang_tag, original) REFERENCES gwapese.operating_copy (app_name, lang_tag,
-    original) ON DELETE CASCADE ON UPDATE RESTRICT
+    original) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'outfit_name');

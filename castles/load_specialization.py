@@ -1,4 +1,3 @@
-import datetime
 import luigi
 from os import path
 from psycopg import sql

@@ -1,4 +1,3 @@
-import datetime
 import enum
 import luigi
 from os import path
@@ -7,6 +6,7 @@ import common
 import config
 import extract_batch
 import transform_csv
+import transform_lang
 
 
 class SpecializationTable(enum.Enum):
@@ -55,7 +55,9 @@ class TransformSpecialization(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "specialization_id": specialization_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": specialization["name"],
+                        "original": transform_lang.to_xhmtl_fragment(
+                            specialization["name"]
+                        ),
                     }
                 ]
             case _:

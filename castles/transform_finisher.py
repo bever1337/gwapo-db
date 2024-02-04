@@ -1,4 +1,3 @@
-import datetime
 import enum
 import luigi
 from os import path
@@ -7,6 +6,7 @@ import common
 import config
 import extract_batch
 import transform_csv
+import transform_lang
 
 
 class FinisherTable(enum.Enum):
@@ -56,7 +56,7 @@ class TransformFinisher(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "finisher_id": finisher_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": unlock_details,
+                        "original": transform_lang.to_xhmtl_fragment(unlock_details),
                     }
                 ]
 
@@ -66,7 +66,7 @@ class TransformFinisher(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "finisher_id": finisher_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": finisher["name"],
+                        "original": transform_lang.to_xhmtl_fragment(finisher["name"]),
                     }
                 ]
             case _:

@@ -1,4 +1,3 @@
-import datetime
 import enum
 import luigi
 from os import path
@@ -7,6 +6,7 @@ import common
 import config
 import extract_batch
 import transform_csv
+import transform_lang
 
 
 class MountTable(enum.Enum):
@@ -47,7 +47,7 @@ class TransformMount(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "mount_id": mount_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": mount["name"],
+                        "original": transform_lang.to_xhmtl_fragment(mount["name"]),
                     }
                 ]
             case _:

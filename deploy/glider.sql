@@ -31,7 +31,7 @@ CREATE TABLE gwapese.glider_description (
     REFERENCES gwapese.glider (glider_id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT operating_copy_precedes_glider_description_fk FOREIGN KEY
     (app_name, lang_tag, original) REFERENCES gwapese.operating_copy (app_name,
-    lang_tag, original) ON DELETE CASCADE ON UPDATE RESTRICT
+    lang_tag, original) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'glider_description');
@@ -73,7 +73,7 @@ CREATE TABLE gwapese.glider_name (
     REFERENCES gwapese.glider (glider_id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT operating_copy_precedes_glider_name_fk FOREIGN KEY (app_name,
     lang_tag, original) REFERENCES gwapese.operating_copy (app_name, lang_tag,
-    original) ON DELETE CASCADE ON UPDATE RESTRICT
+    original) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CALL temporal_tables.alter_table_to_temporal ('gwapese', 'glider_name');

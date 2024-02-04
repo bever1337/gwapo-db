@@ -1,4 +1,3 @@
-import datetime
 import enum
 import luigi
 from os import path
@@ -7,6 +6,7 @@ import common
 import config
 import extract_batch
 import transform_csv
+import transform_lang
 
 
 class OutfitTable(enum.Enum):
@@ -47,7 +47,7 @@ class TransformOutfit(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "outfit_id": outfit_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": outfit["name"],
+                        "original": transform_lang.to_xhmtl_fragment(outfit["name"]),
                     }
                 ]
             case _:

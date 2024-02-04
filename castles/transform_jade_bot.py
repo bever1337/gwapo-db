@@ -1,4 +1,3 @@
-import datetime
 import enum
 import luigi
 from os import path
@@ -7,6 +6,7 @@ import common
 import config
 import extract_batch
 import transform_csv
+import transform_lang
 
 
 class JadeBotTable(enum.Enum):
@@ -47,7 +47,9 @@ class TransformJadeBot(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "jade_bot_id": jade_bot_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": jade_bot["description"],
+                        "original": transform_lang.to_xhmtl_fragment(
+                            jade_bot["description"]
+                        ),
                     }
                 ]
             case JadeBotTable.JadeBotName:
@@ -56,7 +58,7 @@ class TransformJadeBot(transform_csv.TransformCsvTask):
                         "app_name": "gw2",
                         "jade_bot_id": jade_bot_id,
                         "lang_tag": self.lang_tag.value,
-                        "original": jade_bot["name"],
+                        "original": transform_lang.to_xhmtl_fragment(jade_bot["name"]),
                     }
                 ]
             case _:
