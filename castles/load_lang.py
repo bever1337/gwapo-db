@@ -4,6 +4,7 @@ from os import path
 from psycopg import sql
 
 import common
+import config
 
 
 merge_into_operating_copy = sql.SQL(
@@ -44,15 +45,13 @@ WHEN NOT MATCHED THEN
 
 
 class LoadLang(luigi.Task):
-    extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
-    output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
-
     def output(self):
+        gwapo_config = config.gconfig()
         target_filename = "{timestamp:s}.txt".format(
-            timestamp=self.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
+            timestamp=gwapo_config.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
         )
         target_path = path.join(
-            self.output_dir,
+            gwapo_config.output_dir,
             "load_lang",
             target_filename,
         )

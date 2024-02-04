@@ -5,16 +5,16 @@ import luigi
 import os
 import requests
 
+import config
 import common
 
 
 class ExtractIdTask(luigi.Task):
-    extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     json_schema_path = luigi.PathParameter(exists=True)
-    output_dir = luigi.PathParameter()
     url = luigi.Parameter()
 
     def output(self):
+        gwapo_config = config.gconfig()
         with open(self.json_schema_path) as json_schema_file:
             json_schema = json.load(fp=json_schema_file)
         schema_id: str = json_schema["$id"]
@@ -23,8 +23,8 @@ class ExtractIdTask(luigi.Task):
         output_folder = "_".join(["extract", "id", schema_id_as_filename])
 
         return common.from_output_params(
-            output_dir=os.path.join(self.output_dir, output_folder),
-            extract_datetime=self.extract_datetime,
+            output_dir=os.path.join(gwapo_config.output_dir, output_folder),
+            extract_datetime=gwapo_config.extract_datetime,
             params={},
             ext="ndjson",
         )

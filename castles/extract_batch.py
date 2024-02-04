@@ -9,41 +9,38 @@ import os
 import requests
 import time
 
+import config
 import common
 import extract_id
 
 
 class ExtractBatchTask(luigi.Task):
-    extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     json_patch_path = luigi.OptionalPathParameter(
         default="./patch/noop.json", exists=True
     )
     json_schema_path = luigi.PathParameter(exists=True)
-    output_dir = luigi.PathParameter(absolute=True, exists=True)
     url_params = luigi.DictParameter(default={})
     url = luigi.Parameter()
 
     def output(self):
+        gwapo_config = config.gconfig()
         with open(self.json_schema_path) as json_schema_file:
             json_schema = json.load(fp=json_schema_file)
         schema_id: str = json_schema["$id"]
         schema_id_no_ext, _ = os.path.splitext(schema_id)
         schema_id_sanitized = schema_id_no_ext.replace(os.path.sep, "_")
         output_folder = "_".join(["extract", "batch", schema_id_sanitized])
-        output_dir = os.path.join(self.output_dir, output_folder)
 
         return common.from_output_params(
-            output_dir=output_dir,
-            extract_datetime=self.extract_datetime,
+            output_dir=os.path.join(gwapo_config.output_dir, output_folder),
+            extract_datetime=gwapo_config.extract_datetime,
             params=self.url_params,
             ext="ndjson",
         )
 
     def requires(self):
         return extract_id.ExtractIdTask(
-            extract_datetime=self.extract_datetime,
             json_schema_path=self.json_schema_path,
-            output_dir=self.output_dir,
             url=self.url,
         )
 
@@ -52,6 +49,7 @@ class ExtractBatchTask(luigi.Task):
 
         with open(self.json_schema_path) as json_schema_file:
             json_schema = json.load(fp=json_schema_file)
+        # because schema is union type, this could validate unexpected data
         validator = jsonschema.Draft202012Validator(
             schema={"items": json_schema, "type": "array"}
         )
@@ -61,10 +59,6 @@ class ExtractBatchTask(luigi.Task):
                 jsonpatch.JsonPatch(patch) for patch in json.load(fp=json_patch_file)
             ]
 
-        progress = 0
-        self.set_status_message(
-            "Progress: {current:d} / {total:d}".format(current=progress, total=0)
-        )
         with (
             self.input().open("r") as r_input_file,
             self.output().open("w") as write_target,

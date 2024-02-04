@@ -1,4 +1,5 @@
 import csv
+import datetime
 import enum
 import io
 import luigi
@@ -8,7 +9,7 @@ import common
 
 
 class UnimplementedEnum(enum.Enum):
-    """"""
+    pass
 
 
 class LoadCsvTask(luigi.Task):

@@ -7,6 +7,7 @@ from os import path
 from psycopg import sql
 
 import common
+import config
 import extract_batch
 import load_profession
 import load_race
@@ -26,16 +27,15 @@ class ItemTable(enum.Enum):
 
 
 class TransformItem(transform_csv.TransformCsvTask):
-    extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    output_dir = luigi.PathParameter(exists=True)
     table = luigi.EnumParameter(enum=ItemTable)
 
     def output(self):
+        gwapo_config = config.gconfig()
         output_folder_name = "_".join(["transform", self.table.value])
         return common.from_output_params(
-            output_dir=path.join(self.output_dir, output_folder_name),
-            extract_datetime=self.extract_datetime,
+            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
+            extract_datetime=gwapo_config.extract_datetime,
             params={"lang": self.lang_tag.value},
             ext="csv",
         )
@@ -43,22 +43,12 @@ class TransformItem(transform_csv.TransformCsvTask):
     def requires(self):
         return {
             "item": extract_batch.ExtractBatchTask(
-                extract_datetime=self.extract_datetime,
                 json_schema_path="./schema/gw2/v2/items/index.json",
-                output_dir=self.output_dir,
                 url_params={"lang": self.lang_tag.value},
                 url="https://api.guildwars2.com/v2/items",
             ),
-            "race": load_race.LoadRace(
-                extract_datetime=self.extract_datetime,
-                lang_tag=self.lang_tag,
-                output_dir=self.output_dir,
-            ),
-            "profession": load_profession.LoadProfession(
-                extract_datetime=self.extract_datetime,
-                lang_tag=self.lang_tag,
-                output_dir=self.output_dir,
-            ),
+            "race": load_race.LoadRace(lang_tag=self.lang_tag),
+            "profession": load_profession.LoadProfession(lang_tag=self.lang_tag),
         }
 
     def get_rows(self, item, profession_ids: list[str], race_ids: list[str]):

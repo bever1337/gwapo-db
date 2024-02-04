@@ -4,6 +4,7 @@ from os import path
 from psycopg import sql
 
 import common
+import config
 import load_color
 import load_csv
 import load_lang
@@ -12,32 +13,25 @@ import transform_skiff
 
 
 class SeedSkiff(luigi.WrapperTask):
-    extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
 
     def requires(self):
-        args = {
-            "extract_datetime": self.extract_datetime,
-            "lang_tag": self.lang_tag,
-            "output_dir": self.output_dir,
-        }
+        args = {"lang_tag": self.lang_tag}
         yield LoadSkiff(**args)
         yield LoadSkiffDyeSlot(**args)
         yield LoadSkiffName(**args)
 
 
 class LoadSkiffTask(load_csv.LoadCsvTask):
-    extract_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    output_dir = luigi.PathParameter(absolute=True, exists=True, significant=False)
     table = luigi.EnumParameter(enum=transform_skiff.SkiffTable)
 
     def output(self):
+        gwapo_config = config.gconfig()
         output_folder_name = "_".join(["load", self.table.value])
         return common.from_output_params(
-            output_dir=path.join(self.output_dir, output_folder_name),
-            extract_datetime=self.extract_datetime,
+            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
+            extract_datetime=gwapo_config.extract_datetime,
             params={"lang": self.lang_tag.value},
             ext="txt",
         )
@@ -63,10 +57,7 @@ WHEN NOT MATCHED THEN
     def requires(self):
         return {
             self.table.value: transform_skiff.TransformSkiff(
-                extract_datetime=self.extract_datetime,
-                lang_tag=self.lang_tag,
-                output_dir=self.output_dir,
-                table=self.table,
+                lang_tag=self.lang_tag, table=self.table
             )
         }
 
@@ -106,21 +97,12 @@ WHEN NOT MATCHED THEN
     def requires(self):
         return {
             self.table.value: transform_skiff.TransformSkiff(
-                extract_datetime=self.extract_datetime,
-                lang_tag=self.lang_tag,
-                output_dir=self.output_dir,
-                table=self.table,
+                lang_tag=self.lang_tag, table=self.table
             ),
             transform_color.ColorTable.ColorSample.value: load_color.LoadColorSample(
-                extract_datetime=self.extract_datetime,
-                lang_tag=self.lang_tag,
-                output_dir=self.output_dir,
+                lang_tag=self.lang_tag
             ),
-            transform_skiff.SkiffTable.Skiff.value: LoadSkiff(
-                extract_datetime=self.extract_datetime,
-                lang_tag=self.lang_tag,
-                output_dir=self.output_dir,
-            ),
+            transform_skiff.SkiffTable.Skiff.value: LoadSkiff(lang_tag=self.lang_tag),
         }
 
 
@@ -143,17 +125,8 @@ class LoadSkiffName(LoadSkiffTask):
     def requires(self):
         return {
             self.table.value: transform_skiff.TransformSkiff(
-                extract_datetime=self.extract_datetime,
-                lang_tag=self.lang_tag,
-                output_dir=self.output_dir,
-                table=self.table,
+                lang_tag=self.lang_tag, table=self.table
             ),
-            transform_skiff.SkiffTable.Skiff.value: LoadSkiff(
-                extract_datetime=self.extract_datetime,
-                lang_tag=self.lang_tag,
-                output_dir=self.output_dir,
-            ),
-            "lang": load_lang.LoadLang(
-                extract_datetime=self.extract_datetime, output_dir=self.output_dir
-            ),
+            transform_skiff.SkiffTable.Skiff.value: LoadSkiff(lang_tag=self.lang_tag),
+            "lang": load_lang.LoadLang(),
         }
