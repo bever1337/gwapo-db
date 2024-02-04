@@ -1,0 +1,6 @@
+[
+  [
+    { "op": "test", "path": "/id", "value": 1594 },
+    { "op": "copy", "path": "/fur", "from": "/cloth" }
+  ]
+]

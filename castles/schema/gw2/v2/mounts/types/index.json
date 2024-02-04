@@ -1,0 +1,21 @@
+{
+  "$id": "gw2/v2/mounts/types/index.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "items": { "minLength": 1, "type": "string" },
+      "type": "array"
+    },
+    {
+      "properties": {
+        "default_skin": { "type": "integer" },
+        "id": { "minLength": 1, "type": "string" },
+        "name": { "minLength": 1, "type": "string" },
+        "skills": { "items": {}, "type": "array" },
+        "skins": { "items": { "type": "integer" }, "type": "array" }
+      },
+      "required": ["default_skin", "id", "name", "skills", "skins"],
+      "type": "object"
+    }
+  ]
+}

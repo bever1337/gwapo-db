@@ -1,0 +1,22 @@
+{
+  "$id": "gw2/v2/novelties/index.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "items": { "type": "integer" },
+      "type": "array"
+    },
+    {
+      "properties": {
+        "description": { "type": "string" },
+        "icon": { "format": "uri", "minLength": 1, "type": "string" },
+        "id": { "type": "integer" },
+        "name": { "minLength": 1, "type": "string" },
+        "slot": { "minLength": 1, "type": "string" },
+        "unlock_item": { "items": { "type": "integer" }, "type": "array" }
+      },
+      "required": ["description", "icon", "id", "name", "slot", "unlock_item"],
+      "type": "object"
+    }
+  ]
+}

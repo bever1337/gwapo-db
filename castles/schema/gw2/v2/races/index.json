@@ -1,0 +1,15 @@
+{
+  "$id": "gw2/v2/races/index.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    { "items": { "type": "string" }, "type": "array" },
+    {
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "skills": { "items": { "type": "integer" }, "type": "array" }
+      },
+      "type": "object"
+    }
+  ]
+}

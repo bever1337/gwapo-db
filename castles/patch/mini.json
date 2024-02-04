@@ -1,0 +1,203 @@
+[
+  [
+    { "op": "test", "path": "/id", "value": 747 },
+    { "op": "replace", "path": "/name", "value": "Mini Shrine Guardian" },
+    { "op": "replace", "path": "/item_id", "value": 90009 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 717 },
+    { "op": "replace", "path": "/name", "value": "Mini Exo-Suit Springer" },
+    { "op": "replace", "path": "/item_id", "value": 88464 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 715 },
+    { "op": "replace", "path": "/name", "value": "Mini Exo-Suit Raptor" },
+    { "op": "replace", "path": "/item_id", "value": 88402 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 714 },
+    { "op": "replace", "path": "/name", "value": "Mini Exo-Suit Skimmer" },
+    { "op": "replace", "path": "/item_id", "value": 88437 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 713 },
+    { "op": "replace", "path": "/name", "value": "Mini Exo-Suit Jackal" },
+    { "op": "replace", "path": "/item_id", "value": 88469 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 709 },
+    { "op": "replace", "path": "/name", "value": "Mini Exo-Suit Griffon" },
+    { "op": "replace", "path": "/item_id", "value": 88389 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 699 },
+    { "op": "replace", "path": "/name", "value": "Mini Awakened Raptor" },
+    { "op": "replace", "path": "/item_id", "value": 87778 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 694 },
+    { "op": "replace", "path": "/name", "value": "Mini Awakened Skimmer" },
+    { "op": "replace", "path": "/item_id", "value": 87753 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 693 },
+    { "op": "replace", "path": "/name", "value": "Mini Awakened Jackal" },
+    { "op": "replace", "path": "/item_id", "value": 87626 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 691 },
+    { "op": "replace", "path": "/name", "value": "Mini Awakened Springer" },
+    { "op": "replace", "path": "/item_id", "value": 87760 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 689 },
+    { "op": "replace", "path": "/name", "value": "Mini Awakened Griffon" },
+    { "op": "replace", "path": "/item_id", "value": 87934 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 663 },
+    { "op": "replace", "path": "/name", "value": "Mini Branded Skimmer" },
+    { "op": "replace", "path": "/item_id", "value": 87203 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 662 },
+    { "op": "replace", "path": "/name", "value": "Mini Branded Jackal" },
+    { "op": "replace", "path": "/item_id", "value": 87141 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 661 },
+    { "op": "replace", "path": "/name", "value": "Mini Branded Springer" },
+    { "op": "replace", "path": "/item_id", "value": 87156 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 660 },
+    { "op": "replace", "path": "/name", "value": "Mini Branded Raptor" },
+    { "op": "replace", "path": "/item_id", "value": 87236 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 657 },
+    { "op": "replace", "path": "/name", "value": "Mini Branded Griffon" },
+    { "op": "replace", "path": "/item_id", "value": 87133 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 655 },
+    { "op": "replace", "path": "/name", "value": "Mini Umbral Demon Skimmer" },
+    { "op": "replace", "path": "/item_id", "value": 86948 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 654 },
+    { "op": "replace", "path": "/name", "value": "Mini Lucky Lantern Puppy" },
+    { "op": "replace", "path": "/item_id", "value": 86958 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 653 },
+    {
+      "op": "replace",
+      "path": "/name",
+      "value": "Mini Reforged Warhound Jackal"
+    },
+    { "op": "replace", "path": "/item_id", "value": 86956 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 652 },
+    {
+      "op": "replace",
+      "path": "/name",
+      "value": "Mini Grand Lion Griffon"
+    },
+    { "op": "replace", "path": "/item_id", "value": 86927 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 649 },
+    {
+      "op": "replace",
+      "path": "/name",
+      "value": "Mini Summit Wildhorn Springer"
+    },
+    { "op": "replace", "path": "/item_id", "value": 86939 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 648 },
+    {
+      "op": "replace",
+      "path": "/name",
+      "value": "Mini Resplendent Avialan Raptor"
+    },
+    { "op": "replace", "path": "/item_id", "value": 86950 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 635 },
+    {
+      "op": "replace",
+      "path": "/name",
+      "value": "Mini Cozy Wintersday Griffon"
+    },
+    { "op": "replace", "path": "/item_id", "value": 86581 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 633 },
+    {
+      "op": "replace",
+      "path": "/name",
+      "value": "Mini Cozy Wintersday Jackal"
+    },
+    { "op": "replace", "path": "/item_id", "value": 86692 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 631 },
+    {
+      "op": "replace",
+      "path": "/name",
+      "value": "Mini Cozy Wintersday Skimmer"
+    },
+    { "op": "replace", "path": "/item_id", "value": 86609 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 629 },
+    {
+      "op": "replace",
+      "path": "/name",
+      "value": "Mini Cozy Wintersday Springer"
+    },
+    { "op": "replace", "path": "/item_id", "value": 86644 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 627 },
+    {
+      "op": "replace",
+      "path": "/name",
+      "value": "Mini Cozy Wintersday Raptor"
+    },
+    { "op": "replace", "path": "/item_id", "value": 86693 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 611 },
+    { "op": "replace", "path": "/name", "value": "Mini Spooky Jackal" },
+    { "op": "replace", "path": "/item_id", "value": 85401 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 610 },
+    { "op": "replace", "path": "/name", "value": "Mini Spooky Griffon" },
+    { "op": "replace", "path": "/item_id", "value": 85461 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 609 },
+    { "op": "replace", "path": "/name", "value": "Mini Spooky Springer" },
+    { "op": "replace", "path": "/item_id", "value": 85458 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 605 },
+    { "op": "replace", "path": "/name", "value": "Mini Spooky Raptor" },
+    { "op": "replace", "path": "/item_id", "value": 85435 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 602 },
+    { "op": "replace", "path": "/name", "value": "Mini Kormeerkat" },
+    { "op": "replace", "path": "/item_id", "value": 85517 }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 599 },
+    { "op": "replace", "path": "/name", "value": "Mini Spooky Skimmer" },
+    { "op": "replace", "path": "/item_id", "value": 85467 }
+  ]
+]

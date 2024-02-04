@@ -1,0 +1,31 @@
+{
+  "$id": "gw2/v2/mounts/skins/index.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "items": { "type": "integer" },
+      "type": "array"
+    },
+    {
+      "properties": {
+        "dye_slots": {
+          "items": {
+            "properties": {
+              "color_id": { "type": "integer" },
+              "material": { "minLength": 1, "type": "string" }
+            },
+            "required": ["color_id", "material"],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "icon": { "format": "uri", "minLength": 1, "type": "string" },
+        "id": { "type": "integer" },
+        "mount": { "minLength": 1, "type": "string" },
+        "name": { "minLength": 1, "type": "string" }
+      },
+      "required": ["dye_slots", "icon", "id", "mount", "name"],
+      "type": "object"
+    }
+  ]
+}
