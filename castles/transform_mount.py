@@ -11,6 +11,7 @@ import transform_lang
 
 class MountTable(enum.Enum):
     Mount = "mount"
+    MountSkinDefault = "mount_skin_default"
     MountName = "mount_name"
 
 
@@ -41,6 +42,8 @@ class TransformMount(transform_csv.TransformCsvTask):
         match self.table:
             case MountTable.Mount:
                 return [{"mount_id": mount_id}]
+            case MountTable.MountSkinDefault:
+                return [{"mount_id": mount_id, "mount_skin_id": mount["default_skin"]}]
             case MountTable.MountName:
                 return [
                     {

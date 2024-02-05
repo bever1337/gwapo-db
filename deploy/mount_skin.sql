@@ -25,11 +25,9 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
   'mount_skin', 'mount_skin_history');
 
 CREATE TABLE gwapese.mount_skin_default (
-  mount_id text UNIQUE NOT NULL,
+  mount_id text NOT NULL,
   mount_skin_id integer NOT NULL,
-  CONSTRAINT mount_skin_default_pk PRIMARY KEY (mount_id, mount_skin_id),
-  CONSTRAINT mount_identifies_mount_skin_default_fk FOREIGN KEY (mount_id)
-    REFERENCES gwapese.mount (mount_id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT mount_skin_default_pk PRIMARY KEY (mount_id),
   CONSTRAINT mount_skin_identifies_mount_skin_default_fk FOREIGN KEY (mount_id,
     mount_skin_id) REFERENCES gwapese.mount_skin (mount_id, mount_skin_id) ON
     DELETE CASCADE ON UPDATE CASCADE
@@ -90,5 +88,4 @@ CREATE TABLE gwapese.mount_skin_name_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'mount_skin_name', 'mount_skin_name_history');
 
--- todo mount_skin_default
 COMMIT;

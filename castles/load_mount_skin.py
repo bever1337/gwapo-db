@@ -69,6 +69,36 @@ WHEN NOT MATCHED THEN
         }
 
 
+class LoadMountSkinDefault(LoadMountSkinTask):
+    table = transform_mount.MountTable.MountSkinDefault
+
+    postcopy_sql = sql.SQL(
+        """
+MERGE INTO gwapese.mount_skin_default
+USING tempo_mount_skin_default
+  ON gwapese.mount_skin_default.mount_id = tempo_mount_skin_default.mount_id
+WHEN MATCHED
+  AND gwapese.mount_skin_default.mount_skin_id != tempo_mount_skin_default.mount_skin_id THEN
+  UPDATE SET
+    mount_skin_id = tempo_mount_skin_default.mount_skin_id
+WHEN NOT MATCHED THEN
+  INSERT (mount_id, mount_skin_id)
+    VALUES (tempo_mount_skin_default.mount_id,
+      tempo_mount_skin_default.mount_skin_id);
+"""
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_mount.TransformMount(
+                lang_tag=self.lang_tag, table=self.table
+            ),
+            transform_mount_skin.MountSkinTable.MountSkin.value: LoadMountSkin(
+                lang_tag=self.lang_tag
+            ),
+        }
+
+
 class LoadMountSkinDyeSlot(LoadMountSkinTask):
     table = transform_mount_skin.MountSkinTable.MountSkinDyeSlot
 
