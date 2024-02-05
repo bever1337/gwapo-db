@@ -5,7 +5,9 @@ from psycopg import sql
 import common
 import config
 import load_csv
+import load_item
 import load_lang
+import transform_item
 import transform_mini
 
 
@@ -57,6 +59,28 @@ WHEN NOT MATCHED THEN
             self.table.value: transform_mini.TransformMini(
                 lang_tag=self.lang_tag, table=self.table
             )
+        }
+
+
+class LoadMiniItem(LoadMiniTask):
+    table = transform_mini.MiniTable.MiniItem
+
+    postcopy_sql = load_item.merge_into_item_reference.format(
+        cross_table_name=sql.Identifier(transform_mini.MiniTable.MiniItem.value),
+        table_name=sql.Identifier(transform_mini.MiniTable.Mini.value),
+        temp_table_name=sql.Identifier("tempo_mini_item"),
+        pk_name=sql.Identifier("mini_id"),
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_mini.TransformMini(
+                lang_tag=self.lang_tag, table=self.table
+            ),
+            transform_mini.MiniTable.Mini.value: LoadMini(lang_tag=self.lang_tag),
+            transform_item.ItemTable.Item.value: load_item.LoadItem(
+                lang_tag=self.lang_tag
+            ),
         }
 
 

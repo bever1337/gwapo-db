@@ -12,6 +12,7 @@ import transform_lang
 class NoveltyTable(enum.Enum):
     Novelty = "novelty"
     NoveltyDescription = "novelty_description"
+    NoveltyItem = "novelty_item"
     NoveltyName = "novelty_name"
 
 
@@ -60,6 +61,11 @@ class TransformNovelty(transform_csv.TransformCsvTask):
                             novelty_description
                         ),
                     }
+                ]
+            case NoveltyTable.NoveltyItem:
+                return [
+                    {"item_id": item_id, "novelty_id": novelty_id}
+                    for item_id in novelty["unlock_item"]
                 ]
             case NoveltyTable.NoveltyName:
                 return [

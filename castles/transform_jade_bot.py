@@ -12,6 +12,7 @@ import transform_lang
 class JadeBotTable(enum.Enum):
     JadeBot = "jade_bot"
     JadeBotDescription = "jade_bot_description"
+    JadeBotItem = "jade_bot_item"
     JadeBotName = "jade_bot_name"
 
 
@@ -51,6 +52,10 @@ class TransformJadeBot(transform_csv.TransformCsvTask):
                             jade_bot["description"]
                         ),
                     }
+                ]
+            case JadeBotTable.JadeBotItem:
+                return [
+                    {"jade_bot_id": jade_bot_id, "item_id": jade_bot["unlock_item"]}
                 ]
             case JadeBotTable.JadeBotName:
                 return [

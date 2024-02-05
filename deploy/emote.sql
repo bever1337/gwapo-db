@@ -34,5 +34,4 @@ CREATE TABLE gwapese.emote_command_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'emote_command', 'emote_command_history');
 
--- todo references unlock_items
 COMMIT;

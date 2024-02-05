@@ -6,8 +6,10 @@ from psycopg import sql
 import common
 import config
 import load_csv
+import load_item
 import load_lang
 import transform_finisher
+import transform_item
 
 
 class WrapFinisher(luigi.WrapperTask):
@@ -88,6 +90,32 @@ class LoadFinisherDetail(LoadFinisherTask):
                 lang_tag=self.lang_tag
             ),
             "lang": load_lang.LoadLang(),
+        }
+
+
+class LoadFinisherItem(LoadFinisherTask):
+    table = transform_finisher.FinisherTable.FinisherItem
+
+    postcopy_sql = load_item.merge_into_item_reference.format(
+        cross_table_name=sql.Identifier(
+            transform_finisher.FinisherTable.FinisherItem.value
+        ),
+        table_name=sql.Identifier(transform_finisher.FinisherTable.Finisher.value),
+        temp_table_name=sql.Identifier("tempo_finisher_item"),
+        pk_name=sql.Identifier("finisher_id"),
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_finisher.TransformFinisher(
+                lang_tag=self.lang_tag, table=self.table
+            ),
+            transform_finisher.FinisherTable.Finisher.value: LoadFinisher(
+                lang_tag=self.lang_tag
+            ),
+            transform_item.ItemTable.Item.value: load_item.LoadItem(
+                lang_tag=self.lang_tag
+            ),
         }
 
 

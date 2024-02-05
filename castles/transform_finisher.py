@@ -12,6 +12,7 @@ import transform_lang
 class FinisherTable(enum.Enum):
     Finisher = "finisher"
     FinisherDetail = "finisher_detail"
+    FinisherItem = "finisher_item"
     FinisherName = "finisher_name"
 
 
@@ -59,7 +60,11 @@ class TransformFinisher(transform_csv.TransformCsvTask):
                         "original": transform_lang.to_xhmtl_fragment(unlock_details),
                     }
                 ]
-
+            case FinisherTable.FinisherItem:
+                return [
+                    {"finisher_id": finisher_id, "item_id": item_id}
+                    for item_id in finisher["unlock_items"]
+                ]
             case FinisherTable.FinisherName:
                 return [
                     {

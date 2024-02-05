@@ -66,5 +66,4 @@ CREATE TABLE gwapese.novelty_name_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'novelty_name', 'novelty_name_history');
 
--- todo references unlock_item(s)
 COMMIT;

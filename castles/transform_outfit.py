@@ -11,6 +11,7 @@ import transform_lang
 
 class OutfitTable(enum.Enum):
     Outfit = "outfit"
+    OutfitItem = "outfit_item"
     OutfitName = "outfit_name"
 
 
@@ -41,6 +42,11 @@ class TransformOutfit(transform_csv.TransformCsvTask):
         match self.table:
             case OutfitTable.Outfit:
                 return [{"icon": outfit["icon"], "outfit_id": outfit_id}]
+            case OutfitTable.OutfitItem:
+                return [
+                    {"item_id": item_id, "outfit_id": outfit_id}
+                    for item_id in outfit["unlock_items"]
+                ]
             case OutfitTable.OutfitName:
                 return [
                     {

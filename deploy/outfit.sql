@@ -41,5 +41,4 @@ CREATE TABLE gwapese.outfit_name_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'outfit_name', 'outfit_name_history');
 
--- todo references unlock_item(s)
 COMMIT;

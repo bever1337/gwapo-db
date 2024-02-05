@@ -13,6 +13,7 @@ class GliderTable(enum.Enum):
     Glider = "glider"
     GliderDescription = "glider_description"
     GliderDyeSlot = "glider_dye_slot"
+    GliderItem = "glider_item"
     GliderName = "glider_name"
 
 
@@ -70,6 +71,12 @@ class TransformGlider(transform_csv.TransformCsvTask):
                         "slot_index": index,
                     }
                     for index, color_id in enumerate(glider["default_dyes"])
+                ]
+            case GliderTable.GliderItem:
+                glider_items = glider.get("unlock_items", [])
+                return [
+                    {"glider_id": glider_id, "item_id": item_id}
+                    for item_id in glider_items
                 ]
             case GliderTable.GliderName:
                 return [

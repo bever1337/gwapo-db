@@ -5,7 +5,9 @@ from psycopg import sql
 import common
 import config
 import load_csv
+import load_item
 import load_lang
+import transform_item
 import transform_novelty
 
 
@@ -86,6 +88,32 @@ class LoadNoveltyDescription(LoadNoveltyTask):
                 lang_tag=self.lang_tag
             ),
             "lang": load_lang.LoadLang(),
+        }
+
+
+class LoadNoveltyItem(LoadNoveltyTask):
+    table = transform_novelty.NoveltyTable.NoveltyItem
+
+    postcopy_sql = load_item.merge_into_item_reference.format(
+        cross_table_name=sql.Identifier(
+            transform_novelty.NoveltyTable.NoveltyItem.value
+        ),
+        table_name=sql.Identifier(transform_novelty.NoveltyTable.Novelty.value),
+        temp_table_name=sql.Identifier("tempo_novelty_item"),
+        pk_name=sql.Identifier("novelty_id"),
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_novelty.TransformNovelty(
+                lang_tag=self.lang_tag, table=self.table
+            ),
+            transform_novelty.NoveltyTable.Novelty.value: LoadNovelty(
+                lang_tag=self.lang_tag
+            ),
+            transform_item.ItemTable.Item.value: load_item.LoadItem(
+                lang_tag=self.lang_tag
+            ),
         }
 
 

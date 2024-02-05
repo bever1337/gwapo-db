@@ -11,8 +11,9 @@ import transform_lang
 
 class MiniTable(enum.Enum):
     Mini = "mini"
-    MiniUnlock = "mini_unlock"
+    MiniItem = "mini_item"
     MiniName = "mini_name"
+    MiniUnlock = "mini_unlock"
 
 
 class TransformMini(transform_csv.TransformCsvTask):
@@ -48,6 +49,8 @@ class TransformMini(transform_csv.TransformCsvTask):
                         "presentation_order": mini["order"],
                     }
                 ]
+            case MiniTable.MiniItem:
+                return [{"item_id": mini["item_id"], "mini_id": mini_id}]
             case MiniTable.MiniName:
                 return [
                     {

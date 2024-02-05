@@ -12,6 +12,38 @@ import transform_item
 import transform_profession
 import transform_race
 
+merge_into_item_reference = sql.SQL(
+    """
+MERGE INTO gwapese.{cross_table_name} AS target_item_reference
+USING (
+  SELECT
+    {pk_name},
+    item_id
+  FROM
+    {temp_table_name}
+  WHERE
+    EXISTS (
+      SELECT
+        1
+      FROM
+        gwapese.{table_name}
+      WHERE
+        gwapese.{table_name}.{pk_name} = {temp_table_name}.{pk_name})
+    AND EXISTS (
+      SELECT
+        1
+      FROM
+        gwapese.item
+      WHERE
+        gwapese.item.item_id = {temp_table_name}.item_id)
+) AS source_item_reference ON target_item_reference.{pk_name} = source_item_reference.{pk_name}
+  AND target_item_reference.item_id = source_item_reference.item_id
+WHEN NOT MATCHED THEN
+  INSERT ({pk_name}, item_id)
+    VALUES (source_item_reference.{pk_name}, source_item_reference.item_id);
+"""
+)
+
 
 class WrapItem(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)

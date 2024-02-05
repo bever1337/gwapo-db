@@ -11,6 +11,7 @@ import transform_csv
 class EmoteTable(enum.Enum):
     Emote = "emote"
     EmoteCommand = "emote_command"
+    EmoteItem = "emote_item"
 
 
 class TransformEmote(transform_csv.TransformCsvTask):
@@ -41,6 +42,11 @@ class TransformEmote(transform_csv.TransformCsvTask):
                 return [
                     {"command": command, "emote_id": emote_id}
                     for command in ["commands"]
+                ]
+            case EmoteTable.EmoteItem:
+                return [
+                    {"emote_id": emote_id, "item_id": item_id}
+                    for item_id in emote["unlock_items"]
                 ]
             case _:
                 raise RuntimeError("Unexpected table name")

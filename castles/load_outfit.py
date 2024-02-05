@@ -5,7 +5,9 @@ from psycopg import sql
 import common
 import config
 import load_csv
+import load_item
 import load_lang
+import transform_item
 import transform_outfit
 
 
@@ -55,6 +57,30 @@ WHEN NOT MATCHED THEN
             self.table.value: transform_outfit.TransformOutfit(
                 lang_tag=self.lang_tag, table=self.table
             )
+        }
+
+
+class LoadOutfitItem(LoadOutfitTask):
+    table = transform_outfit.OutfitTable.OutfitItem
+
+    postcopy_sql = load_item.merge_into_item_reference.format(
+        cross_table_name=sql.Identifier(transform_outfit.OutfitTable.OutfitItem.value),
+        table_name=sql.Identifier(transform_outfit.OutfitTable.Outfit.value),
+        temp_table_name=sql.Identifier("tempo_outfit_item"),
+        pk_name=sql.Identifier("outfit_id"),
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_outfit.TransformOutfit(
+                lang_tag=self.lang_tag, table=self.table
+            ),
+            transform_outfit.OutfitTable.Outfit.value: LoadOutfit(
+                lang_tag=self.lang_tag
+            ),
+            transform_item.ItemTable.Item.value: load_item.LoadItem(
+                lang_tag=self.lang_tag
+            ),
         }
 
 

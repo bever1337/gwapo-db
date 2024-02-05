@@ -85,5 +85,4 @@ CREATE TABLE gwapese.glider_name_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'glider_name', 'glider_name_history');
 
--- todo references unlock_items
 COMMIT;

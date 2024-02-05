@@ -5,8 +5,10 @@ from psycopg import sql
 import common
 import config
 import load_csv
+import load_item
 import load_lang
 import transform_jade_bot
+import transform_item
 
 
 class WrapJadeBot(luigi.WrapperTask):
@@ -81,6 +83,32 @@ class LoadJadeBotDescription(LoadJadeBotTask):
                 lang_tag=self.lang_tag
             ),
             "lang": load_lang.LoadLang(),
+        }
+
+
+class LoadJadeBotItem(LoadJadeBotTask):
+    table = transform_jade_bot.JadeBotTable.JadeBotItem
+
+    postcopy_sql = load_item.merge_into_item_reference.format(
+        cross_table_name=sql.Identifier(
+            transform_jade_bot.JadeBotTable.JadeBotItem.value
+        ),
+        table_name=sql.Identifier(transform_jade_bot.JadeBotTable.JadeBot.value),
+        temp_table_name=sql.Identifier("tempo_jade_bot_item"),
+        pk_name=sql.Identifier("jade_bot_id"),
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_jade_bot.TransformJadeBot(
+                lang_tag=self.lang_tag, table=self.table
+            ),
+            transform_jade_bot.JadeBotTable.JadeBot.value: LoadJadeBot(
+                lang_tag=self.lang_tag
+            ),
+            transform_item.ItemTable.Item.value: load_item.LoadItem(
+                lang_tag=self.lang_tag
+            ),
         }
 
 

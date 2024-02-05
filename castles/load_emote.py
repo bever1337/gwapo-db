@@ -5,7 +5,9 @@ from psycopg import sql
 import common
 import config
 import load_csv
+import load_item
 import transform_emote
+import transform_item
 
 
 class WrapEmote(luigi.WrapperTask):
@@ -80,4 +82,25 @@ WHEN NOT MATCHED THEN
         return {
             self.table.value: transform_emote.TransformEmote(table=self.table),
             transform_emote.EmoteTable.Emote.value: LoadEmote(),
+        }
+
+
+class LoadEmoteItem(LoadEmoteTask):
+    lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    table = transform_emote.EmoteTable.EmoteItem
+
+    postcopy_sql = load_item.merge_into_item_reference.format(
+        cross_table_name=sql.Identifier(transform_emote.EmoteTable.EmoteItem.value),
+        table_name=sql.Identifier(transform_emote.EmoteTable.Emote.value),
+        temp_table_name=sql.Identifier("tempo_emote_item"),
+        pk_name=sql.Identifier("emote_id"),
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_emote.TransformEmote(table=self.table),
+            transform_emote.EmoteTable.Emote.value: LoadEmote(),
+            transform_item.ItemTable.Item.value: load_item.LoadItem(
+                lang_tag=self.lang_tag
+            ),
         }

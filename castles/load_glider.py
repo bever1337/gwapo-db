@@ -6,9 +6,11 @@ import common
 import config
 import load_color
 import load_csv
+import load_item
 import load_lang
 import transform_color
 import transform_glider
+import transform_item
 
 
 class WrapGlider(luigi.WrapperTask):
@@ -132,6 +134,30 @@ WHEN NOT MATCHED THEN
                 lang_tag=self.lang_tag
             ),
             transform_glider.GliderTable.Glider.value: LoadGlider(
+                lang_tag=self.lang_tag
+            ),
+        }
+
+
+class LoadGliderItem(LoadGliderTask):
+    table = transform_glider.GliderTable.GliderItem
+
+    postcopy_sql = load_item.merge_into_item_reference.format(
+        cross_table_name=sql.Identifier(transform_glider.GliderTable.GliderItem.value),
+        table_name=sql.Identifier(transform_glider.GliderTable.Glider.value),
+        temp_table_name=sql.Identifier("tempo_glider_item"),
+        pk_name=sql.Identifier("glider_id"),
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_glider.TransformGlider(
+                lang_tag=self.lang_tag, table=self.table
+            ),
+            transform_glider.GliderTable.Glider.value: LoadGlider(
+                lang_tag=self.lang_tag
+            ),
+            transform_item.ItemTable.Item.value: load_item.LoadItem(
                 lang_tag=self.lang_tag
             ),
         }
