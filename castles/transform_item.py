@@ -24,6 +24,7 @@ class ItemTable(enum.Enum):
     ItemRaceRestriction = "item_race_restriction"
     ItemType = "item_type"
     ItemUpgrade = "item_upgrade"
+    SkinDefaultItem = "skin_default_item"
 
 
 class TransformItem(transform_csv.TransformCsvTask):
@@ -132,6 +133,11 @@ class TransformItem(transform_csv.TransformCsvTask):
                         for upgrade_into in item.get("upgrades_into", [])
                     ],
                 ]
+            case ItemTable.SkinDefaultItem:
+                default_skin = item.get("default_skin")
+                if default_skin is None:
+                    return []
+                return [{"item_id": item_id, "skin_id": default_skin}]
             case _:
                 raise RuntimeError("Unexpected table")
 

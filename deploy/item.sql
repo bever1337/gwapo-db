@@ -177,5 +177,4 @@ CREATE TABLE gwapese.item_upgrade_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'item_upgrade', 'item_upgrade_history');
 
--- todo default_skin
 COMMIT;

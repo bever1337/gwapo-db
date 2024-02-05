@@ -6,9 +6,11 @@ import common
 import config
 import load_color
 import load_csv
+import load_item
 import load_lang
 import load_race
 import transform_color
+import transform_item
 import transform_race
 import transform_skin
 
@@ -161,6 +163,28 @@ class LoadSkinName(LoadSkinTask):
             ),
             transform_skin.SkinTable.Skin.value: LoadSkin(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
+        }
+
+
+class LoadSkinDefaultItem(LoadSkinTask):
+    table = transform_item.ItemTable.SkinDefaultItem
+
+    postcopy_sql = load_item.merge_into_item_reference.format(
+        cross_table_name=sql.Identifier(transform_item.ItemTable.SkinDefaultItem.value),
+        table_name=sql.Identifier(transform_skin.SkinTable.Skin.value),
+        temp_table_name=sql.Identifier("tempo_skin_default_item"),
+        pk_name=sql.Identifier("skin_id"),
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_item.TransformItem(
+                lang_tag=self.lang_tag, table=self.table
+            ),
+            transform_skin.SkinTable.Skin.value: LoadSkin(lang_tag=self.lang_tag),
+            transform_item.ItemTable.Item.value: load_item.LoadItem(
+                lang_tag=self.lang_tag
+            ),
         }
 
 
