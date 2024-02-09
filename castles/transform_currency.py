@@ -4,9 +4,9 @@ from os import path
 
 import common
 import config
-import extract_batch
 import transform_csv
 import transform_lang
+import transform_patch_currency
 
 
 class CurrencyTable(enum.Enum):
@@ -31,12 +31,7 @@ class TransformCurrency(transform_csv.TransformCsvTask):
         )
 
     def requires(self):
-        return extract_batch.ExtractBatchTask(
-            json_patch_path="./patch/currency.json",
-            json_schema_path="./schema/gw2/v2/currencies/index.json",
-            url_params={"lang": self.lang_tag.value},
-            url="https://api.guildwars2.com/v2/currencies",
-        )
+        return transform_patch_currency.TransformPatchCurrency(lang_tag=self.lang_tag)
 
     def get_rows(self, currency):
         match self.table:

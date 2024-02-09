@@ -4,9 +4,9 @@ from os import path
 
 import common
 import config
-import extract_batch
 import transform_csv
 import transform_lang
+import transform_patch_mini
 
 
 class MiniTable(enum.Enum):
@@ -31,12 +31,7 @@ class TransformMini(transform_csv.TransformCsvTask):
         )
 
     def requires(self):
-        return extract_batch.ExtractBatchTask(
-            json_schema_path="./schema/gw2/v2/minis/index.json",
-            json_patch_path="./patch/mini.json",
-            url_params={"lang": self.lang_tag.value},
-            url="https://api.guildwars2.com/v2/minis",
-        )
+        return transform_patch_mini.TransformPatchMini(lang_tag=self.lang_tag)
 
     def get_rows(self, mini):
         mini_id = mini["id"]

@@ -4,9 +4,9 @@ from os import path
 
 import common
 import config
-import extract_batch
 import transform_csv
 import transform_lang
+import transform_patch_color
 
 
 class ColorTable(enum.Enum):
@@ -38,12 +38,7 @@ class TransformColor(transform_csv.TransformCsvTask):
         )
 
     def requires(self):
-        return extract_batch.ExtractBatchTask(
-            json_patch_path="./patch/color.json",
-            json_schema_path="./schema/gw2/v2/colors/index.json",
-            url_params={"lang": self.lang_tag.value},
-            url="https://api.guildwars2.com/v2/colors",
-        )
+        return transform_patch_color.TransformPatchColor(lang_tag=self.lang_tag)
 
     def get_rows(self, color):
         color_id = color["id"]

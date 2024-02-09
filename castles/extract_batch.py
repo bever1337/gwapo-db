@@ -1,6 +1,4 @@
-import copy
 import itertools
-import jsonpatch
 import jsonschema
 import json
 import luigi
@@ -14,9 +12,6 @@ import extract_id
 
 
 class ExtractBatchTask(luigi.Task):
-    json_patch_path = luigi.OptionalPathParameter(
-        default="./patch/noop.json", exists=True
-    )
     json_schema_path = luigi.PathParameter(exists=True)
     url_params = luigi.DictParameter(default={})
     url = luigi.Parameter()
@@ -53,11 +48,6 @@ class ExtractBatchTask(luigi.Task):
             schema={"items": json_schema, "type": "array"}
         )
 
-        with open(self.json_patch_path) as json_patch_file:
-            json_patches = [
-                jsonpatch.JsonPatch(patch) for patch in json.load(fp=json_patch_file)
-            ]
-
         with (
             self.input().open("r") as r_input_file,
             self.output().open("w") as write_target,
@@ -72,21 +62,9 @@ class ExtractBatchTask(luigi.Task):
                     raise RuntimeError("Expected status code 200")
                 response_json: list = response.json()
                 validator.validate(response_json)
-
-                for entity in response_json:
-                    patched_entity = copy.deepcopy(entity)
-                    for patch in json_patches:
-                        try:
-                            # in_place patches do not allow setting root to None
-                            # gwapo patches use an `add` operation to filter out patches
-                            # so, accumulate the patched entity and check Noneness afterwards
-                            patched_entity = patch.apply(patched_entity, in_place=False)
-                        except jsonpatch.JsonPatchTestFailed:
-                            # each patch begins with a so-called identity test op
-                            # it is expected to fail, try the next patch
-                            pass
-                    if patched_entity != None:
-                        write_target.write("".join([json.dumps(patched_entity), "\n"]))
+                write_target.writelines(
+                    "".join([json.dumps(entity), "\n"]) for entity in response_json
+                )
 
                 if index % 100 == 0:
                     processed_so_far = (index * 200) + len(id_batch)
