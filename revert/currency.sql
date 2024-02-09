@@ -1,4 +1,4 @@
--- Revert gawpo-db:currency from pg
+-- Revert gwapo-db:currency from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'currency_category');

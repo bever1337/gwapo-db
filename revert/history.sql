@@ -1,4 +1,4 @@
--- Revert gawpo-db:history from pg
+-- Revert gwapo-db:history from pg
 BEGIN;
 
 DROP FUNCTION temporal_tables.fmt_trigger_fn_name;

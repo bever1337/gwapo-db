@@ -1,4 +1,4 @@
--- Revert gawpo-db:skins from pg
+-- Revert gwapo-db:skins from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'skin_armor_dye_slot');

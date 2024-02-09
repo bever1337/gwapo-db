@@ -1,4 +1,4 @@
--- Verify gawpo-db:emote_item on pg
+-- Verify gwapo-db:emote_item on pg
 BEGIN;
 
 SELECT

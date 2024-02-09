@@ -1,4 +1,4 @@
--- Verify gawpo-db:mount on pg
+-- Verify gwapo-db:mount on pg
 BEGIN;
 
 SELECT

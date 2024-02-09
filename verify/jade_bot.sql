@@ -1,4 +1,4 @@
--- Verify gawpo-db:jade_bot on pg
+-- Verify gwapo-db:jade_bot on pg
 BEGIN;
 
 SELECT

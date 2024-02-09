@@ -1,4 +1,4 @@
--- Deploy gawpo-db:finisher_item to pg
+-- Deploy gwapo-db:finisher_item to pg
 -- requires: schema
 -- requires: history
 -- requires: finisher

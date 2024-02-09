@@ -1,4 +1,4 @@
--- Deploy gawpo-db:specialization to pg
+-- Deploy gwapo-db:specialization to pg
 -- requires: schema
 -- requires: history
 -- requires: lang

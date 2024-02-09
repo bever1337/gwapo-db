@@ -1,4 +1,4 @@
--- Verify gawpo-db:mini on pg
+-- Verify gwapo-db:mini on pg
 BEGIN;
 
 SELECT

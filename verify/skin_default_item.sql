@@ -1,4 +1,4 @@
--- Verify gawpo-db:skin_default_item on pg
+-- Verify gwapo-db:skin_default_item on pg
 BEGIN;
 
 SELECT

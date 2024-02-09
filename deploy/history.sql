@@ -1,4 +1,4 @@
--- Deploy gawpo-db:history to pg
+-- Deploy gwapo-db:history to pg
 BEGIN;
 
 CREATE SCHEMA temporal_tables;

@@ -1,4 +1,4 @@
--- Deploy gawpo-db:emote to pg
+-- Deploy gwapo-db:emote to pg
 -- requires: schema
 -- requires: history
 BEGIN;

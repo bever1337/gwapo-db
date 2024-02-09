@@ -8,14 +8,49 @@
         "build_time": { "type": "integer" },
         "costs": {
           "items": {
-            "properties": {
-              "count": { "type": "integer" },
-              "item_id": { "type": "integer" },
-              "name": { "minLength": 1, "type": "string" },
-              "type": { "type": "string" }
-            },
-            "required": ["count", "type"],
-            "type": "object"
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "count": { "type": "integer" },
+                  "type": { "const": "Coins" }
+                },
+                "required": ["count", "type"],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "count": { "type": "integer" },
+                  "item_id": { "type": "integer" },
+                  "name": { "minLength": 1, "type": "string" },
+                  "type": { "const": "Collectible" }
+                },
+                "required": ["count", "item_id", "name", "type"],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "count": { "type": "integer" },
+                  "name": { "minLength": 1, "type": "string" },
+                  "type": { "const": "Currency" }
+                },
+                "required": ["count", "name", "type"],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "count": { "type": "integer" },
+                  "item_id": { "type": "integer" },
+                  "name": { "minLength": 1, "type": "string" },
+                  "type": { "const": "Item" }
+                },
+                "required": ["count", "item_id", "name", "type"],
+                "type": "object"
+              }
+            ]
           },
           "type": "array"
         },

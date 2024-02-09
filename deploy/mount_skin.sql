@@ -1,4 +1,4 @@
--- Deploy gawpo-db:mount_skin to pg
+-- Deploy gwapo-db:mount_skin to pg
 -- requires: schema
 -- requires: history
 -- requires: lang

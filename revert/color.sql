@@ -1,4 +1,4 @@
--- Revert gawpo-db:color from pg
+-- Revert gwapo-db:color from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'color_base');

@@ -1,4 +1,4 @@
--- Deploy gawpo-db:emote_item to pg
+-- Deploy gwapo-db:emote_item to pg
 -- requires: schema
 -- requires: history
 -- requires: emote

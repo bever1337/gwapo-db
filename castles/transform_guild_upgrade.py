@@ -14,6 +14,9 @@ class GuildUpgradeTable(enum.Enum):
     GuildUpgradeDescription = "guild_upgrade_description"
     GuildUpgradeName = "guild_upgrade_name"
     GuildUpgradePrerequisite = "guild_upgrade_prerequisite"
+    GuildUpgradeCostCurrency = "guild_upgrade_cost_currency"
+    GuildUpgradeCostItem = "guild_upgrade_cost_item"
+    GuildUpgradeCostWallet = "guild_upgrade_cost_wallet"
 
 
 class TransformGuildUpgrade(transform_csv.TransformCsvTask):
@@ -84,6 +87,46 @@ class TransformGuildUpgrade(transform_csv.TransformCsvTask):
                     }
                     for prerequisite_id in guild_upgrade["prerequisites"]
                 ]
-
+            case GuildUpgradeTable.GuildUpgradeCostCurrency:
+                return [
+                    *[
+                        {
+                            "guild_currency_id": cost["name"],
+                            "guild_upgrade_id": guild_upgrade_id,
+                            "quantity": cost["count"],
+                        }
+                        for cost in guild_upgrade["costs"]
+                        if cost["type"] == "Currency"
+                    ],
+                    *[
+                        {
+                            "guild_currency_id": "Favor",
+                            "guild_upgrade_id": guild_upgrade_id,
+                            "quantity": cost["count"],
+                        }
+                        for cost in guild_upgrade["costs"]
+                        if cost["type"] == "Collectible"
+                    ],
+                ]
+            case GuildUpgradeTable.GuildUpgradeCostItem:
+                return [
+                    {
+                        "guild_upgrade_id": guild_upgrade_id,
+                        "item_id": cost["item_id"],
+                        "quantity": cost["count"],
+                    }
+                    for cost in guild_upgrade["costs"]
+                    if cost["type"] == "Item"
+                ]
+            case GuildUpgradeTable.GuildUpgradeCostWallet:
+                return [
+                    {
+                        "currency_name": "Coin",
+                        "guild_upgrade_id": guild_upgrade_id,
+                        "quantity": cost["count"],
+                    }
+                    for cost in guild_upgrade["costs"]
+                    if cost["type"] == "Coins"
+                ]
             case _:
                 raise RuntimeError("Unexpected table name")

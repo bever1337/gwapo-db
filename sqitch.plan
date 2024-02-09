@@ -1,5 +1,5 @@
 %syntax-version=1.0.0
-%project=gawpo-db
+%project=gwapo-db
 %uri=https://github.com/bever1337/gwapo-db
 
 schema 2023-12-08T04:26:35Z gwapobot <gwapobot@example.com> # Base schema
@@ -31,3 +31,5 @@ mini_item [schema history mini item] 2024-02-05T01:10:00Z bever1337 <gwapobot@ex
 novelty_item [schema history novelty item] 2024-02-05T01:20:21Z bever1337 <gwapobot@example.com> # Adds novelty x item
 outfit_item [schema history outfit item] 2024-02-05T01:21:47Z bever1337 <gwapobot@example.com> # Adds outfit x item
 skin_default_item [schema history skin item] 2024-02-05T02:20:28Z bever1337 <gwapobot@example.com> # Adds item default skin
+guild_currency [schema history lang] 2024-02-08T23:32:52Z bever1337 <gwapobot@example.com> # Adds guild currency
+guild_upgrade_cost [schema history currency guild_currency guild_upgrade item] 2024-02-05T02:47:52Z bever1337 <gwapobot@example.com> # Adds guild upgrade costs

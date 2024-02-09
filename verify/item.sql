@@ -1,4 +1,4 @@
--- Verify gawpo-db:item on pg
+-- Verify gwapo-db:item on pg
 BEGIN;
 
 SELECT

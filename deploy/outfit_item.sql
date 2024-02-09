@@ -1,4 +1,4 @@
--- Deploy gawpo-db:outfit_item to pg
+-- Deploy gwapo-db:outfit_item to pg
 -- requires: schema
 -- requires: history
 -- requires: outfit

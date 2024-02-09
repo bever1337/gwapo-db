@@ -1,4 +1,4 @@
--- Verify gawpo-db:novelty_item on pg
+-- Verify gwapo-db:novelty_item on pg
 BEGIN;
 
 SELECT

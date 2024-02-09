@@ -1,4 +1,4 @@
--- Verify gawpo-db:specialization on pg
+-- Verify gwapo-db:specialization on pg
 BEGIN;
 
 SELECT

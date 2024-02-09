@@ -1,4 +1,4 @@
--- Revert gawpo-db:jade_bot_item from pg
+-- Revert gwapo-db:jade_bot_item from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'jade_bot_item');

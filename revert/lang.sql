@@ -1,4 +1,4 @@
--- Revert gawpo-db:lang from pg
+-- Revert gwapo-db:lang from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'translated_copy');

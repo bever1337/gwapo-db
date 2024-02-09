@@ -1,4 +1,4 @@
--- Revert gawpo-db:guild_upgrade from pg
+-- Revert gwapo-db:guild_upgrade from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'guild_upgrade_prerequisite');

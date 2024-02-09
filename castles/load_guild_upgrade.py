@@ -5,8 +5,13 @@ from psycopg import sql
 import common
 import config
 import load_csv
+import load_currency
+import load_guild_currency
+import load_item
 import load_lang
+import transform_currency
 import transform_guild_upgrade
+import transform_item
 
 
 class WrapGuildUpgrade(luigi.WrapperTask):
@@ -169,6 +174,219 @@ WHEN NOT MATCHED THEN
         return {
             self.table.value: transform_guild_upgrade.TransformGuildUpgrade(
                 lang_tag=self.lang_tag, table=self.table
+            ),
+            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade.value: LoadGuildUpgrade(
+                lang_tag=self.lang_tag
+            ),
+        }
+
+
+class LoadGuildUpgradeCostCurrency(LoadGuildUpgradeTask):
+    table = transform_guild_upgrade.GuildUpgradeTable.GuildUpgradeCostCurrency
+
+    postcopy_sql = sql.Composed(
+        [
+            sql.SQL(
+                """
+DELETE FROM gwapese.guild_upgrade_cost_currency
+WHERE
+  EXISTS (
+    SELECT
+      1
+    FROM
+      tempo_guild_upgrade_cost_currency
+    WHERE
+      gwapese.guild_upgrade_cost_currency.guild_upgrade_id = tempo_guild_upgrade_cost_currency.guild_upgrade_id)
+  AND NOT EXISTS (
+    SELECT
+      1
+    FROM
+      tempo_guild_upgrade_cost_currency
+    WHERE
+      gwapese.guild_upgrade_cost_currency.guild_currency_id = tempo_guild_upgrade_cost_currency.guild_currency_id
+      AND gwapese.guild_upgrade_cost_currency.guild_upgrade_id = tempo_guild_upgrade_cost_currency.guild_upgrade_id);
+"""
+            ),
+            sql.SQL(
+                """
+MERGE INTO gwapese.guild_upgrade_cost_currency
+USING tempo_guild_upgrade_cost_currency
+  ON gwapese.guild_upgrade_cost_currency.guild_currency_id = tempo_guild_upgrade_cost_currency.guild_currency_id
+  AND gwapese.guild_upgrade_cost_currency.guild_upgrade_id = tempo_guild_upgrade_cost_currency.guild_upgrade_id
+WHEN MATCHED AND
+  gwapese.guild_upgrade_cost_currency.quantity != tempo_guild_upgrade_cost_currency.quantity
+THEN
+  UPDATE SET quantity = tempo_guild_upgrade_cost_currency.quantity
+WHEN NOT MATCHED THEN
+  INSERT (guild_currency_id, guild_upgrade_id, quantity)
+    VALUES (tempo_guild_upgrade_cost_currency.guild_currency_id,
+      tempo_guild_upgrade_cost_currency.guild_upgrade_id,
+      tempo_guild_upgrade_cost_currency.quantity);
+"""
+            ),
+        ]
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_guild_upgrade.TransformGuildUpgrade(
+                lang_tag=self.lang_tag, table=self.table
+            ),
+            "guild_currency": load_guild_currency.LoadGuildCurrency(),
+            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade.value: LoadGuildUpgrade(
+                lang_tag=self.lang_tag
+            ),
+        }
+
+
+class LoadGuildUpgradeCostItem(LoadGuildUpgradeTask):
+    table = transform_guild_upgrade.GuildUpgradeTable.GuildUpgradeCostItem
+
+    postcopy_sql = sql.Composed(
+        [
+            sql.SQL(
+                """
+DELETE FROM gwapese.guild_upgrade_cost_item
+WHERE
+  EXISTS (
+    SELECT
+      1
+    FROM
+      tempo_guild_upgrade_cost_item
+    WHERE
+      gwapese.guild_upgrade_cost_item.guild_upgrade_id = tempo_guild_upgrade_cost_item.guild_upgrade_id)
+  AND NOT EXISTS (
+    SELECT
+      1
+    FROM
+      tempo_guild_upgrade_cost_item
+    WHERE
+      gwapese.guild_upgrade_cost_item.guild_upgrade_id = tempo_guild_upgrade_cost_item.guild_upgrade_id
+      AND gwapese.guild_upgrade_cost_item.item_id = tempo_guild_upgrade_cost_item.item_id);
+"""
+            ),
+            sql.SQL(
+                """
+MERGE INTO gwapese.guild_upgrade_cost_item
+USING tempo_guild_upgrade_cost_item
+  ON gwapese.guild_upgrade_cost_item.guild_upgrade_id = tempo_guild_upgrade_cost_item.guild_upgrade_id
+  AND gwapese.guild_upgrade_cost_item.item_id = tempo_guild_upgrade_cost_item.item_id
+WHEN MATCHED AND
+  gwapese.guild_upgrade_cost_item.quantity != tempo_guild_upgrade_cost_item.quantity
+THEN
+  UPDATE SET quantity = tempo_guild_upgrade_cost_item.quantity
+WHEN NOT MATCHED THEN
+  INSERT (guild_upgrade_id, item_id, quantity)
+    VALUES (tempo_guild_upgrade_cost_item.guild_upgrade_id,
+      tempo_guild_upgrade_cost_item.item_id,
+      tempo_guild_upgrade_cost_item.quantity);
+"""
+            ),
+        ]
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_guild_upgrade.TransformGuildUpgrade(
+                lang_tag=self.lang_tag, table=self.table
+            ),
+            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade.value: LoadGuildUpgrade(
+                lang_tag=self.lang_tag
+            ),
+            transform_item.ItemTable.Item.value: load_item.LoadItem(
+                lang_tag=self.lang_tag
+            ),
+        }
+
+
+class LoadGuildUpgradeCostWallet(LoadGuildUpgradeTask):
+    table = transform_guild_upgrade.GuildUpgradeTable.GuildUpgradeCostWallet
+
+    precopy_sql = sql.Composed(
+        [
+            sql.SQL(
+                """
+CREATE TEMPORARY TABLE tempo_guild_upgrade_cost_wallet (
+  LIKE gwapese.guild_upgrade_cost_wallet
+) ON COMMIT DROP;
+"""
+            ),
+            sql.SQL(
+                """
+ALTER TABLE tempo_guild_upgrade_cost_wallet
+  ADD COLUMN currency_name TEXT NOT NULL,
+  DROP COLUMN currency_id,
+  DROP COLUMN IF EXISTS sysrange_lower,
+  DROP COLUMN IF EXISTS sysrange_upper;
+"""
+            ),
+        ]
+    )
+
+    postcopy_sql = sql.Composed(
+        [
+            sql.SQL(
+                """
+DELETE FROM gwapese.guild_upgrade_cost_wallet
+WHERE
+  EXISTS (
+    SELECT
+      1
+    FROM
+      tempo_guild_upgrade_cost_wallet
+    WHERE
+      gwapese.guild_upgrade_cost_wallet.guild_upgrade_id = tempo_guild_upgrade_cost_wallet.guild_upgrade_id)
+  AND NOT EXISTS (
+    SELECT
+      1
+    FROM
+      tempo_guild_upgrade_cost_wallet
+    LEFT JOIN
+      gwapese.currency_name
+    ON
+      gwapese.currency_name.original = tempo_guild_upgrade_cost_wallet.currency_name
+    WHERE
+      gwapese.guild_upgrade_cost_wallet.currency_id = gwapese.currency_name.currency_id
+      AND gwapese.guild_upgrade_cost_wallet.guild_upgrade_id = tempo_guild_upgrade_cost_wallet.guild_upgrade_id);
+"""
+            ),
+            sql.SQL(
+                """
+MERGE INTO gwapese.guild_upgrade_cost_wallet
+USING (
+  SELECT
+    gwapese.currency_name.currency_id,
+    tempo_guild_upgrade_cost_wallet.guild_upgrade_id,
+    tempo_guild_upgrade_cost_wallet.quantity
+  FROM tempo_guild_upgrade_cost_wallet
+  LEFT JOIN
+    gwapese.currency_name
+  ON
+    gwapese.currency_name.original = tempo_guild_upgrade_cost_wallet.currency_name
+) AS source_guild_upgrade_cost_wallet
+  ON gwapese.guild_upgrade_cost_wallet.currency_id = source_guild_upgrade_cost_wallet.currency_id
+  AND gwapese.guild_upgrade_cost_wallet.guild_upgrade_id = source_guild_upgrade_cost_wallet.guild_upgrade_id
+WHEN MATCHED AND
+  gwapese.guild_upgrade_cost_wallet.quantity != source_guild_upgrade_cost_wallet.quantity
+THEN
+  UPDATE SET quantity = source_guild_upgrade_cost_wallet.quantity
+WHEN NOT MATCHED THEN
+  INSERT (currency_id, guild_upgrade_id, quantity)
+    VALUES (source_guild_upgrade_cost_wallet.currency_id,
+      source_guild_upgrade_cost_wallet.guild_upgrade_id,
+      source_guild_upgrade_cost_wallet.quantity);
+"""
+            ),
+        ]
+    )
+
+    def requires(self):
+        return {
+            self.table.value: transform_guild_upgrade.TransformGuildUpgrade(
+                lang_tag=self.lang_tag, table=self.table
+            ),
+            transform_currency.CurrencyTable.CurrencyName: load_currency.LoadCurrencyName(
+                lang_tag=self.lang_tag
             ),
             transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade.value: LoadGuildUpgrade(
                 lang_tag=self.lang_tag

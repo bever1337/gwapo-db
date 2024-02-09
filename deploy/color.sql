@@ -1,4 +1,4 @@
--- Deploy gawpo-db:color to pg
+-- Deploy gwapo-db:color to pg
 -- requires: schema
 -- requires: history
 -- requires: lang

@@ -1,4 +1,4 @@
--- Revert gawpo-db:finisher_item from pg
+-- Revert gwapo-db:finisher_item from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'finisher_item');

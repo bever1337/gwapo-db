@@ -1,4 +1,4 @@
--- Deploy gawpo-db:skiff to pg
+-- Deploy gwapo-db:skiff to pg
 -- requires: schema
 -- requires: history
 -- requires: lang

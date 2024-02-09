@@ -1,4 +1,4 @@
--- Deploy gawpo-db:glider_item to pg
+-- Deploy gwapo-db:glider_item to pg
 -- requires: schema
 -- requires: history
 -- requires: glider

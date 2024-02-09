@@ -1,4 +1,4 @@
--- Revert gawpo-db:mount from pg
+-- Revert gwapo-db:mount from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'mount_name');

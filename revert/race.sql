@@ -1,4 +1,4 @@
--- Revert gawpo-db:race from pg
+-- Revert gwapo-db:race from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'race_name');

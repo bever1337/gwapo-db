@@ -1,4 +1,4 @@
--- Verify gawpo-db:color on pg
+-- Verify gwapo-db:color on pg
 BEGIN;
 
 SELECT

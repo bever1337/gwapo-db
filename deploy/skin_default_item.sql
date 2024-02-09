@@ -1,4 +1,4 @@
--- Deploy gawpo-db:skin_default_item to pg
+-- Deploy gwapo-db:skin_default_item to pg
 -- requires: schema
 -- requires: history
 -- requires: skin_default

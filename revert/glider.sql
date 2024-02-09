@@ -1,4 +1,4 @@
--- Revert gawpo-db:glider from pg
+-- Revert gwapo-db:glider from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'glider_description');

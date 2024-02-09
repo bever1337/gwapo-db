@@ -1,4 +1,4 @@
--- Verify gawpo-db:profession on pg
+-- Verify gwapo-db:profession on pg
 BEGIN;
 
 SELECT

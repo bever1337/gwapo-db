@@ -1,4 +1,4 @@
--- Revert gawpo-db:outfit from pg
+-- Revert gwapo-db:outfit from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'outfit_name');

@@ -1,4 +1,4 @@
--- Deploy gawpo-db:glider to pg
+-- Deploy gwapo-db:glider to pg
 -- requires: schema
 -- requires: history
 -- requires: lang

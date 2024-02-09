@@ -1,4 +1,4 @@
--- Deploy gawpo-db:mini_item to pg
+-- Deploy gwapo-db:mini_item to pg
 -- requires: schema
 -- requires: history
 -- requires: mini

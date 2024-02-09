@@ -1,4 +1,4 @@
--- Deploy gawpo-db:schema to pg
+-- Deploy gwapo-db:schema to pg
 BEGIN;
 
 CREATE SCHEMA gwapese;

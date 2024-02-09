@@ -1,4 +1,4 @@
--- Verify gawpo-db:guild_upgrade on pg
+-- Verify gwapo-db:guild_upgrade on pg
 BEGIN;
 
 SELECT

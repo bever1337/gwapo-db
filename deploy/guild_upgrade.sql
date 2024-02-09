@@ -1,4 +1,4 @@
--- Deploy gawpo-db:guild_upgrade to pg
+-- Deploy gwapo-db:guild_upgrade to pg
 -- requires: schema
 -- requires: history
 -- requires: lang
@@ -92,5 +92,4 @@ CREATE TABLE gwapese.guild_upgrade_prerequisite_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'guild_upgrade_prerequisite', 'guild_upgrade_prerequisite_history');
 
--- TODO guild costs references item, collectible, currency, coin
 COMMIT;

@@ -1,4 +1,4 @@
--- Revert gawpo-db:profession from pg
+-- Revert gwapo-db:profession from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'profession_name');

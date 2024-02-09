@@ -1,4 +1,4 @@
--- Verify gawpo-db:skins on pg
+-- Verify gwapo-db:skins on pg
 BEGIN;
 
 SELECT

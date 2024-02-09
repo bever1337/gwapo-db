@@ -1,4 +1,4 @@
--- Deploy gawpo-db:race to pg
+-- Deploy gwapo-db:race to pg
 -- requires: schema
 -- requires: history
 -- requires: lang

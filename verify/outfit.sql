@@ -1,4 +1,4 @@
--- Verify gawpo-db:outfit on pg
+-- Verify gwapo-db:outfit on pg
 BEGIN;
 
 SELECT

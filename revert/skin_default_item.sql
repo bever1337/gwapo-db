@@ -1,4 +1,4 @@
--- Revert gawpo-db:skin_default_item from pg
+-- Revert gwapo-db:skin_default_item from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'skin_default_item');

@@ -1,4 +1,4 @@
--- Verify gawpo-db:glider on pg
+-- Verify gwapo-db:glider on pg
 BEGIN;
 
 SELECT

@@ -1,4 +1,4 @@
--- Revert gawpo-db:novelty from pg
+-- Revert gwapo-db:novelty from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'novelty_description');

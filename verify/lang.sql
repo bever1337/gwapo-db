@@ -1,4 +1,4 @@
--- Verify gawpo-db:lang on pg
+-- Verify gwapo-db:lang on pg
 BEGIN;
 
 SELECT

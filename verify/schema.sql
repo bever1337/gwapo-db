@@ -1,7 +1,7 @@
--- Verify gawpo-db:schema on pg
+-- Verify gwapo-db:schema on pg
 BEGIN;
 
 SELECT
-  pg_catalog.HAS_SCHEMA_PRIVILEGE('gwapese', 'usage');
+  pg_catalog.has_schema_privilege('gwapese', 'usage');
 
 ROLLBACK;

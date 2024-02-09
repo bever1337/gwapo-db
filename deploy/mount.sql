@@ -1,4 +1,4 @@
--- Deploy gawpo-db:mount to pg
+-- Deploy gwapo-db:mount to pg
 -- requires: schema
 -- requires: history
 -- requires: lang

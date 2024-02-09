@@ -1,4 +1,4 @@
--- Deploy gawpo-db:profession to pg
+-- Deploy gwapo-db:profession to pg
 -- requires: schema
 -- requires: history
 -- requires: lang

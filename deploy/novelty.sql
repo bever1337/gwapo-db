@@ -1,4 +1,4 @@
--- Deploy gawpo-db:novelty to pg
+-- Deploy gwapo-db:novelty to pg
 -- requires: schema
 -- requires: history
 -- requires: lang

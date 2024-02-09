@@ -1,71 +1,69 @@
--- Verify gwapo-db:skiff on pg
+-- Verify gwapo-db:guild_currency on pg
 BEGIN;
 
 SELECT
-  icon,
-  skiff_id,
+  guild_currency_id,
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.skiff
+  gwapese.guild_currency
 WHERE
   FALSE;
 
 SELECT
-  icon,
-  skiff_id,
+  guild_currency_id,
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.skiff_history
-WHERE
-  FALSE;
-
-SELECT
-  color_id,
-  material,
-  skiff_id,
-  slot_index,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.skiff_dye_slot
-WHERE
-  FALSE;
-
-SELECT
-  color_id,
-  material,
-  skiff_id,
-  slot_index,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.skiff_dye_slot_history
+  gwapese.guild_currency_history
 WHERE
   FALSE;
 
 SELECT
   app_name,
+  guild_currency_id,
   lang_tag,
   original,
-  skiff_id,
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.skiff_name
+  gwapese.guild_currency_description
 WHERE
   FALSE;
 
 SELECT
   app_name,
+  guild_currency_id,
   lang_tag,
   original,
-  skiff_id,
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.skiff_name_history
+  gwapese.guild_currency_description_history
+WHERE
+  FALSE;
+
+SELECT
+  app_name,
+  guild_currency_id,
+  lang_tag,
+  original,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.guild_currency_name
+WHERE
+  FALSE;
+
+SELECT
+  app_name,
+  guild_currency_id,
+  lang_tag,
+  original,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.guild_currency_name_history
 WHERE
   FALSE;
 

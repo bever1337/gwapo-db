@@ -1,4 +1,4 @@
--- Deploy gawpo-db:currency to pg
+-- Deploy gwapo-db:currency to pg
 -- requires: schema
 -- requires: history
 -- requires: lang

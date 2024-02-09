@@ -1,4 +1,4 @@
--- Deploy gawpo-db:lang to pg
+-- Deploy gwapo-db:lang to pg
 -- requires: schema
 -- requires: history
 BEGIN;

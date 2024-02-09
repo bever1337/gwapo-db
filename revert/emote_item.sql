@@ -1,4 +1,4 @@
--- Revert gawpo-db:emote_item from pg
+-- Revert gwapo-db:emote_item from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'emote_item');

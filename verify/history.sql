@@ -1,4 +1,4 @@
--- Verify gawpo-db:history on pg
+-- Verify gwapo-db:history on pg
 BEGIN;
 
 SELECT

@@ -1,4 +1,4 @@
--- Revert gawpo-db:mount_skin from pg
+-- Revert gwapo-db:mount_skin from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'mount_skin_default');

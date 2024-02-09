@@ -1,4 +1,4 @@
--- Deploy gawpo-db:item to pg
+-- Deploy gwapo-db:item to pg
 -- requires: schema
 -- requires: history
 -- requires: lang

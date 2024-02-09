@@ -1,4 +1,4 @@
--- Deploy gawpo-db:outfit to pg
+-- Deploy gwapo-db:outfit to pg
 -- requires: schema
 -- requires: history
 -- requires: lang

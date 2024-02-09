@@ -1,4 +1,4 @@
--- Deploy gawpo-db:jade_bot_item to pg
+-- Deploy gwapo-db:jade_bot_item to pg
 -- requires: schema
 -- requires: history
 -- requires: jade_bot

@@ -1,4 +1,4 @@
--- Revert gawpo-db:specialization from pg
+-- Revert gwapo-db:specialization from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'specialization_name');

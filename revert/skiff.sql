@@ -1,4 +1,4 @@
--- Revert gawpo-db:skiff from pg
+-- Revert gwapo-db:skiff from pg
 BEGIN;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'skiff_dye_slot');

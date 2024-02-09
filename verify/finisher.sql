@@ -1,4 +1,4 @@
--- Verify gawpo-db:finisher on pg
+-- Verify gwapo-db:finisher on pg
 BEGIN;
 
 SELECT
