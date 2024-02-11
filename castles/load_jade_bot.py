@@ -1,3 +1,4 @@
+import datetime
 import luigi
 from psycopg import sql
 
@@ -10,9 +11,10 @@ import transform_jade_bot
 
 class WrapJadeBot(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
 
     def requires(self):
-        args = {"lang_tag": self.lang_tag}
+        args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
         yield LoadJadeBot(**args)
         yield LoadJadeBotDescription(**args)
         yield LoadJadeBotName(**args)

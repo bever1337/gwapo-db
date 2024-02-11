@@ -1,3 +1,4 @@
+import datetime
 import luigi
 from os import path
 from psycopg import sql
@@ -44,6 +45,8 @@ WHEN NOT MATCHED THEN
 
 
 class LoadLang(luigi.Task):
+    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+
     def output(self):
         gwapo_config = config.gconfig()
         return luigi.LocalTarget(

@@ -1,4 +1,5 @@
 import csv
+import datetime
 import json
 import luigi
 from os import path
@@ -7,6 +8,8 @@ import config
 
 
 class TransformCsvTask(luigi.Task):
+    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+
     def get_rows(self, entity) -> list[dict]:
         raise NotImplementedError()
 

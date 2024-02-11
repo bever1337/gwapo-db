@@ -1,4 +1,5 @@
 import csv
+import datetime
 import io
 import luigi
 from os import path
@@ -14,6 +15,7 @@ class LoadCsvTask(luigi.Task):
     postcopy_sql: None | sql.SQL = None
 
     table = luigi.Parameter()
+    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
 
     def output(self):
         gwapo_config = config.gconfig()

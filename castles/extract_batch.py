@@ -1,3 +1,4 @@
+import datetime
 import itertools
 import jsonschema
 import json
@@ -12,6 +13,7 @@ import extract_id
 
 class ExtractBatchTask(luigi.Task):
     json_schema_path = luigi.PathParameter(exists=True)
+    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     url_params = luigi.DictParameter(default={})
     url = luigi.Parameter()
 

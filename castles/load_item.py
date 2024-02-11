@@ -1,3 +1,4 @@
+import datetime
 import luigi
 from psycopg import sql
 
@@ -43,9 +44,10 @@ WHEN NOT MATCHED THEN
 
 class WrapItem(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
 
     def requires(self):
-        args = {"lang_tag": self.lang_tag}
+        args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
         yield LoadItem(**args)
         yield LoadItemDescription(**args)
         yield LoadItemFlag(**args)

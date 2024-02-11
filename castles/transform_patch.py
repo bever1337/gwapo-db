@@ -1,4 +1,5 @@
 import copy
+import datetime
 import jsonpatch
 import json
 import luigi
@@ -10,6 +11,7 @@ import config
 
 class TransformPatchTask(luigi.Task):
     json_patch_path = luigi.OptionalPathParameter(exists=True)
+    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
 
     def output(self):
         gwapo_config = config.gconfig()

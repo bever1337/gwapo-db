@@ -1,21 +1,20 @@
+import datetime
 import luigi
-from os import path
 from psycopg import sql
 
 import common
-import config
 import load_csv
 import load_item
 import load_lang
-import transform_item
 import transform_outfit
 
 
 class WrapOutfit(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
 
     def requires(self):
-        args = {"lang_tag": self.lang_tag}
+        args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
         yield LoadOutfit(**args)
         yield LoadOutfitName(**args)
 

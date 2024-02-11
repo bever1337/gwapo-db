@@ -1,3 +1,4 @@
+import datetime
 import jsonschema
 import json
 import luigi
@@ -9,6 +10,7 @@ import config
 
 class ExtractIdTask(luigi.Task):
     json_schema_path = luigi.PathParameter(exists=True)
+    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     url = luigi.Parameter()
 
     def output(self):

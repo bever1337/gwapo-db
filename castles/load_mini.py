@@ -1,3 +1,4 @@
+import datetime
 import luigi
 from psycopg import sql
 
@@ -9,10 +10,11 @@ import transform_mini
 
 
 class WrapMini(luigi.WrapperTask):
+    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
 
     def requires(self):
-        args = {"lang_tag": self.lang_tag}
+        args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
         yield LoadMini(**args)
         yield LoadMiniName(**args)
         yield LoadMiniUnlock(**args)

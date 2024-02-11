@@ -1,3 +1,4 @@
+import datetime
 import luigi
 from psycopg import sql
 
@@ -8,9 +9,12 @@ import transform_emote
 
 
 class WrapEmote(luigi.WrapperTask):
+    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+
     def requires(self):
-        yield LoadEmote()
-        yield LoadEmoteCommand()
+        args = {"task_datetime": self.task_datetime}
+        yield LoadEmote(**args)
+        yield LoadEmoteCommand(**args)
 
 
 class LoadEmoteTask(load_csv.LoadCsvTask):

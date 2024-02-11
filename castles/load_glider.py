@@ -1,3 +1,4 @@
+import datetime
 import luigi
 from psycopg import sql
 
@@ -11,9 +12,10 @@ import transform_glider
 
 class WrapGlider(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
 
     def requires(self):
-        args = {"lang_tag": self.lang_tag}
+        args = {"lang_tag": self.lang_tag, "task_dateime": self.task_datetime}
         yield LoadGlider(**args)
         yield LoadGliderDescription(**args)
         yield LoadGliderDyeSlot(**args)
