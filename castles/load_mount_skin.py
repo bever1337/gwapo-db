@@ -1,14 +1,11 @@
 import luigi
-from os import path
 from psycopg import sql
 
 import common
-import config
 import load_color
 import load_csv
 import load_lang
 import load_mount
-import transform_color
 import transform_mount_skin
 import transform_mount
 
@@ -25,21 +22,10 @@ class WrapMountSkin(luigi.WrapperTask):
 
 class LoadMountSkinTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = luigi.EnumParameter(enum=transform_mount_skin.MountSkinTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["load", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={"lang": self.lang_tag.value},
-            ext="txt",
-        )
 
 
 class LoadMountSkin(LoadMountSkinTask):
-    table = transform_mount_skin.MountSkinTable.MountSkin
+    table = "mount_skin"
 
     postcopy_sql = sql.SQL(
         """
@@ -60,17 +46,13 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_mount_skin.TransformMountSkin(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_mount.MountTable.Mount.value: load_mount.LoadMount(
-                lang_tag=self.lang_tag
-            ),
+            self.table: transform_mount_skin.TransformMountSkin(lang_tag=self.lang_tag),
+            "mount": load_mount.LoadMount(lang_tag=self.lang_tag),
         }
 
 
 class LoadMountSkinDefault(LoadMountSkinTask):
-    table = transform_mount.MountTable.MountSkinDefault
+    table = "mount_skin_default"
 
     postcopy_sql = sql.SQL(
         """
@@ -90,17 +72,15 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_mount.TransformMount(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_mount_skin.MountSkinTable.MountSkin.value: LoadMountSkin(
+            self.table: transform_mount.TransformMountSkinDefault(
                 lang_tag=self.lang_tag
             ),
+            "mount_skin": LoadMountSkin(lang_tag=self.lang_tag),
         }
 
 
 class LoadMountSkinDyeSlot(LoadMountSkinTask):
-    table = transform_mount_skin.MountSkinTable.MountSkinDyeSlot
+    table = "mount_skin_dye_slot"
 
     postcopy_sql = sql.Composed(
         [
@@ -136,20 +116,16 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_mount_skin.TransformMountSkin(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_color.ColorTable.ColorSample.value: load_color.LoadColorSample(
+            self.table: transform_mount_skin.TransformMountSkinDyeSlot(
                 lang_tag=self.lang_tag
             ),
-            transform_mount_skin.MountSkinTable.MountSkin.value: LoadMountSkin(
-                lang_tag=self.lang_tag
-            ),
+            "color_sample": load_color.LoadColorSample(lang_tag=self.lang_tag),
+            "mount_skin": LoadMountSkin(lang_tag=self.lang_tag),
         }
 
 
 class LoadMountSkinName(LoadMountSkinTask):
-    table = transform_mount_skin.MountSkinTable.MountSkinName
+    table = "mount_skin_name"
 
     postcopy_sql = sql.Composed(
         [
@@ -166,11 +142,9 @@ class LoadMountSkinName(LoadMountSkinTask):
 
     def requires(self):
         return {
-            self.table.value: transform_mount_skin.TransformMountSkin(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_mount_skin.MountSkinTable.MountSkin.value: LoadMountSkin(
+            self.table: transform_mount_skin.TransformMountSkinName(
                 lang_tag=self.lang_tag
             ),
+            "mount_skin": LoadMountSkin(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }

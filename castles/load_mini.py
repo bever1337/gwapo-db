@@ -1,13 +1,10 @@
 import luigi
-from os import path
 from psycopg import sql
 
 import common
-import config
 import load_csv
 import load_item
 import load_lang
-import transform_item
 import transform_mini
 
 
@@ -23,21 +20,10 @@ class WrapMini(luigi.WrapperTask):
 
 class LoadMiniTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = luigi.EnumParameter(enum=transform_mini.MiniTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["load", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={"lang": self.lang_tag.value},
-            ext="txt",
-        )
 
 
 class LoadMini(LoadMiniTask):
-    table = transform_mini.MiniTable.Mini
+    table = "mini"
 
     postcopy_sql = sql.SQL(
         """
@@ -55,37 +41,29 @@ WHEN NOT MATCHED THEN
     )
 
     def requires(self):
-        return {
-            self.table.value: transform_mini.TransformMini(
-                lang_tag=self.lang_tag, table=self.table
-            )
-        }
+        return {self.table: transform_mini.TransformMini(lang_tag=self.lang_tag)}
 
 
 class LoadMiniItem(LoadMiniTask):
-    table = transform_mini.MiniTable.MiniItem
+    table = "mini_item"
 
     postcopy_sql = load_item.merge_into_item_reference.format(
-        cross_table_name=sql.Identifier(transform_mini.MiniTable.MiniItem.value),
-        table_name=sql.Identifier(transform_mini.MiniTable.Mini.value),
+        cross_table_name=sql.Identifier("mini_item"),
+        table_name=sql.Identifier("mini"),
         temp_table_name=sql.Identifier("tempo_mini_item"),
         pk_name=sql.Identifier("mini_id"),
     )
 
     def requires(self):
         return {
-            self.table.value: transform_mini.TransformMini(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_mini.MiniTable.Mini.value: LoadMini(lang_tag=self.lang_tag),
-            transform_item.ItemTable.Item.value: load_item.LoadItem(
-                lang_tag=self.lang_tag
-            ),
+            self.table: transform_mini.TransformMiniItem(lang_tag=self.lang_tag),
+            "mini": LoadMini(lang_tag=self.lang_tag),
+            "item": load_item.LoadItem(lang_tag=self.lang_tag),
         }
 
 
 class LoadMiniName(LoadMiniTask):
-    table = transform_mini.MiniTable.MiniName
+    table = "mini_name"
 
     postcopy_sql = sql.Composed(
         [
@@ -102,16 +80,14 @@ class LoadMiniName(LoadMiniTask):
 
     def requires(self):
         return {
-            self.table.value: transform_mini.TransformMini(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_mini.MiniTable.Mini.value: LoadMini(lang_tag=self.lang_tag),
+            self.table: transform_mini.TransformMiniName(lang_tag=self.lang_tag),
+            "mini": LoadMini(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }
 
 
 class LoadMiniUnlock(LoadMiniTask):
-    table = transform_mini.MiniTable.MiniUnlock
+    table = "mini_unlock"
 
     postcopy_sql = sql.Composed(
         [
@@ -128,9 +104,7 @@ class LoadMiniUnlock(LoadMiniTask):
 
     def requires(self):
         return {
-            self.table.value: transform_mini.TransformMini(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_mini.MiniTable.Mini.value: LoadMini(lang_tag=self.lang_tag),
+            self.table: transform_mini.TransformMiniUnlock(lang_tag=self.lang_tag),
+            "mini": LoadMini(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }

@@ -1,13 +1,10 @@
 import luigi
-from os import path
 from psycopg import sql
 
 import common
-import config
 import load_csv
 import load_lang
 import load_profession
-import transform_profession
 import transform_specialization
 
 
@@ -22,21 +19,10 @@ class WrapSpecialization(luigi.WrapperTask):
 
 class LoadSpecializationTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = luigi.EnumParameter(enum=transform_specialization.SpecializationTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["load", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={"lang": self.lang_tag.value},
-            ext="txt",
-        )
 
 
 class LoadSpecialization(LoadSpecializationTask):
-    table = transform_specialization.SpecializationTable.Specialization
+    table = "specialization"
 
     postcopy_sql = sql.SQL(
         """
@@ -61,17 +47,15 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_specialization.TransformSpecialization(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_profession.ProfessionTable.Profession.value: load_profession.LoadProfession(
+            self.table: transform_specialization.TransformSpecialization(
                 lang_tag=self.lang_tag
             ),
+            "profession": load_profession.LoadProfession(lang_tag=self.lang_tag),
         }
 
 
 class LoadSpecializationName(LoadSpecializationTask):
-    table = transform_specialization.SpecializationTable.SpecializationName
+    table = "specialization_name"
 
     postcopy_sql = sql.Composed(
         [
@@ -88,14 +72,10 @@ class LoadSpecializationName(LoadSpecializationTask):
 
     def requires(self):
         return {
-            self.table.value: transform_specialization.TransformSpecialization(
-                lang_tag=self.lang_tag, table=self.table
+            self.table: transform_specialization.TransformSpecializationName(
+                lang_tag=self.lang_tag
             ),
             "lang": load_lang.LoadLang(),
-            transform_profession.ProfessionTable.Profession.value: load_profession.LoadProfession(
-                lang_tag=self.lang_tag
-            ),
-            transform_specialization.SpecializationTable.Specialization.value: LoadSpecialization(
-                lang_tag=self.lang_tag
-            ),
+            "profession": load_profession.LoadProfession(lang_tag=self.lang_tag),
+            "specialization": LoadSpecialization(lang_tag=self.lang_tag),
         }

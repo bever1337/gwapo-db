@@ -1,17 +1,13 @@
 import luigi
-from os import path
 from psycopg import sql
 
 import common
-import config
 import load_color
 import load_csv
 import load_item
 import load_lang
 import load_race
-import transform_color
 import transform_item
-import transform_race
 import transform_skin
 
 
@@ -35,21 +31,10 @@ class WrapSkin(luigi.WrapperTask):
 
 class LoadSkinTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = luigi.EnumParameter(enum=transform_skin.SkinTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["load", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={"lang": self.lang_tag.value},
-            ext="txt",
-        )
 
 
 class LoadSkin(LoadSkinTask):
-    table = transform_skin.SkinTable.Skin
+    table = "skin"
 
     postcopy_sql = sql.SQL(
         """
@@ -67,15 +52,11 @@ WHEN NOT MATCHED THEN
     )
 
     def requires(self):
-        return {
-            self.table.value: transform_skin.TransformSkin(
-                lang_tag=self.lang_tag, table=self.table
-            )
-        }
+        return {self.table: transform_skin.TransformSkin(lang_tag=self.lang_tag)}
 
 
 class LoadSkinDescription(LoadSkinTask):
-    table = transform_skin.SkinTable.SkinDescription
+    table = "skin_description"
 
     postcopy_sql = sql.Composed(
         [
@@ -92,16 +73,14 @@ class LoadSkinDescription(LoadSkinTask):
 
     def requires(self):
         return {
-            self.table.value: transform_skin.TransformSkin(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_skin.SkinTable.Skin.value: LoadSkin(lang_tag=self.lang_tag),
+            self.table: transform_skin.TransformSkinDescription(lang_tag=self.lang_tag),
+            "skin": LoadSkin(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }
 
 
 class LoadSkinFlag(LoadSkinTask):
-    table = transform_skin.SkinTable.SkinFlag
+    table = "skin_flag"
 
     postcopy_sql = sql.Composed(
         [
@@ -133,15 +112,13 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_skin.TransformSkin(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_skin.SkinTable.Skin.value: LoadSkin(lang_tag=self.lang_tag),
+            self.table: transform_skin.TransformSkinFlag(lang_tag=self.lang_tag),
+            "skin": LoadSkin(lang_tag=self.lang_tag),
         }
 
 
 class LoadSkinName(LoadSkinTask):
-    table = transform_skin.SkinTable.SkinName
+    table = "skin_name"
 
     postcopy_sql = sql.Composed(
         [
@@ -158,38 +135,32 @@ class LoadSkinName(LoadSkinTask):
 
     def requires(self):
         return {
-            self.table.value: transform_skin.TransformSkin(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_skin.SkinTable.Skin.value: LoadSkin(lang_tag=self.lang_tag),
+            self.table: transform_skin.TransformSkinName(lang_tag=self.lang_tag),
+            "skin": LoadSkin(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }
 
 
 class LoadSkinDefaultItem(LoadSkinTask):
-    table = transform_item.ItemTable.SkinDefaultItem
+    table = "skin_default_item"
 
     postcopy_sql = load_item.merge_into_item_reference.format(
-        cross_table_name=sql.Identifier(transform_item.ItemTable.SkinDefaultItem.value),
-        table_name=sql.Identifier(transform_skin.SkinTable.Skin.value),
+        cross_table_name=sql.Identifier("skin_default_item"),
+        table_name=sql.Identifier("skin"),
         temp_table_name=sql.Identifier("tempo_skin_default_item"),
         pk_name=sql.Identifier("skin_id"),
     )
 
     def requires(self):
         return {
-            self.table.value: transform_item.TransformItem(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_skin.SkinTable.Skin.value: LoadSkin(lang_tag=self.lang_tag),
-            transform_item.ItemTable.Item.value: load_item.LoadItem(
-                lang_tag=self.lang_tag
-            ),
+            self.table: transform_item.TransformItemDefaultSkin(lang_tag=self.lang_tag),
+            "skin": LoadSkin(lang_tag=self.lang_tag),
+            "item": load_item.LoadItem(lang_tag=self.lang_tag),
         }
 
 
 class LoadSkinRestriction(LoadSkinTask):
-    table = transform_skin.SkinTable.SkinRestriction
+    table = "skin_restriction"
 
     postcopy_sql = sql.Composed(
         [
@@ -221,18 +192,14 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_skin.TransformSkin(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_race.RaceTable.Race.value: load_race.LoadRace(
-                lang_tag=self.lang_tag
-            ),
-            transform_skin.SkinTable.Skin.value: LoadSkin(lang_tag=self.lang_tag),
+            self.table: transform_skin.TransformSkinRestriction(lang_tag=self.lang_tag),
+            "race": load_race.LoadRace(lang_tag=self.lang_tag),
+            "skin": LoadSkin(lang_tag=self.lang_tag),
         }
 
 
 class LoadSkinType(LoadSkinTask):
-    table = transform_skin.SkinTable.SkinType
+    table = "skin_type"
 
     postcopy_sql = sql.SQL(
         """
@@ -247,15 +214,13 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_skin.TransformSkin(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_skin.SkinTable.Skin.value: LoadSkin(lang_tag=self.lang_tag),
+            self.table: transform_skin.TransformSkinType(lang_tag=self.lang_tag),
+            "skin": LoadSkin(lang_tag=self.lang_tag),
         }
 
 
 class LoadSkinArmor(LoadSkinTask):
-    table = transform_skin.SkinTable.SkinArmor
+    table = "skin_armor"
 
     postcopy_sql = sql.SQL(
         """
@@ -276,17 +241,13 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_skin.TransformSkin(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_skin.SkinTable.SkinType.value: LoadSkinType(
-                lang_tag=self.lang_tag
-            ),
+            self.table: transform_skin.TransformSkinArmor(lang_tag=self.lang_tag),
+            "skin_type": LoadSkinType(lang_tag=self.lang_tag),
         }
 
 
 class LoadSkinArmorDyeSlot(LoadSkinTask):
-    table = transform_skin.SkinTable.SkinArmorDyeSlot
+    table = "skin_armor_dye_slot"
 
     postcopy_sql = sql.Composed(
         [
@@ -324,20 +285,16 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_skin.TransformSkin(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_color.ColorTable.ColorSample.value: load_color.LoadColorSample(
+            self.table: transform_skin.TransformSkinArmorDyeSlot(
                 lang_tag=self.lang_tag
             ),
-            transform_skin.SkinTable.SkinArmor.value: LoadSkinArmor(
-                lang_tag=self.lang_tag
-            ),
+            "color_sample": load_color.LoadColorSample(lang_tag=self.lang_tag),
+            "skin_armor": LoadSkinArmor(lang_tag=self.lang_tag),
         }
 
 
 class LoadSkinBack(LoadSkinTask):
-    table = transform_skin.SkinTable.SkinBack
+    table = "skin_back"
 
     postcopy_sql = sql.SQL(
         """
@@ -352,17 +309,13 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_skin.TransformSkin(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_skin.SkinTable.SkinType.value: LoadSkinType(
-                lang_tag=self.lang_tag
-            ),
+            self.table: transform_skin.TransformSkinBack(lang_tag=self.lang_tag),
+            "skin_type": LoadSkinType(lang_tag=self.lang_tag),
         }
 
 
 class LoadSkinGathering(LoadSkinTask):
-    table = transform_skin.SkinTable.SkinGathering
+    table = "skin_gathering"
 
     postcopy_sql = sql.SQL(
         """
@@ -381,17 +334,13 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_skin.TransformSkin(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_skin.SkinTable.SkinType.value: LoadSkinType(
-                lang_tag=self.lang_tag
-            ),
+            self.table: transform_skin.TransformSkinGathering(lang_tag=self.lang_tag),
+            "skin_type": LoadSkinType(lang_tag=self.lang_tag),
         }
 
 
 class LoadSkinWeapon(LoadSkinTask):
-    table = transform_skin.SkinTable.SkinWeapon
+    table = "skin_weapon"
 
     postcopy_sql = sql.SQL(
         """
@@ -413,10 +362,6 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_skin.TransformSkin(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_skin.SkinTable.SkinType.value: LoadSkinType(
-                lang_tag=self.lang_tag
-            ),
+            self.table: transform_skin.TransformSkinWeapon(lang_tag=self.lang_tag),
+            "skin_type": LoadSkinType(lang_tag=self.lang_tag),
         }

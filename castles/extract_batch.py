@@ -7,7 +7,6 @@ import requests
 import time
 
 import config
-import common
 import extract_id
 
 
@@ -18,18 +17,12 @@ class ExtractBatchTask(luigi.Task):
 
     def output(self):
         gwapo_config = config.gconfig()
-        with open(self.json_schema_path) as json_schema_file:
-            json_schema = json.load(fp=json_schema_file)
-        schema_id: str = json_schema["$id"]
-        schema_id_no_ext, _ = os.path.splitext(schema_id)
-        schema_id_sanitized = schema_id_no_ext.replace(os.path.sep, "_")
-        output_folder = "_".join(["extract", "batch", schema_id_sanitized])
-
-        return common.from_output_params(
-            output_dir=os.path.join(gwapo_config.output_dir, output_folder),
-            extract_datetime=gwapo_config.extract_datetime,
-            params=self.url_params,
-            ext="ndjson",
+        return luigi.LocalTarget(
+            path=os.path.join(
+                gwapo_config.output_dir,
+                self.get_task_family(),
+                os.path.extsep.join([self.task_id, "ndjson"]),
+            )
         )
 
     def requires(self):
@@ -55,7 +48,9 @@ class ExtractBatchTask(luigi.Task):
             self.set_status_message("Count: {current:d}".format(current=0))
             for index, id_batch in enumerate(itertools.batched(r_input_file, 200)):
                 next_params = dict(self.url_params)
-                next_params["ids"] = ",".join([str(id).strip() for id in id_batch])
+                next_params["ids"] = ",".join(
+                    [str(json.loads(id)).strip() for id in id_batch]
+                )
                 response = requests.get(url=self.url, params=next_params)
 
                 if response.status_code != 200:

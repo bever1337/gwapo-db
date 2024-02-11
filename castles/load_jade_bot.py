@@ -1,14 +1,11 @@
 import luigi
-from os import path
 from psycopg import sql
 
 import common
-import config
 import load_csv
 import load_item
 import load_lang
 import transform_jade_bot
-import transform_item
 
 
 class WrapJadeBot(luigi.WrapperTask):
@@ -23,21 +20,10 @@ class WrapJadeBot(luigi.WrapperTask):
 
 class LoadJadeBotTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = luigi.EnumParameter(enum=transform_jade_bot.JadeBotTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["load", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={"lang": self.lang_tag.value},
-            ext="txt",
-        )
 
 
 class LoadJadeBot(LoadJadeBotTask):
-    table = transform_jade_bot.JadeBotTable.JadeBot
+    table = "jade_bot"
 
     postcopy_sql = sql.SQL(
         """
@@ -51,15 +37,11 @@ WHEN NOT MATCHED THEN
     )
 
     def requires(self):
-        return {
-            self.table.value: transform_jade_bot.TransformJadeBot(
-                lang_tag=self.lang_tag, table=self.table
-            )
-        }
+        return {self.table: transform_jade_bot.TransformJadeBot(lang_tag=self.lang_tag)}
 
 
 class LoadJadeBotDescription(LoadJadeBotTask):
-    table = transform_jade_bot.JadeBotTable.JadeBotDescription
+    table = "jade_bot_description"
 
     postcopy_sql = sql.Composed(
         [
@@ -76,44 +58,34 @@ class LoadJadeBotDescription(LoadJadeBotTask):
 
     def requires(self):
         return {
-            self.table.value: transform_jade_bot.TransformJadeBot(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_jade_bot.JadeBotTable.JadeBot.value: LoadJadeBot(
+            self.table: transform_jade_bot.TransformJadeBotDescription(
                 lang_tag=self.lang_tag
             ),
+            "jade_bot": LoadJadeBot(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }
 
 
 class LoadJadeBotItem(LoadJadeBotTask):
-    table = transform_jade_bot.JadeBotTable.JadeBotItem
+    table = "jade_bot_item"
 
     postcopy_sql = load_item.merge_into_item_reference.format(
-        cross_table_name=sql.Identifier(
-            transform_jade_bot.JadeBotTable.JadeBotItem.value
-        ),
-        table_name=sql.Identifier(transform_jade_bot.JadeBotTable.JadeBot.value),
+        cross_table_name=sql.Identifier("jade_bot_item"),
+        table_name=sql.Identifier("jade_bot"),
         temp_table_name=sql.Identifier("tempo_jade_bot_item"),
         pk_name=sql.Identifier("jade_bot_id"),
     )
 
     def requires(self):
         return {
-            self.table.value: transform_jade_bot.TransformJadeBot(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_jade_bot.JadeBotTable.JadeBot.value: LoadJadeBot(
-                lang_tag=self.lang_tag
-            ),
-            transform_item.ItemTable.Item.value: load_item.LoadItem(
-                lang_tag=self.lang_tag
-            ),
+            self.table: transform_jade_bot.TransformJadeBotItem(lang_tag=self.lang_tag),
+            "jade_bot": LoadJadeBot(lang_tag=self.lang_tag),
+            "item": load_item.LoadItem(lang_tag=self.lang_tag),
         }
 
 
 class LoadJadeBotName(LoadJadeBotTask):
-    table = transform_jade_bot.JadeBotTable.JadeBotName
+    table = "jade_bot_name"
 
     postcopy_sql = sql.Composed(
         [
@@ -130,11 +102,7 @@ class LoadJadeBotName(LoadJadeBotTask):
 
     def requires(self):
         return {
-            self.table.value: transform_jade_bot.TransformJadeBot(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_jade_bot.JadeBotTable.JadeBot.value: LoadJadeBot(
-                lang_tag=self.lang_tag
-            ),
+            self.table: transform_jade_bot.TransformJadeBotName(lang_tag=self.lang_tag),
+            "jade_bot": LoadJadeBot(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }

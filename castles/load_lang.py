@@ -2,7 +2,6 @@ import luigi
 from os import path
 from psycopg import sql
 
-
 import common
 import config
 
@@ -47,15 +46,13 @@ WHEN NOT MATCHED THEN
 class LoadLang(luigi.Task):
     def output(self):
         gwapo_config = config.gconfig()
-        target_filename = "{timestamp:s}.txt".format(
-            timestamp=gwapo_config.extract_datetime.strftime("%Y-%m-%dT%H%M%S%z"),
+        return luigi.LocalTarget(
+            path=path.join(
+                gwapo_config.output_dir,
+                self.get_task_family(),
+                path.extsep.join([self.task_id, "txt"]),
+            )
         )
-        target_path = path.join(
-            gwapo_config.output_dir,
-            "load_lang",
-            target_filename,
-        )
-        return luigi.LocalTarget(path=target_path)
 
     def run(self):
         with (

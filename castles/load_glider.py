@@ -1,16 +1,12 @@
 import luigi
-from os import path
 from psycopg import sql
 
 import common
-import config
 import load_color
 import load_csv
 import load_item
 import load_lang
-import transform_color
 import transform_glider
-import transform_item
 
 
 class WrapGlider(luigi.WrapperTask):
@@ -26,21 +22,10 @@ class WrapGlider(luigi.WrapperTask):
 
 class LoadGliderTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = luigi.EnumParameter(enum=transform_glider.GliderTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["load", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={"lang": self.lang_tag.value},
-            ext="txt",
-        )
 
 
 class LoadGlider(LoadGliderTask):
-    table = transform_glider.GliderTable.Glider
+    table = "glider"
 
     postcopy_sql = sql.SQL(
         """
@@ -58,15 +43,11 @@ WHEN NOT MATCHED THEN
     )
 
     def requires(self):
-        return {
-            self.table.value: transform_glider.TransformGlider(
-                lang_tag=self.lang_tag, table=self.table
-            )
-        }
+        return {self.table: transform_glider.TransformGlider(lang_tag=self.lang_tag)}
 
 
 class LoadGliderDescription(LoadGliderTask):
-    table = transform_glider.GliderTable.GliderDescription
+    table = "glider_description"
 
     postcopy_sql = sql.Composed(
         [
@@ -83,18 +64,16 @@ class LoadGliderDescription(LoadGliderTask):
 
     def requires(self):
         return {
-            self.table.value: transform_glider.TransformGlider(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_glider.GliderTable.Glider.value: LoadGlider(
+            self.table: transform_glider.TransformGliderDescription(
                 lang_tag=self.lang_tag
             ),
+            "glider": LoadGlider(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }
 
 
 class LoadGliderDyeSlot(LoadGliderTask):
-    table = transform_glider.GliderTable.GliderDyeSlot
+    table = "glider_dye_slot"
 
     postcopy_sql = sql.Composed(
         [
@@ -127,44 +106,32 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_glider.TransformGlider(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_color.ColorTable.Color.value: load_color.LoadColor(
-                lang_tag=self.lang_tag
-            ),
-            transform_glider.GliderTable.Glider.value: LoadGlider(
-                lang_tag=self.lang_tag
-            ),
+            self.table: transform_glider.TransformGliderDyeSlot(lang_tag=self.lang_tag),
+            "color": load_color.LoadColor(lang_tag=self.lang_tag),
+            "glider": LoadGlider(lang_tag=self.lang_tag),
         }
 
 
 class LoadGliderItem(LoadGliderTask):
-    table = transform_glider.GliderTable.GliderItem
+    table = "glider_item"
 
     postcopy_sql = load_item.merge_into_item_reference.format(
-        cross_table_name=sql.Identifier(transform_glider.GliderTable.GliderItem.value),
-        table_name=sql.Identifier(transform_glider.GliderTable.Glider.value),
+        cross_table_name=sql.Identifier("glider_item"),
+        table_name=sql.Identifier("glider"),
         temp_table_name=sql.Identifier("tempo_glider_item"),
         pk_name=sql.Identifier("glider_id"),
     )
 
     def requires(self):
         return {
-            self.table.value: transform_glider.TransformGlider(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_glider.GliderTable.Glider.value: LoadGlider(
-                lang_tag=self.lang_tag
-            ),
-            transform_item.ItemTable.Item.value: load_item.LoadItem(
-                lang_tag=self.lang_tag
-            ),
+            self.table: transform_glider.TransformGliderItem(lang_tag=self.lang_tag),
+            "glider": LoadGlider(lang_tag=self.lang_tag),
+            "item": load_item.LoadItem(lang_tag=self.lang_tag),
         }
 
 
 class LoadGliderName(LoadGliderTask):
-    table = transform_glider.GliderTable.GliderName
+    table = "glider_name"
 
     postcopy_sql = sql.Composed(
         [
@@ -181,11 +148,7 @@ class LoadGliderName(LoadGliderTask):
 
     def requires(self):
         return {
-            self.table.value: transform_glider.TransformGlider(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_glider.GliderTable.Glider.value: LoadGlider(
-                lang_tag=self.lang_tag,
-            ),
+            self.table: transform_glider.TransformGliderName(lang_tag=self.lang_tag),
+            "glider": LoadGlider(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }

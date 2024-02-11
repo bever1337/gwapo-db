@@ -1,9 +1,7 @@
 import luigi
-from os import path
 from psycopg import sql
 
 import common
-import config
 import load_csv
 import load_lang
 import transform_mount
@@ -20,21 +18,10 @@ class WrapMount(luigi.WrapperTask):
 
 class LoadMountTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = luigi.EnumParameter(enum=transform_mount.MountTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["load", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={"lang": self.lang_tag.value},
-            ext="txt",
-        )
 
 
 class LoadMount(LoadMountTask):
-    table = transform_mount.MountTable.Mount
+    table = "mount"
 
     postcopy_sql = sql.SQL(
         """
@@ -47,15 +34,11 @@ WHEN NOT MATCHED THEN
     )
 
     def requires(self):
-        return {
-            self.table.value: transform_mount.TransformMount(
-                lang_tag=self.lang_tag, table=self.table
-            )
-        }
+        return {self.table: transform_mount.TransformMount(lang_tag=self.lang_tag)}
 
 
 class LoadMountName(LoadMountTask):
-    table = transform_mount.MountTable.MountName
+    table = "mount_name"
 
     postcopy_sql = sql.Composed(
         [
@@ -72,9 +55,7 @@ class LoadMountName(LoadMountTask):
 
     def requires(self):
         return {
-            self.table.value: transform_mount.TransformMount(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_mount.MountTable.Mount.value: LoadMount(lang_tag=self.lang_tag),
+            self.table: transform_mount.TransformMountName(lang_tag=self.lang_tag),
+            "mount": LoadMount(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }

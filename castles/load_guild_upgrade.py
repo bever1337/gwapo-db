@@ -1,17 +1,13 @@
 import luigi
-from os import path
 from psycopg import sql
 
 import common
-import config
 import load_csv
 import load_currency
 import load_guild_currency
 import load_item
 import load_lang
-import transform_currency
 import transform_guild_upgrade
-import transform_item
 
 
 class WrapGuildUpgrade(luigi.WrapperTask):
@@ -27,21 +23,10 @@ class WrapGuildUpgrade(luigi.WrapperTask):
 
 class LoadGuildUpgradeTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = luigi.EnumParameter(enum=transform_guild_upgrade.GuildUpgradeTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["load", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={"lang": self.lang_tag.value},
-            ext="txt",
-        )
 
 
 class LoadGuildUpgrade(LoadGuildUpgradeTask):
-    table = transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade
+    table = "guild_upgrade"
 
     postcopy_sql = sql.SQL(
         """
@@ -72,14 +57,14 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_guild_upgrade.TransformGuildUpgrade(
-                lang_tag=self.lang_tag, table=self.table
+            self.table: transform_guild_upgrade.TransformGuildUpgrade(
+                lang_tag=self.lang_tag
             )
         }
 
 
 class LoadGuildUpgradeDescription(LoadGuildUpgradeTask):
-    table = transform_guild_upgrade.GuildUpgradeTable.GuildUpgradeDescription
+    table = "guild_upgrade_description"
 
     postcopy_sql = sql.Composed(
         [
@@ -96,18 +81,16 @@ class LoadGuildUpgradeDescription(LoadGuildUpgradeTask):
 
     def requires(self):
         return {
-            self.table.value: transform_guild_upgrade.TransformGuildUpgrade(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade.value: LoadGuildUpgrade(
+            self.table: transform_guild_upgrade.TransformGuildUpgradeDescription(
                 lang_tag=self.lang_tag
             ),
+            "guild_upgrade": LoadGuildUpgrade(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }
 
 
 class LoadGuildUpgradeName(LoadGuildUpgradeTask):
-    table = transform_guild_upgrade.GuildUpgradeTable.GuildUpgradeName
+    table = "guild_upgrade_name"
 
     postcopy_sql = sql.Composed(
         [
@@ -124,18 +107,16 @@ class LoadGuildUpgradeName(LoadGuildUpgradeTask):
 
     def requires(self):
         return {
-            self.table.value: transform_guild_upgrade.TransformGuildUpgrade(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade.value: LoadGuildUpgrade(
+            self.table: transform_guild_upgrade.TransformGuildUpgradeName(
                 lang_tag=self.lang_tag
             ),
+            "guild_upgrade": LoadGuildUpgrade(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }
 
 
 class LoadGuildUpgradePrerequisite(LoadGuildUpgradeTask):
-    table = transform_guild_upgrade.GuildUpgradeTable.GuildUpgradePrerequisite
+    table = "guild_upgrade_prerequisite"
 
     postcopy_sql = sql.Composed(
         [
@@ -172,17 +153,15 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_guild_upgrade.TransformGuildUpgrade(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade.value: LoadGuildUpgrade(
+            self.table: transform_guild_upgrade.TransformGuildUpgradePrerequisite(
                 lang_tag=self.lang_tag
             ),
+            "guild_upgrade": LoadGuildUpgrade(lang_tag=self.lang_tag),
         }
 
 
 class LoadGuildUpgradeCostCurrency(LoadGuildUpgradeTask):
-    table = transform_guild_upgrade.GuildUpgradeTable.GuildUpgradeCostCurrency
+    table = "guild_upgrade_cost_currency"
 
     postcopy_sql = sql.Composed(
         [
@@ -229,18 +208,16 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_guild_upgrade.TransformGuildUpgrade(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            "guild_currency": load_guild_currency.LoadGuildCurrency(),
-            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade.value: LoadGuildUpgrade(
+            self.table: transform_guild_upgrade.TransformGuildUpgradeCostCurrency(
                 lang_tag=self.lang_tag
             ),
+            "guild_currency": load_guild_currency.LoadGuildCurrency(),
+            "guild_upgrade": LoadGuildUpgrade(lang_tag=self.lang_tag),
         }
 
 
 class LoadGuildUpgradeCostItem(LoadGuildUpgradeTask):
-    table = transform_guild_upgrade.GuildUpgradeTable.GuildUpgradeCostItem
+    table = "guild_upgrade_cost_item"
 
     postcopy_sql = sql.Composed(
         [
@@ -287,20 +264,16 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_guild_upgrade.TransformGuildUpgrade(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade.value: LoadGuildUpgrade(
+            self.table: transform_guild_upgrade.TransformGuildUpgradeCostItem(
                 lang_tag=self.lang_tag
             ),
-            transform_item.ItemTable.Item.value: load_item.LoadItem(
-                lang_tag=self.lang_tag
-            ),
+            "guild_upgrade": LoadGuildUpgrade(lang_tag=self.lang_tag),
+            "item": load_item.LoadItem(lang_tag=self.lang_tag),
         }
 
 
 class LoadGuildUpgradeCostWallet(LoadGuildUpgradeTask):
-    table = transform_guild_upgrade.GuildUpgradeTable.GuildUpgradeCostWallet
+    table = "guild_upgrade_cost_wallet"
 
     precopy_sql = sql.Composed(
         [
@@ -382,13 +355,9 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_guild_upgrade.TransformGuildUpgrade(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_currency.CurrencyTable.CurrencyName: load_currency.LoadCurrencyName(
+            self.table: transform_guild_upgrade.TransformGuildUpgradeCostWallet(
                 lang_tag=self.lang_tag
             ),
-            transform_guild_upgrade.GuildUpgradeTable.GuildUpgrade.value: LoadGuildUpgrade(
-                lang_tag=self.lang_tag
-            ),
+            "currency_name": load_currency.LoadCurrencyName(lang_tag=self.lang_tag),
+            "guild_upgrade": LoadGuildUpgrade(lang_tag=self.lang_tag),
         }

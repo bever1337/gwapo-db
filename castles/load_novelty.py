@@ -1,13 +1,10 @@
 import luigi
-from os import path
 from psycopg import sql
 
 import common
-import config
 import load_csv
 import load_item
 import load_lang
-import transform_item
 import transform_novelty
 
 
@@ -23,21 +20,10 @@ class WrapNovelty(luigi.WrapperTask):
 
 class LoadNoveltyTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = luigi.EnumParameter(enum=transform_novelty.NoveltyTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["load", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={"lang": self.lang_tag.value},
-            ext="txt",
-        )
 
 
 class LoadNovelty(LoadNoveltyTask):
-    table = transform_novelty.NoveltyTable.Novelty
+    table = "novelty"
 
     postcopy_sql = sql.SQL(
         """
@@ -56,15 +42,11 @@ WHEN NOT MATCHED THEN
     )
 
     def requires(self):
-        return {
-            self.table.value: transform_novelty.TransformNovelty(
-                lang_tag=self.lang_tag, table=self.table
-            )
-        }
+        return {self.table: transform_novelty.TransformNovelty(lang_tag=self.lang_tag)}
 
 
 class LoadNoveltyDescription(LoadNoveltyTask):
-    table = transform_novelty.NoveltyTable.NoveltyDescription
+    table = "novelty_description"
 
     postcopy_sql = sql.Composed(
         [
@@ -81,44 +63,34 @@ class LoadNoveltyDescription(LoadNoveltyTask):
 
     def requires(self):
         return {
-            self.table.value: transform_novelty.TransformNovelty(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_novelty.NoveltyTable.Novelty.value: LoadNovelty(
+            self.table: transform_novelty.TransformNoveltyDescription(
                 lang_tag=self.lang_tag
             ),
+            "novelty": LoadNovelty(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }
 
 
 class LoadNoveltyItem(LoadNoveltyTask):
-    table = transform_novelty.NoveltyTable.NoveltyItem
+    table = "novelty_item"
 
     postcopy_sql = load_item.merge_into_item_reference.format(
-        cross_table_name=sql.Identifier(
-            transform_novelty.NoveltyTable.NoveltyItem.value
-        ),
-        table_name=sql.Identifier(transform_novelty.NoveltyTable.Novelty.value),
+        cross_table_name=sql.Identifier("novelty_item"),
+        table_name=sql.Identifier("novelty"),
         temp_table_name=sql.Identifier("tempo_novelty_item"),
         pk_name=sql.Identifier("novelty_id"),
     )
 
     def requires(self):
         return {
-            self.table.value: transform_novelty.TransformNovelty(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_novelty.NoveltyTable.Novelty.value: LoadNovelty(
-                lang_tag=self.lang_tag
-            ),
-            transform_item.ItemTable.Item.value: load_item.LoadItem(
-                lang_tag=self.lang_tag
-            ),
+            self.table: transform_novelty.TransformNoveltyItem(lang_tag=self.lang_tag),
+            "novelty": LoadNovelty(lang_tag=self.lang_tag),
+            "item": load_item.LoadItem(lang_tag=self.lang_tag),
         }
 
 
 class LoadNoveltyName(LoadNoveltyTask):
-    table = transform_novelty.NoveltyTable.NoveltyName
+    table = "novelty_name"
 
     postcopy_sql = sql.Composed(
         [
@@ -135,11 +107,7 @@ class LoadNoveltyName(LoadNoveltyTask):
 
     def requires(self):
         return {
-            self.table.value: transform_novelty.TransformNovelty(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_novelty.NoveltyTable.Novelty.value: LoadNovelty(
-                lang_tag=self.lang_tag
-            ),
+            self.table: transform_novelty.TransformNoveltyName(lang_tag=self.lang_tag),
+            "novelty": LoadNovelty(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }

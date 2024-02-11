@@ -1,9 +1,7 @@
 import luigi
-from os import path
 from psycopg import sql
 
 import common
-import config
 import load_csv
 import load_lang
 import transform_color
@@ -26,21 +24,10 @@ class WrapColor(luigi.WrapperTask):
 
 class LoadColorTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = luigi.EnumParameter(enum=transform_color.ColorTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["load", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={"lang": self.lang_tag.value},
-            ext="txt",
-        )
 
 
 class LoadColor(LoadColorTask):
-    table = transform_color.ColorTable.Color
+    table = "color"
 
     postcopy_sql = sql.SQL(
         """
@@ -60,41 +47,11 @@ WHEN NOT MATCHED THEN
     )
 
     def requires(self):
-        return {
-            self.table.value: transform_color.TransformColor(
-                lang_tag=self.lang_tag, table=self.table
-            )
-        }
-
-
-class LoadColorName(LoadColorTask):
-    table = transform_color.ColorTable.ColorName
-
-    postcopy_sql = sql.Composed(
-        [
-            load_lang.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_color_name")
-            ),
-            load_lang.merge_into_placed_copy.format(
-                table_name=sql.Identifier("color_name"),
-                temp_table_name=sql.Identifier("tempo_color_name"),
-                pk_name=sql.Identifier("color_id"),
-            ),
-        ]
-    )
-
-    def requires(self):
-        return {
-            self.table.value: transform_color.TransformColor(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_color.ColorTable.Color.value: LoadColor(lang_tag=self.lang_tag),
-            "lang": load_lang.LoadLang(),
-        }
+        return {self.table: transform_color.TransformColor(lang_tag=self.lang_tag)}
 
 
 class LoadColorBase(LoadColorTask):
-    table = transform_color.ColorTable.ColorBase
+    table = "color_base"
 
     postcopy_sql = sql.SQL(
         """
@@ -117,16 +74,37 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_color.TransformColor(
-                lang_tag=self.lang_tag,
-                table=self.table,
+            self.table: transform_color.TransformColorBase(lang_tag=self.lang_tag),
+            "color": LoadColor(lang_tag=self.lang_tag),
+        }
+
+
+class LoadColorName(LoadColorTask):
+    table = "color_name"
+
+    postcopy_sql = sql.Composed(
+        [
+            load_lang.merge_into_operating_copy.format(
+                table_name=sql.Identifier("tempo_color_name")
             ),
-            transform_color.ColorTable.Color.value: LoadColor(lang_tag=self.lang_tag),
+            load_lang.merge_into_placed_copy.format(
+                table_name=sql.Identifier("color_name"),
+                temp_table_name=sql.Identifier("tempo_color_name"),
+                pk_name=sql.Identifier("color_id"),
+            ),
+        ]
+    )
+
+    def requires(self):
+        return {
+            self.table: transform_color.TransformColorName(lang_tag=self.lang_tag),
+            "color": LoadColor(lang_tag=self.lang_tag),
+            "lang": load_lang.LoadLang(),
         }
 
 
 class LoadColorSample(LoadColorTask):
-    table = transform_color.ColorTable.ColorSample
+    table = "color_sample"
 
     postcopy_sql = sql.SQL(
         """
@@ -142,15 +120,13 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_color.TransformColor(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_color.ColorTable.Color.value: LoadColor(lang_tag=self.lang_tag),
+            self.table: transform_color.TransformColorSample(lang_tag=self.lang_tag),
+            "color": LoadColor(lang_tag=self.lang_tag),
         }
 
 
 class LoadColorSampleAdjustment(LoadColorTask):
-    table = transform_color.ColorTable.ColorSampleAdjustment
+    table = "color_sample_adjustment"
 
     postcopy_sql = sql.SQL(
         """
@@ -172,17 +148,15 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_color.TransformColor(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_color.ColorTable.ColorSample.value: LoadColorSample(
+            self.table: transform_color.TransformColorSampleAdjustment(
                 lang_tag=self.lang_tag
             ),
+            "color_sample": LoadColorSample(lang_tag=self.lang_tag),
         }
 
 
 class LoadColorSampleShift(LoadColorTask):
-    table = transform_color.ColorTable.ColorSampleShift
+    table = "color_sample_shift"
 
     postcopy_sql = sql.SQL(
         """
@@ -206,17 +180,15 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_color.TransformColor(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_color.ColorTable.ColorSample.value: LoadColorSample(
+            self.table: transform_color.TransformColorSampleShift(
                 lang_tag=self.lang_tag
             ),
+            "color_sample": LoadColorSample(lang_tag=self.lang_tag),
         }
 
 
 class LoadColorSampleReference(LoadColorTask):
-    table = transform_color.ColorTable.ColorSampleReference
+    table = "color_sample_reference"
 
     postcopy_sql = sql.SQL(
         """
@@ -240,17 +212,15 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_color.TransformColor(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_color.ColorTable.ColorSample.value: LoadColorSample(
+            self.table: transform_color.TransformColorSampleReference(
                 lang_tag=self.lang_tag
             ),
+            "color_sample": LoadColorSample(lang_tag=self.lang_tag),
         }
 
 
 class LoadColorSampleReferencePerception(LoadColorTask):
-    table = transform_color.ColorTable.ColorSampleReferencePerception
+    table = "color_sample_reference_perception"
 
     precopy_sql = sql.Composed(
         [
@@ -264,7 +234,7 @@ CREATE TEMPORARY TABLE tempo_color_sample_reference_perception (
             sql.SQL(
                 """
 ALTER TABLE tempo_color_sample_reference_perception
-  DROP COLUMN IF EXISTS perceived_lightness,
+  DROP COLUMN perceived_lightness,
   DROP COLUMN IF EXISTS sysrange_lower,
   DROP COLUMN IF EXISTS sysrange_upper;
 """
@@ -294,10 +264,8 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_color.TransformColor(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_color.ColorTable.ColorSampleReference.value: LoadColorSampleReference(
+            self.table: transform_color.TransformColorSampleReference(
                 lang_tag=self.lang_tag
             ),
+            "color_sample_reference": LoadColorSampleReference(lang_tag=self.lang_tag),
         }

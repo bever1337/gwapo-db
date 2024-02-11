@@ -2,14 +2,24 @@ import copy
 import jsonpatch
 import json
 import luigi
+from os import path
 import time
+
+import config
 
 
 class TransformPatchTask(luigi.Task):
     json_patch_path = luigi.OptionalPathParameter(exists=True)
 
     def output(self):
-        raise NotImplementedError("Task must define output")
+        gwapo_config = config.gconfig()
+        return luigi.LocalTarget(
+            path=path.join(
+                gwapo_config.output_dir,
+                self.get_task_family(),
+                path.extsep.join([self.task_id, "ndjson"]),
+            )
+        )
 
     def requires(self):
         raise NotImplementedError("Task must define requires")

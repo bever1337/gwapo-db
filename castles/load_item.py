@@ -1,16 +1,12 @@
 import luigi
-from os import path
 from psycopg import sql
 
 import common
-import config
 import load_csv
 import load_lang
 import load_profession
 import load_race
 import transform_item
-import transform_profession
-import transform_race
 
 merge_into_item_reference = sql.SQL(
     """
@@ -63,21 +59,10 @@ class WrapItem(luigi.WrapperTask):
 
 class LoadItemTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = luigi.EnumParameter(enum=transform_item.ItemTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["load", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={"lang": self.lang_tag.value},
-            ext="txt",
-        )
 
 
 class LoadItem(LoadItemTask):
-    table = transform_item.ItemTable.Item
+    table = "item"
 
     postcopy_sql = sql.SQL(
         """
@@ -100,15 +85,11 @@ WHEN NOT MATCHED THEN
     )
 
     def requires(self):
-        return {
-            self.table.value: transform_item.TransformItem(
-                lang_tag=self.lang_tag, table=self.table
-            )
-        }
+        return {self.table: transform_item.TransformItem(lang_tag=self.lang_tag)}
 
 
 class LoadItemDescription(LoadItemTask):
-    table = transform_item.ItemTable.ItemDescription
+    table = "item_description"
 
     postcopy_sql = sql.Composed(
         [
@@ -125,16 +106,14 @@ class LoadItemDescription(LoadItemTask):
 
     def requires(self):
         return {
-            self.table.value: transform_item.TransformItem(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_item.ItemTable.Item.value: LoadItem(lang_tag=self.lang_tag),
+            self.table: transform_item.TransformItemDescription(lang_tag=self.lang_tag),
+            "item": LoadItem(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }
 
 
 class LoadItemFlag(LoadItemTask):
-    table = transform_item.ItemTable.ItemFlag
+    table = "item_flag"
 
     postcopy_sql = sql.Composed(
         [
@@ -166,15 +145,13 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_item.TransformItem(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_item.ItemTable.Item.value: LoadItem(lang_tag=self.lang_tag),
+            self.table: transform_item.TransformItemFlag(lang_tag=self.lang_tag),
+            "item": LoadItem(lang_tag=self.lang_tag),
         }
 
 
 class LoadItemGameType(LoadItemTask):
-    table = transform_item.ItemTable.ItemGameType
+    table = "item_game_type"
 
     postcopy_sql = sql.Composed(
         [
@@ -206,15 +183,13 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_item.TransformItem(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_item.ItemTable.Item.value: LoadItem(lang_tag=self.lang_tag),
+            self.table: transform_item.TransformItemGameType(lang_tag=self.lang_tag),
+            "item": LoadItem(lang_tag=self.lang_tag),
         }
 
 
 class LoadItemName(LoadItemTask):
-    table = transform_item.ItemTable.ItemName
+    table = "item_name"
 
     postcopy_sql = sql.Composed(
         [
@@ -231,16 +206,14 @@ class LoadItemName(LoadItemTask):
 
     def requires(self):
         return {
-            self.table.value: transform_item.TransformItem(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_item.ItemTable.Item.value: LoadItem(lang_tag=self.lang_tag),
+            self.table: transform_item.TransformItemName(lang_tag=self.lang_tag),
+            "item": LoadItem(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }
 
 
 class LoadItemProfessionRestriction(LoadItemTask):
-    table = transform_item.ItemTable.ItemProfessionRestriction
+    table = "item_profession_restriction"
 
     postcopy_sql = sql.Composed(
         [
@@ -276,18 +249,16 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_item.TransformItem(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_profession.ProfessionTable.Profession.value: load_profession.LoadProfession(
+            self.table: transform_item.TransformItemRestrictionProfession(
                 lang_tag=self.lang_tag
             ),
-            transform_item.ItemTable.Item.value: LoadItem(lang_tag=self.lang_tag),
+            "profession": load_profession.LoadProfession(lang_tag=self.lang_tag),
+            "item": LoadItem(lang_tag=self.lang_tag),
         }
 
 
 class LoadItemRaceRestriction(LoadItemTask):
-    table = transform_item.ItemTable.ItemRaceRestriction
+    table = "item_race_restriction"
 
     postcopy_sql = sql.Composed(
         [
@@ -319,18 +290,16 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_item.TransformItem(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_race.RaceTable.Race.value: load_race.LoadRace(
+            self.table: transform_item.TransformItemRestrictionRace(
                 lang_tag=self.lang_tag
             ),
-            transform_item.ItemTable.Item.value: LoadItem(lang_tag=self.lang_tag),
+            "race": load_race.LoadRace(lang_tag=self.lang_tag),
+            "item": LoadItem(lang_tag=self.lang_tag),
         }
 
 
 class LoadItemType(LoadItemTask):
-    table = transform_item.ItemTable.ItemType
+    table = "item_type"
 
     postcopy_sql = sql.SQL(
         """
@@ -345,15 +314,13 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_item.TransformItem(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_item.ItemTable.Item.value: LoadItem(lang_tag=self.lang_tag),
+            self.table: transform_item.TransformItemType(lang_tag=self.lang_tag),
+            "item": LoadItem(lang_tag=self.lang_tag),
         }
 
 
 class LoadItemUpgrade(LoadItemTask):
-    table = transform_item.ItemTable.ItemUpgrade
+    table = "item_upgrade"
 
     postcopy_sql = sql.SQL(
         """
@@ -394,8 +361,6 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_item.TransformItem(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_item.ItemTable.Item.value: LoadItem(lang_tag=self.lang_tag),
+            self.table: transform_item.TransformItemUpgrade(lang_tag=self.lang_tag),
+            "item": LoadItem(lang_tag=self.lang_tag),
         }

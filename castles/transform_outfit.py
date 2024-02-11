@@ -1,33 +1,13 @@
-import enum
 import luigi
-from os import path
 
 import common
-import config
 import extract_batch
 import transform_csv
 import transform_lang
 
 
-class OutfitTable(enum.Enum):
-    Outfit = "outfit"
-    OutfitItem = "outfit_item"
-    OutfitName = "outfit_name"
-
-
-class TransformOutfit(transform_csv.TransformCsvTask):
+class TransformOutfitTask(transform_csv.TransformCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = luigi.EnumParameter(enum=OutfitTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["transform", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={"lang": self.lang_tag.value},
-            ext="csv",
-        )
 
     def requires(self):
         return extract_batch.ExtractBatchTask(
@@ -36,25 +16,28 @@ class TransformOutfit(transform_csv.TransformCsvTask):
             url="https://api.guildwars2.com/v2/outfits",
         )
 
+
+class TransformOutfit(TransformOutfitTask):
+    def get_rows(self, outfit):
+        return [{"icon": outfit["icon"], "outfit_id": outfit["id"]}]
+
+
+class TransformOutfitItem(TransformOutfitTask):
     def get_rows(self, outfit):
         outfit_id = outfit["id"]
+        return [
+            {"item_id": item_id, "outfit_id": outfit_id}
+            for item_id in outfit["unlock_items"]
+        ]
 
-        match self.table:
-            case OutfitTable.Outfit:
-                return [{"icon": outfit["icon"], "outfit_id": outfit_id}]
-            case OutfitTable.OutfitItem:
-                return [
-                    {"item_id": item_id, "outfit_id": outfit_id}
-                    for item_id in outfit["unlock_items"]
-                ]
-            case OutfitTable.OutfitName:
-                return [
-                    {
-                        "app_name": "gw2",
-                        "outfit_id": outfit_id,
-                        "lang_tag": self.lang_tag.value,
-                        "original": transform_lang.to_xhmtl_fragment(outfit["name"]),
-                    }
-                ]
-            case _:
-                raise RuntimeError("Unexpected table name")
+
+class TransformOutfitName(TransformOutfitTask):
+    def get_rows(self, outfit):
+        return [
+            {
+                "app_name": "gw2",
+                "outfit_id": outfit["id"],
+                "lang_tag": self.lang_tag.value,
+                "original": transform_lang.to_xhmtl_fragment(outfit["name"]),
+            }
+        ]

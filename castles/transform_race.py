@@ -1,32 +1,13 @@
-import enum
 import luigi
-from os import path
 
 import common
-import config
 import extract_batch
 import transform_csv
 import transform_lang
 
 
-class RaceTable(enum.Enum):
-    Race = "race"
-    RaceName = "race_name"
-
-
-class TransformRace(transform_csv.TransformCsvTask):
+class TransformRaceTask(transform_csv.TransformCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = luigi.EnumParameter(enum=RaceTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["transform", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={"lang": self.lang_tag.value},
-            ext="csv",
-        )
 
     def requires(self):
         return extract_batch.ExtractBatchTask(
@@ -35,19 +16,19 @@ class TransformRace(transform_csv.TransformCsvTask):
             url="https://api.guildwars2.com/v2/races",
         )
 
+
+class TransformRace(TransformRaceTask):
     def get_rows(self, race):
-        race_id = race["id"]
-        match self.table:
-            case RaceTable.Race:
-                return [{"race_id": race_id}]
-            case RaceTable.RaceName:
-                return [
-                    {
-                        "app_name": "gw2",
-                        "lang_tag": self.lang_tag.value,
-                        "original": transform_lang.to_xhmtl_fragment(race["name"]),
-                        "race_id": race_id,
-                    }
-                ]
-            case _:
-                raise RuntimeError("Unexpected table name")
+        return [{"race_id": race["id"]}]
+
+
+class TransformRaceName(TransformRaceTask):
+    def get_rows(self, race):
+        return [
+            {
+                "app_name": "gw2",
+                "lang_tag": self.lang_tag.value,
+                "original": transform_lang.to_xhmtl_fragment(race["name"]),
+                "race_id": race["id"],
+            }
+        ]

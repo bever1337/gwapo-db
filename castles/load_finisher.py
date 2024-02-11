@@ -1,15 +1,11 @@
 import luigi
-from os import path
 from psycopg import sql
 
-
 import common
-import config
 import load_csv
 import load_item
 import load_lang
 import transform_finisher
-import transform_item
 
 
 class WrapFinisher(luigi.WrapperTask):
@@ -24,21 +20,10 @@ class WrapFinisher(luigi.WrapperTask):
 
 class LoadFinisherTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = luigi.EnumParameter(enum=transform_finisher.FinisherTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["load", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={"lang": self.lang_tag.value},
-            ext="txt",
-        )
 
 
 class LoadFinisher(LoadFinisherTask):
-    table = transform_finisher.FinisherTable.Finisher
+    table = "finisher"
 
     postcopy_sql = sql.SQL(
         """
@@ -59,14 +44,12 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_finisher.TransformFinisher(
-                lang_tag=self.lang_tag, table=self.table
-            )
+            self.table: transform_finisher.TransformFinisher(lang_tag=self.lang_tag)
         }
 
 
 class LoadFinisherDetail(LoadFinisherTask):
-    table = transform_finisher.FinisherTable.FinisherDetail
+    table = "finisher_detail"
 
     postcopy_sql = sql.Composed(
         [
@@ -83,44 +66,36 @@ class LoadFinisherDetail(LoadFinisherTask):
 
     def requires(self):
         return {
-            self.table.value: transform_finisher.TransformFinisher(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_finisher.FinisherTable.Finisher.value: LoadFinisher(
+            self.table: transform_finisher.TransformFinisherDetail(
                 lang_tag=self.lang_tag
             ),
+            "finisher": LoadFinisher(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }
 
 
 class LoadFinisherItem(LoadFinisherTask):
-    table = transform_finisher.FinisherTable.FinisherItem
+    table = "finisher_item"
 
     postcopy_sql = load_item.merge_into_item_reference.format(
-        cross_table_name=sql.Identifier(
-            transform_finisher.FinisherTable.FinisherItem.value
-        ),
-        table_name=sql.Identifier(transform_finisher.FinisherTable.Finisher.value),
+        cross_table_name=sql.Identifier("finisher_item"),
+        table_name=sql.Identifier("finisher"),
         temp_table_name=sql.Identifier("tempo_finisher_item"),
         pk_name=sql.Identifier("finisher_id"),
     )
 
     def requires(self):
         return {
-            self.table.value: transform_finisher.TransformFinisher(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_finisher.FinisherTable.Finisher.value: LoadFinisher(
+            self.table: transform_finisher.TransformFinisherItem(
                 lang_tag=self.lang_tag
             ),
-            transform_item.ItemTable.Item.value: load_item.LoadItem(
-                lang_tag=self.lang_tag
-            ),
+            "finisher": LoadFinisher(lang_tag=self.lang_tag),
+            "item": load_item.LoadItem(lang_tag=self.lang_tag),
         }
 
 
 class LoadFinisherName(LoadFinisherTask):
-    table = transform_finisher.FinisherTable.FinisherName
+    table = "finisher_name"
 
     postcopy_sql = sql.Composed(
         [
@@ -137,11 +112,9 @@ class LoadFinisherName(LoadFinisherTask):
 
     def requires(self):
         return {
-            self.table.value: transform_finisher.TransformFinisher(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_finisher.FinisherTable.Finisher.value: LoadFinisher(
+            self.table: transform_finisher.TransformFinisherName(
                 lang_tag=self.lang_tag
             ),
+            "finisher": LoadFinisher(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }

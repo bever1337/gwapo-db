@@ -1,13 +1,10 @@
 import luigi
-from os import path
 from psycopg import sql
 
 import common
-import config
 import load_color
 import load_csv
 import load_lang
-import transform_color
 import transform_skiff
 
 
@@ -23,21 +20,10 @@ class WrapSkiff(luigi.WrapperTask):
 
 class LoadSkiffTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = luigi.EnumParameter(enum=transform_skiff.SkiffTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["load", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={"lang": self.lang_tag.value},
-            ext="txt",
-        )
 
 
 class LoadSkiff(LoadSkiffTask):
-    table = transform_skiff.SkiffTable.Skiff
+    table = "skiff"
 
     postcopy_sql = sql.SQL(
         """
@@ -54,15 +40,11 @@ WHEN NOT MATCHED THEN
     )
 
     def requires(self):
-        return {
-            self.table.value: transform_skiff.TransformSkiff(
-                lang_tag=self.lang_tag, table=self.table
-            )
-        }
+        return {self.table: transform_skiff.TransformSkiff(lang_tag=self.lang_tag)}
 
 
 class LoadSkiffDyeSlot(LoadSkiffTask):
-    table = transform_skiff.SkiffTable.SkiffDyeSlot
+    table = "skiff_dye_slot"
 
     postcopy_sql = sql.Composed(
         [
@@ -95,18 +77,14 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_skiff.TransformSkiff(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_color.ColorTable.ColorSample.value: load_color.LoadColorSample(
-                lang_tag=self.lang_tag
-            ),
-            transform_skiff.SkiffTable.Skiff.value: LoadSkiff(lang_tag=self.lang_tag),
+            self.table: transform_skiff.TransformSkiffDyeSlot(lang_tag=self.lang_tag),
+            "color_sample": load_color.LoadColorSample(lang_tag=self.lang_tag),
+            "skiff": LoadSkiff(lang_tag=self.lang_tag),
         }
 
 
 class LoadSkiffName(LoadSkiffTask):
-    table = transform_skiff.SkiffTable.SkiffName
+    table = "skiff_name"
 
     postcopy_sql = sql.Composed(
         [
@@ -123,9 +101,7 @@ class LoadSkiffName(LoadSkiffTask):
 
     def requires(self):
         return {
-            self.table.value: transform_skiff.TransformSkiff(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_skiff.SkiffTable.Skiff.value: LoadSkiff(lang_tag=self.lang_tag),
+            self.table: transform_skiff.TransformSkiffName(lang_tag=self.lang_tag),
+            "skiff": LoadSkiff(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }

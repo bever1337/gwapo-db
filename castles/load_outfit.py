@@ -22,21 +22,10 @@ class WrapOutfit(luigi.WrapperTask):
 
 class LoadOutfitTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = luigi.EnumParameter(enum=transform_outfit.OutfitTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["load", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={"lang": self.lang_tag.value},
-            ext="txt",
-        )
 
 
 class LoadOutfit(LoadOutfitTask):
-    table = transform_outfit.OutfitTable.Outfit
+    table = "outfit"
 
     postcopy_sql = sql.SQL(
         """
@@ -53,39 +42,29 @@ WHEN NOT MATCHED THEN
     )
 
     def requires(self):
-        return {
-            self.table.value: transform_outfit.TransformOutfit(
-                lang_tag=self.lang_tag, table=self.table
-            )
-        }
+        return {self.table: transform_outfit.TransformOutfit(lang_tag=self.lang_tag)}
 
 
 class LoadOutfitItem(LoadOutfitTask):
-    table = transform_outfit.OutfitTable.OutfitItem
+    table = "outfit_item"
 
     postcopy_sql = load_item.merge_into_item_reference.format(
-        cross_table_name=sql.Identifier(transform_outfit.OutfitTable.OutfitItem.value),
-        table_name=sql.Identifier(transform_outfit.OutfitTable.Outfit.value),
+        cross_table_name=sql.Identifier("outfit_item"),
+        table_name=sql.Identifier("outfit"),
         temp_table_name=sql.Identifier("tempo_outfit_item"),
         pk_name=sql.Identifier("outfit_id"),
     )
 
     def requires(self):
         return {
-            self.table.value: transform_outfit.TransformOutfit(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_outfit.OutfitTable.Outfit.value: LoadOutfit(
-                lang_tag=self.lang_tag
-            ),
-            transform_item.ItemTable.Item.value: load_item.LoadItem(
-                lang_tag=self.lang_tag
-            ),
+            self.table: transform_outfit.TransformOutfitItem(lang_tag=self.lang_tag),
+            "outfit": LoadOutfit(lang_tag=self.lang_tag),
+            "item": load_item.LoadItem(lang_tag=self.lang_tag),
         }
 
 
 class LoadOutfitName(LoadOutfitTask):
-    table = transform_outfit.OutfitTable.OutfitName
+    table = "outfit_name"
 
     postcopy_sql = sql.Composed(
         [
@@ -102,11 +81,7 @@ class LoadOutfitName(LoadOutfitTask):
 
     def requires(self):
         return {
-            self.table.value: transform_outfit.TransformOutfit(
-                lang_tag=self.lang_tag, table=self.table
-            ),
-            transform_outfit.OutfitTable.Outfit.value: LoadOutfit(
-                lang_tag=self.lang_tag
-            ),
+            self.table: transform_outfit.TransformOutfitName(lang_tag=self.lang_tag),
+            "outfit": LoadOutfit(lang_tag=self.lang_tag),
             "lang": load_lang.LoadLang(),
         }

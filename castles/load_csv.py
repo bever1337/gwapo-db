@@ -1,14 +1,11 @@
 import csv
-import enum
 import io
 import luigi
+from os import path
 from psycopg import sql
 
 import common
-
-
-class UnimplementedEnum(enum.Enum):
-    pass
+import config
 
 
 class LoadCsvTask(luigi.Task):
@@ -16,10 +13,17 @@ class LoadCsvTask(luigi.Task):
     copy_sql: None | sql.SQL = None
     postcopy_sql: None | sql.SQL = None
 
-    table = luigi.EnumParameter(enum=UnimplementedEnum)
+    table = luigi.Parameter()
 
     def output(self):
-        raise NotImplementedError("Task must define output")
+        gwapo_config = config.gconfig()
+        return luigi.LocalTarget(
+            path=path.join(
+                gwapo_config.output_dir,
+                self.get_task_family(),
+                path.extsep.join([self.task_id, "txt"]),
+            )
+        )
 
     def requires(self):
         raise NotImplementedError("Task must define requires")
@@ -27,13 +31,11 @@ class LoadCsvTask(luigi.Task):
     def run(self):
         if self.postcopy_sql is None:
             raise NotImplementedError("Task must implement postcopy_sql attribute")
-        if self.table is UnimplementedEnum:
-            raise NotImplementedError("Task must implement table parameter")
 
         r_input_file: io.FileIO
         w_output_file: io.FileIO
         with (
-            self.input().get(self.table.value).open("r") as r_input_file,
+            self.input().get(self.table).open("r") as r_input_file,
             self.output().open("w") as w_output_file,
             common.get_conn() as connection,
         ):
@@ -51,9 +53,9 @@ CREATE TEMPORARY TABLE {temp_table_name} (
 ) ON COMMIT DROP;
 """
                         ).format(
-                            table_name=sql.Identifier(self.table.value),
+                            table_name=sql.Identifier(self.table),
                             temp_table_name=sql.Identifier(
-                                "_".join(["tempo", self.table.value])
+                                "_".join(["tempo", self.table])
                             ),
                         ),
                         sql.SQL(
@@ -64,7 +66,7 @@ ALTER TABLE {temp_table_name}
 """
                         ).format(
                             temp_table_name=sql.Identifier(
-                                "_".join(["tempo", self.table.value])
+                                "_".join(["tempo", self.table])
                             )
                         ),
                     ]
@@ -85,9 +87,7 @@ COPY {temp_table_name} ({fields}) FROM STDIN (FORMAT 'csv');
                             for fieldname in csv_reader.fieldnames
                         ]
                     ),
-                    temp_table_name=sql.Identifier(
-                        "_".join(["tempo", self.table.value])
-                    ),
+                    temp_table_name=sql.Identifier("_".join(["tempo", self.table])),
                 )
             )
 

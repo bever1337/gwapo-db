@@ -1,17 +1,27 @@
 import csv
 import json
 import luigi
+from os import path
+
+import config
 
 
 class TransformCsvTask(luigi.Task):
     def get_rows(self, entity) -> list[dict]:
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def output(self):
-        raise NotImplementedError
+        gwapo_config = config.gconfig()
+        return luigi.LocalTarget(
+            path=path.join(
+                gwapo_config.output_dir,
+                self.get_task_family(),
+                path.extsep.join([self.task_id, "csv"]),
+            )
+        )
 
     def requires(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def run(self):
         with (
@@ -34,3 +44,5 @@ class TransformCsvTask(luigi.Task):
                     )
                     csv_writer.writeheader()
                 csv_writer.writerows(rows)
+            if csv_writer is None:
+                raise RuntimeError("Wrote 0 rows")

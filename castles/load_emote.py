@@ -1,13 +1,10 @@
 import luigi
-from os import path
 from psycopg import sql
 
 import common
-import config
 import load_csv
 import load_item
 import transform_emote
-import transform_item
 
 
 class WrapEmote(luigi.WrapperTask):
@@ -17,21 +14,11 @@ class WrapEmote(luigi.WrapperTask):
 
 
 class LoadEmoteTask(load_csv.LoadCsvTask):
-    table = luigi.EnumParameter(enum=transform_emote.EmoteTable)
-
-    def output(self):
-        gwapo_config = config.gconfig()
-        output_folder_name = "_".join(["load", self.table.value])
-        return common.from_output_params(
-            output_dir=path.join(gwapo_config.output_dir, output_folder_name),
-            extract_datetime=gwapo_config.extract_datetime,
-            params={},
-            ext="txt",
-        )
+    pass
 
 
 class LoadEmote(LoadEmoteTask):
-    table = transform_emote.EmoteTable.Emote
+    table = "emote"
 
     postcopy_sql = sql.SQL(
         """
@@ -44,11 +31,11 @@ WHEN NOT MATCHED THEN
     )
 
     def requires(self):
-        return {self.table.value: transform_emote.TransformEmote(table=self.table)}
+        return {self.table: transform_emote.TransformEmote()}
 
 
 class LoadEmoteCommand(LoadEmoteTask):
-    table = transform_emote.EmoteTable.EmoteCommand
+    table = "emote_command"
 
     postcopy_sql = sql.Composed(
         [
@@ -80,27 +67,25 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table.value: transform_emote.TransformEmote(table=self.table),
-            transform_emote.EmoteTable.Emote.value: LoadEmote(),
+            self.table: transform_emote.TransformEmoteCommand(),
+            "emote": LoadEmote(),
         }
 
 
 class LoadEmoteItem(LoadEmoteTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = transform_emote.EmoteTable.EmoteItem
+    table = "emote_item"
 
     postcopy_sql = load_item.merge_into_item_reference.format(
-        cross_table_name=sql.Identifier(transform_emote.EmoteTable.EmoteItem.value),
-        table_name=sql.Identifier(transform_emote.EmoteTable.Emote.value),
+        cross_table_name=sql.Identifier("emote_item"),
+        table_name=sql.Identifier("emote"),
         temp_table_name=sql.Identifier("tempo_emote_item"),
         pk_name=sql.Identifier("emote_id"),
     )
 
     def requires(self):
         return {
-            self.table.value: transform_emote.TransformEmote(table=self.table),
-            transform_emote.EmoteTable.Emote.value: LoadEmote(),
-            transform_item.ItemTable.Item.value: load_item.LoadItem(
-                lang_tag=self.lang_tag
-            ),
+            self.table: transform_emote.TransformEmoteItem(),
+            "emote": LoadEmote(),
+            "item": load_item.LoadItem(lang_tag=self.lang_tag),
         }
