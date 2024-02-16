@@ -113,6 +113,45 @@ class LoadCsvColorName(LoadCsvColorTask):
         }
 
 
+class LoadCsvColorNameTranslation(load_csv.LoadCsvTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    table = "translated_copy"
+    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_namespace = "color"
+    translation_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+
+    precopy_sql = sql.Composed(
+        [
+            lang_load.create_temporary_translation_table,
+            sql.SQL(
+                """
+ALTER TABLE tempo_translated_copy
+  DROP COLUMN original,
+  ADD COLUMN color_id integer NOT NULL,
+  DROP COLUMN IF EXISTS sysrange_lower,
+  DROP COLUMN IF EXISTS sysrange_upper;
+"""
+            ),
+        ]
+    )
+
+    postcopy_sql = lang_load.merge_into_translated_copy.format(
+        cross_ref_table_name=sql.Identifier("color_name"),
+        pk_name=sql.Identifier("color_id"),
+    )
+
+    def requires(self):
+        return {
+            self.table: color_transform_csv.TransformCsvColorNameTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                translation_lang_tag=self.translation_lang_tag,
+            ),
+            "color": LoadCsvColorName(lang_tag=self.original_lang_tag),
+        }
+
+
 class LoadCsvColorSample(LoadCsvColorTask):
     table = "color_sample"
 

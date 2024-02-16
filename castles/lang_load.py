@@ -26,6 +26,7 @@ WHEN NOT MATCHED THEN
 """
 )
 
+
 merge_into_placed_copy = sql.SQL(
     """
 MERGE INTO gwapese.{table_name} AS merge_target
@@ -40,6 +41,58 @@ WHEN NOT MATCHED THEN
   INSERT (app_name, lang_tag, original, {pk_name})
     VALUES (merge_source.app_name, merge_source.lang_tag,
       merge_source.original, merge_source.{pk_name});
+"""
+)
+
+
+create_temporary_translation_table = sql.SQL(
+    """
+CREATE TEMPORARY TABLE tempo_translated_copy (
+  LIKE gwapese.translated_copy
+) ON COMMIT DROP;
+"""
+)
+
+
+merge_into_translated_copy = sql.SQL(
+    """
+MERGE INTO gwapese.translated_copy AS target_translated_copy
+USING (
+  SELECT
+    tempo_translated_copy.app_name,
+    tempo_translated_copy.original_lang_tag,
+    gwapese.color_name.original,
+    tempo_translated_copy.translation_lang_tag,
+    tempo_translated_copy.translation
+  FROM
+    tempo_translated_copy
+  INNER JOIN
+    gwapese.color_name
+  ON
+    tempo_translated_copy.app_name = gwapese.color_name.app_name
+    AND tempo_translated_copy.original_lang_tag = gwapese.color_name.lang_tag
+    AND tempo_translated_copy.color_id = gwapese.color_name.color_id
+  ) AS source_translated_copy ON
+    target_translated_copy.app_name = source_translated_copy.app_name
+    AND target_translated_copy.original_lang_tag = source_translated_copy.original_lang_tag
+    AND target_translated_copy.original = source_translated_copy.original
+    AND target_translated_copy.translation_lang_tag = source_translated_copy.translation_lang_tag
+  WHEN MATCHED
+    AND target_translated_copy.translation !=
+      source_translated_copy.translation THEN
+    UPDATE SET
+      translation = source_translated_copy.translation
+  WHEN NOT MATCHED THEN
+    INSERT (app_name,
+      original_lang_tag,
+      original,
+      translation_lang_tag,
+      translation)
+      VALUES (source_translated_copy.app_name,
+        source_translated_copy.original_lang_tag,
+        source_translated_copy.original,
+        source_translated_copy.translation_lang_tag,
+        source_translated_copy.translation);
 """
 )
 
@@ -120,46 +173,3 @@ WHEN NOT MATCHED THEN
             except Exception as exception_instance:
                 cursor.execute(query="ROLLBACK")
                 raise exception_instance
-
-
-def upsert_translated_copy(
-    app_name: str,
-    original_lang_tag: str,
-    original: str,
-    translation_lang_tag: str,
-    translation: str,
-) -> dict[str]:
-    return {
-        "query": """
-MERGE INTO gwapese.translated_copy AS target_translated_copy
-USING (
-  VALUES (%s::text, %s::text, %s::text, %s::text, %s::text)) AS source_translated_copy
-    (app_name, original_lang_tag, original, translation_lang_tag, translation)
-    ON target_translated_copy.app_name = source_translated_copy.app_name
-    AND target_translated_copy.original_lang_tag = source_translated_copy.original_lang_tag
-    AND target_translated_copy.original = source_translated_copy.original
-    AND target_translated_copy.translation_lang_tag = source_translated_copy.translation_lang_tag
-  WHEN MATCHED
-    AND target_translated_copy.translation !=
-      source_translated_copy.translation THEN
-    UPDATE SET
-      translation = source_translated_copy.translation
-  WHEN NOT MATCHED THEN
-    INSERT (app_name,
-      original_lang_tag,
-      original,
-      translation_lang_tag,
-      translation)
-      VALUES (source_translated_copy.app_name,
-        source_translated_copy.original_lang_tag,
-        source_translated_copy.original,
-        source_translated_copy.translation_lang_tag,
-        source_translated_copy.translation);""",
-        "params": (
-            app_name,
-            original_lang_tag,
-            original,
-            translation_lang_tag,
-            translation,
-        ),
-    }

@@ -53,8 +53,8 @@ class WrapItem(luigi.WrapperTask):
         yield LoadCsvItemFlag(**args)
         yield LoadCsvItemGameType(**args)
         yield LoadCsvItemName(**args)
-        yield LoadCsvItemProfessionRestriction(**args)
-        yield LoadCsvItemRaceRestriction(**args)
+        yield LoadCsvItemRestrictionProfession(**args)
+        yield LoadCsvItemRestrictionRace(**args)
         yield LoadCsvItemType(**args)
         yield LoadCsvItemUpgrade(**args)
 
@@ -128,6 +128,7 @@ class LoadCsvItemFlag(LoadCsvItemTask):
 DELETE FROM gwapese.item_flag
 WHERE NOT EXISTS (
     SELECT
+      1
     FROM
       tempo_item_flag
     WHERE
@@ -166,6 +167,7 @@ class LoadCsvItemGameType(LoadCsvItemTask):
 DELETE FROM gwapese.item_game_type
 WHERE NOT EXISTS (
     SELECT
+      1
     FROM
       tempo_item_game_type
     WHERE
@@ -220,36 +222,75 @@ class LoadCsvItemName(LoadCsvItemTask):
         }
 
 
-class LoadCsvItemProfessionRestriction(LoadCsvItemTask):
-    table = "item_profession_restriction"
+class LoadCsvItemRestrictionProfession(LoadCsvItemTask):
+    table = "item_restriction_profession"
+
+    precopy_sql = sql.SQL(
+        """
+CREATE TEMPORARY TABLE tempo_item_restriction_profession (
+  item_id integer NOT NULL,
+  restriction_id text NOT NULL
+) ON COMMIT DROP;
+"""
+    )
 
     postcopy_sql = sql.Composed(
         [
             sql.SQL(
                 """
-DELETE FROM gwapese.item_profession_restriction
-WHERE NOT EXISTS (
+WITH source_item_restriction_profession AS (
+  SELECT
+    tempo_item_restriction_profession.item_id,
+    gwapese.profession.profession_id
+  FROM
+    tempo_item_restriction_profession
+  INNER JOIN
+    gwapese.profession
+  ON
+    gwapese.profession.profession_id = tempo_item_restriction_profession.restriction_id
+)
+DELETE FROM gwapese.item_restriction_profession
+WHERE EXISTS (
     SELECT
+      1
     FROM
-      tempo_item_profession_restriction
+      source_item_restriction_profession
     WHERE
-      gwapese.item_profession_restriction.item_id = tempo_item_profession_restriction.item_id
-      AND gwapese.item_profession_restriction.profession_id =
-	tempo_item_profession_restriction.profession_id);
+      gwapese.item_restriction_profession.item_id = source_item_restriction_profession.item_id
+  ) AND NOT EXISTS (
+    SELECT
+      1
+    FROM
+      source_item_restriction_profession
+    WHERE
+      gwapese.item_restriction_profession.item_id =
+        source_item_restriction_profession.item_id
+      AND gwapese.item_restriction_profession.profession_id = 
+        source_item_restriction_profession.profession_id);
 """
             ),
             sql.SQL(
                 """
-MERGE INTO gwapese.item_profession_restriction AS target_item_profession_restriction
-USING tempo_item_profession_restriction AS source_item_profession_restriction
-  ON target_item_profession_restriction.profession_id =
-  source_item_profession_restriction.profession_id
-  AND target_item_profession_restriction.item_id =
-    source_item_profession_restriction.item_id
+MERGE INTO gwapese.item_restriction_profession AS target_item_restriction_profession
+USING (
+    SELECT
+      tempo_item_restriction_profession.item_id,
+      gwapese.profession.profession_id
+    FROM
+      tempo_item_restriction_profession
+    INNER JOIN
+      gwapese.profession
+    ON
+      gwapese.profession.profession_id = tempo_item_restriction_profession.restriction_id
+  ) AS source_item_restriction_profession
+  ON target_item_restriction_profession.profession_id =
+    source_item_restriction_profession.profession_id
+  AND target_item_restriction_profession.item_id =
+    source_item_restriction_profession.item_id
 WHEN NOT MATCHED THEN
   INSERT (item_id, profession_id)
-    VALUES (source_item_profession_restriction.item_id,
-      source_item_profession_restriction.profession_id);
+    VALUES (source_item_restriction_profession.item_id,
+      source_item_restriction_profession.profession_id);
 """
             ),
         ]
@@ -257,7 +298,7 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table: item_transform_csv.TransformCsvItemRestrictionProfession(
+            self.table: item_transform_csv.TransformCsvItemRestriction(
                 lang_tag=self.lang_tag
             ),
             "profession": profession_load_csv.LoadCsvProfession(lang_tag=self.lang_tag),
@@ -265,32 +306,75 @@ WHEN NOT MATCHED THEN
         }
 
 
-class LoadCsvItemRaceRestriction(LoadCsvItemTask):
-    table = "item_race_restriction"
+class LoadCsvItemRestrictionRace(LoadCsvItemTask):
+    table = "item_restriction_race"
+
+    precopy_sql = sql.SQL(
+        """
+CREATE TEMPORARY TABLE tempo_item_restriction_race (
+  item_id integer NOT NULL,
+  restriction_id text NOT NULL
+) ON COMMIT DROP;
+"""
+    )
 
     postcopy_sql = sql.Composed(
         [
             sql.SQL(
                 """
-DELETE FROM gwapese.item_race_restriction
-WHERE NOT EXISTS (
+WITH source_item_restriction_race AS (
+  SELECT
+    tempo_item_restriction_race.item_id,
+    gwapese.race.race_id
+  FROM
+    tempo_item_restriction_race
+  INNER JOIN
+    gwapese.race
+  ON
+    gwapese.race.race_id = tempo_item_restriction_race.restriction_id
+)
+DELETE FROM gwapese.item_restriction_race
+WHERE EXISTS (
     SELECT
+      1
     FROM
-      tempo_item_race_restriction
+      source_item_restriction_race
     WHERE
-      gwapese.item_race_restriction.item_id = tempo_item_race_restriction.item_id
-      AND gwapese.item_race_restriction.race_id = tempo_item_race_restriction.race_id);
+      gwapese.item_restriction_race.item_id = source_item_restriction_race.item_id
+  ) AND NOT EXISTS (
+    SELECT
+      1
+    FROM
+      source_item_restriction_race
+    WHERE
+      gwapese.item_restriction_race.item_id =
+        source_item_restriction_race.item_id
+      AND gwapese.item_restriction_race.race_id = 
+        source_item_restriction_race.race_id);
 """
             ),
             sql.SQL(
                 """
-MERGE INTO gwapese.item_race_restriction AS target_item_race_restriction
-USING tempo_item_race_restriction AS source_item_race_restriction ON
-  target_item_race_restriction.item_id = source_item_race_restriction.item_id
-  AND target_item_race_restriction.race_id = source_item_race_restriction.race_id
+MERGE INTO gwapese.item_restriction_race AS target_item_restriction_race
+USING (
+    SELECT
+      tempo_item_restriction_race.item_id,
+      gwapese.race.race_id
+    FROM
+      tempo_item_restriction_race
+    INNER JOIN
+      gwapese.race
+    ON
+      gwapese.race.race_id = tempo_item_restriction_race.restriction_id
+  ) AS source_item_restriction_race
+  ON target_item_restriction_race.race_id =
+    source_item_restriction_race.race_id
+  AND target_item_restriction_race.item_id =
+    source_item_restriction_race.item_id
 WHEN NOT MATCHED THEN
   INSERT (item_id, race_id)
-    VALUES (source_item_race_restriction.item_id, source_item_race_restriction.race_id);
+    VALUES (source_item_restriction_race.item_id,
+      source_item_restriction_race.race_id);
 """
             ),
         ]
@@ -298,7 +382,7 @@ WHEN NOT MATCHED THEN
 
     def requires(self):
         return {
-            self.table: item_transform_csv.TransformCsvItemRestrictionRace(
+            self.table: item_transform_csv.TransformCsvItemRestriction(
                 lang_tag=self.lang_tag
             ),
             "race": race_load_csv.LoadCsvRace(lang_tag=self.lang_tag),

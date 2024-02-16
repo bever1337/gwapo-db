@@ -123,7 +123,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.item_profession_restriction
+  gwapese.item_restriction_profession
 WHERE
   FALSE;
 
@@ -133,7 +133,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.item_profession_restriction_history
+  gwapese.item_restriction_profession_history
 WHERE
   FALSE;
 
@@ -143,7 +143,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.item_race_restriction
+  gwapese.item_restriction_race
 WHERE
   FALSE;
 
@@ -153,7 +153,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.item_race_restriction_history
+  gwapese.item_restriction_race_history
 WHERE
   FALSE;
 

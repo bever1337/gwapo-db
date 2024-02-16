@@ -25,17 +25,17 @@ DROP TABLE gwapese.item_name_history;
 
 DROP TABLE gwapese.item_name;
 
-CALL temporal_tables.drop_historicize_fn ('gwapese', 'item_profession_restriction');
+CALL temporal_tables.drop_historicize_fn ('gwapese', 'item_restriction_profession');
 
-DROP TABLE gwapese.item_profession_restriction_history;
+DROP TABLE gwapese.item_restriction_profession_history;
 
-DROP TABLE gwapese.item_profession_restriction;
+DROP TABLE gwapese.item_restriction_profession;
 
-CALL temporal_tables.drop_historicize_fn ('gwapese', 'item_race_restriction');
+CALL temporal_tables.drop_historicize_fn ('gwapese', 'item_restriction_race');
 
-DROP TABLE gwapese.item_race_restriction_history;
+DROP TABLE gwapese.item_restriction_race_history;
 
-DROP TABLE gwapese.item_race_restriction;
+DROP TABLE gwapese.item_restriction_race;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'item_type');
 

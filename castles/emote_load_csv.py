@@ -49,6 +49,7 @@ class LoadCsvEmoteCommand(LoadCsvEmoteTask):
 DELETE FROM gwapese.emote_command
 WHERE NOT EXISTS (
     SELECT
+      1
     FROM
       tempo_emote_command
     WHERE

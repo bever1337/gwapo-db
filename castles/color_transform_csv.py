@@ -48,15 +48,39 @@ class TransformCsvColorBase(TransformCsvColorTask):
 
 
 class TransformCsvColorName(TransformCsvColorTask):
+    app_name = luigi.Parameter(default="gw2")
+
     def get_rows(self, color):
         return [
             {
-                "app_name": "gw2",
+                "app_name": self.app_name,
                 "color_id": color["id"],
                 "lang_tag": self.lang_tag.value,
                 "original": common.to_xhmtl_fragment(color["name"]),
             }
         ]
+
+
+class TransformCsvColorNameTranslation(transform_csv.TransformCsvTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_namespace = "color"
+    translation_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+
+    def get_rows(self, color):
+        return [
+            {
+                "app_name": self.app_name,
+                "color_id": color["id"],
+                "original_lang_tag": self.original_lang_tag.value,
+                "translation_lang_tag": self.translation_lang_tag.value,
+                "translation": common.to_xhmtl_fragment(color["name"]),
+            }
+        ]
+
+    def requires(self):
+        return color_transform_patch.TransformPatch(lang_tag=self.translation_lang_tag)
 
 
 class TransformCsvColorSample(TransformCsvColorTask):

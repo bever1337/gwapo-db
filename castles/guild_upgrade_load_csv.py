@@ -129,6 +129,7 @@ class LoadCsvGuildUpgradePrerequisite(LoadCsvGuildUpgradeTask):
 DELETE FROM gwapese.guild_upgrade_prerequisite
 WHERE NOT EXISTS (
     SELECT
+      1
     FROM
       tempo_guild_upgrade_prerequisite
     WHERE
@@ -318,7 +319,7 @@ WHERE
       1
     FROM
       tempo_guild_upgrade_cost_wallet
-    LEFT JOIN
+    INNER JOIN
       gwapese.currency_name
     ON
       gwapese.currency_name.original = tempo_guild_upgrade_cost_wallet.currency_name
@@ -336,7 +337,7 @@ USING (
     tempo_guild_upgrade_cost_wallet.guild_upgrade_id,
     tempo_guild_upgrade_cost_wallet.quantity
   FROM tempo_guild_upgrade_cost_wallet
-  LEFT JOIN
+  INNER JOIN
     gwapese.currency_name
   ON
     gwapese.currency_name.original = tempo_guild_upgrade_cost_wallet.currency_name

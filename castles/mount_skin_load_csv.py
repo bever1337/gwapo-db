@@ -95,6 +95,7 @@ class LoadCsvMountSkinDyeSlot(LoadCsvMountSkinTask):
 DELETE FROM gwapese.mount_skin_dye_slot
 WHERE NOT EXISTS (
     SELECT
+      1
     FROM
       tempo_mount_skin_dye_slot
     WHERE

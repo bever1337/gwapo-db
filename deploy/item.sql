@@ -101,44 +101,44 @@ CREATE TABLE gwapese.item_name_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'item_name', 'item_name_history');
 
-CREATE TABLE gwapese.item_profession_restriction (
+CREATE TABLE gwapese.item_restriction_profession (
   item_id integer NOT NULL,
   profession_id text NOT NULL,
-  CONSTRAINT item_profession_restriction_pk PRIMARY KEY (item_id, profession_id),
-  CONSTRAINT item_identifies_item_profession_restriction_fk FOREIGN KEY
+  CONSTRAINT item_restriction_profession_pk PRIMARY KEY (item_id, profession_id),
+  CONSTRAINT item_identifies_item_restriction_profession_fk FOREIGN KEY
     (item_id) REFERENCES gwapese.item (item_id) ON DELETE CASCADE,
-  CONSTRAINT profession_enumerates_item_profession_restriction_fk FOREIGN KEY
+  CONSTRAINT profession_enumerates_item_restriction_profession_fk FOREIGN KEY
     (profession_id) REFERENCES gwapese.profession (profession_id) ON DELETE
     CASCADE ON UPDATE CASCADE
 );
 
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'item_profession_restriction');
+CALL temporal_tables.alter_table_to_temporal ('gwapese', 'item_restriction_profession');
 
-CREATE TABLE gwapese.item_profession_restriction_history (
-  LIKE gwapese.item_profession_restriction
+CREATE TABLE gwapese.item_restriction_profession_history (
+  LIKE gwapese.item_restriction_profession
 );
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'item_profession_restriction', 'item_profession_restriction_history');
+  'item_restriction_profession', 'item_restriction_profession_history');
 
-CREATE TABLE gwapese.item_race_restriction (
+CREATE TABLE gwapese.item_restriction_race (
   item_id integer NOT NULL,
   race_id text NOT NULL,
-  CONSTRAINT item_race_restriction_pk PRIMARY KEY (item_id, race_id),
-  CONSTRAINT item_identifies_item_race_restriction_fk FOREIGN KEY (item_id)
+  CONSTRAINT item_restriction_race_pk PRIMARY KEY (item_id, race_id),
+  CONSTRAINT item_identifies_item_restriction_race_fk FOREIGN KEY (item_id)
     REFERENCES gwapese.item (item_id) ON DELETE CASCADE,
-  CONSTRAINT race_enumerates_item_race_restriction_fk FOREIGN KEY (race_id)
+  CONSTRAINT race_enumerates_item_restriction_race_fk FOREIGN KEY (race_id)
     REFERENCES gwapese.race (race_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'item_race_restriction');
+CALL temporal_tables.alter_table_to_temporal ('gwapese', 'item_restriction_race');
 
-CREATE TABLE gwapese.item_race_restriction_history (
-  LIKE gwapese.item_race_restriction
+CREATE TABLE gwapese.item_restriction_race_history (
+  LIKE gwapese.item_restriction_race
 );
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'item_race_restriction', 'item_race_restriction_history');
+  'item_restriction_race', 'item_restriction_race_history');
 
 CREATE TABLE gwapese.item_type (
   item_id integer UNIQUE NOT NULL,

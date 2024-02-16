@@ -95,6 +95,7 @@ class LoadCsvSkinFlag(LoadCsvSkinTask):
 DELETE FROM gwapese.skin_flag
 WHERE NOT EXISTS (
     SELECT
+      1
     FROM
       tempo_skin_flag
     WHERE
@@ -177,6 +178,7 @@ class LoadCsvSkinRestriction(LoadCsvSkinTask):
 DELETE FROM gwapese.skin_restriction
 WHERE NOT EXISTS (
     SELECT
+      1
     FROM
       tempo_skin_restriction
     WHERE
@@ -268,6 +270,7 @@ class LoadCsvSkinArmorDyeSlot(LoadCsvSkinTask):
 DELETE FROM gwapese.skin_armor_dye_slot
 WHERE NOT EXISTS (
     SELECT
+      1
     FROM
       tempo_skin_armor_dye_slot
     WHERE

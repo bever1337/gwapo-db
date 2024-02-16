@@ -66,6 +66,7 @@ class LoadCsvCurrencyCategory(LoadCsvCurrencyTask):
 DELETE FROM gwapese.currency_category
 WHERE NOT EXISTS (
     SELECT
+      1
     FROM
       tempo_currency_category
     WHERE

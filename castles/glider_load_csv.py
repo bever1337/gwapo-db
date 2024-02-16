@@ -88,6 +88,7 @@ class LoadCsvGliderDyeSlot(LoadCsvGliderTask):
 DELETE FROM gwapese.glider_dye_slot
 WHERE NOT EXISTS (
     SELECT
+      1
     FROM
       tempo_glider_dye_slot
     WHERE

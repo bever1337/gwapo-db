@@ -59,6 +59,7 @@ class LoadCsvSkiffDyeSlot(LoadCsvSkiffTask):
 DELETE FROM gwapese.skiff_dye_slot
 WHERE NOT EXISTS (
     SELECT
+      1
     FROM
       tempo_skiff_dye_slot
     WHERE

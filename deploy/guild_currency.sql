@@ -23,7 +23,8 @@ CREATE TABLE gwapese.guild_currency_description (
   guild_currency_id text NOT NULL,
   lang_tag text NOT NULL,
   original text NOT NULL,
-  CONSTRAINT guild_currency_description_pk PRIMARY KEY (guild_currency_id),
+  CONSTRAINT guild_currency_description_pk PRIMARY KEY (app_name, lang_tag,
+    guild_currency_id),
   CONSTRAINT guild_currency_identifies_guild_currency_description_fk FOREIGN
     KEY (guild_currency_id) REFERENCES gwapese.guild_currency
     (guild_currency_id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -46,7 +47,7 @@ CREATE TABLE gwapese.guild_currency_name (
   guild_currency_id text NOT NULL,
   lang_tag text NOT NULL,
   original text NOT NULL,
-  CONSTRAINT guild_currency_name_pk PRIMARY KEY (guild_currency_id),
+  CONSTRAINT guild_currency_name_pk PRIMARY KEY (app_name, lang_tag, guild_currency_id),
   CONSTRAINT guild_currency_identifies_guild_currency_name_fk FOREIGN KEY
     (guild_currency_id) REFERENCES gwapese.guild_currency (guild_currency_id)
     ON DELETE CASCADE ON UPDATE CASCADE,
