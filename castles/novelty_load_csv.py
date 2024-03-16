@@ -1,17 +1,17 @@
-import datetime
 import luigi
 from psycopg import sql
 
 import common
-from tasks import load_csv
 import item_load_csv
 import lang_load
 import novelty_transform_csv
+from tasks import config
+from tasks import load_csv
 
 
 class WrapNovelty(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
 
     def requires(self):
         args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
@@ -20,9 +20,32 @@ class WrapNovelty(luigi.WrapperTask):
         yield LoadCsvNoveltyName(**args)
 
 
+class WrapNoveltyTranslate(luigi.WrapperTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+
+    def requires(self):
+        for lang_tag in common.LangTag:
+            if lang_tag == self.original_lang_tag:
+                continue
+            yield LoadCsvNoveltyDescriptionTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                task_datetime=self.task_datetime,
+                translation_lang_tag=lang_tag,
+            )
+            yield LoadCsvNoveltyNameTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                task_datetime=self.task_datetime,
+                translation_lang_tag=lang_tag,
+            )
+
+
 class LoadCsvNoveltyTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "novelty"
 
 
@@ -53,21 +76,11 @@ WHEN NOT MATCHED THEN
         }
 
 
-class LoadCsvNoveltyDescription(LoadCsvNoveltyTask):
+class LoadCsvNoveltyDescription(lang_load.LangLoadCopySourceTask):
+    id_attributes = [("novelty_id", sql.SQL("integer NOT NULL"))]
     table = "novelty_description"
-
-    postcopy_sql = sql.Composed(
-        [
-            lang_load.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_novelty_description")
-            ),
-            lang_load.merge_into_placed_copy.format(
-                table_name=sql.Identifier("novelty_description"),
-                temp_table_name=sql.Identifier("tempo_novelty_description"),
-                pk_name=sql.Identifier("novelty_id"),
-            ),
-        ]
-    )
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "novelty"
 
     def requires(self):
         return {
@@ -76,6 +89,24 @@ class LoadCsvNoveltyDescription(LoadCsvNoveltyTask):
             ),
             "novelty": LoadCsvNovelty(lang_tag=self.lang_tag),
             "lang": lang_load.LangLoad(),
+        }
+
+
+class LoadCsvNoveltyDescriptionTranslation(lang_load.LangLoadCopyTargetTask):
+    id_attributes = [("novelty_id", sql.SQL("integer NOT NULL"))]
+    table = "novelty_description_context"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "novelty"
+    widget_table = "novelty_description"
+
+    def requires(self):
+        return {
+            self.table: novelty_transform_csv.TransformCsvNoveltyDescriptionTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                translation_lang_tag=self.translation_lang_tag,
+            ),
+            "_": LoadCsvNoveltyDescription(lang_tag=self.original_lang_tag),
         }
 
 
@@ -99,21 +130,11 @@ class LoadCsvNoveltyItem(LoadCsvNoveltyTask):
         }
 
 
-class LoadCsvNoveltyName(LoadCsvNoveltyTask):
+class LoadCsvNoveltyName(lang_load.LangLoadCopySourceTask):
+    id_attributes = [("novelty_id", sql.SQL("integer NOT NULL"))]
     table = "novelty_name"
-
-    postcopy_sql = sql.Composed(
-        [
-            lang_load.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_novelty_name")
-            ),
-            lang_load.merge_into_placed_copy.format(
-                table_name=sql.Identifier("novelty_name"),
-                temp_table_name=sql.Identifier("tempo_novelty_name"),
-                pk_name=sql.Identifier("novelty_id"),
-            ),
-        ]
-    )
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "novelty"
 
     def requires(self):
         return {
@@ -122,4 +143,22 @@ class LoadCsvNoveltyName(LoadCsvNoveltyTask):
             ),
             "novelty": LoadCsvNovelty(lang_tag=self.lang_tag),
             "lang": lang_load.LangLoad(),
+        }
+
+
+class LoadCsvNoveltyNameTranslation(lang_load.LangLoadCopyTargetTask):
+    id_attributes = [("novelty_id", sql.SQL("integer NOT NULL"))]
+    table = "novelty_name_context"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "novelty"
+    widget_table = "novelty_name"
+
+    def requires(self):
+        return {
+            self.table: novelty_transform_csv.TransformCsvNoveltyNameTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                translation_lang_tag=self.translation_lang_tag,
+            ),
+            "_": LoadCsvNoveltyName(lang_tag=self.original_lang_tag),
         }

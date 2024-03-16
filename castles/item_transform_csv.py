@@ -1,14 +1,14 @@
-import datetime
 import luigi
 
 import common
 import item_extract
+from tasks import config
 from tasks import transform_csv
 
 
 class TransformCsvItemTask(transform_csv.TransformCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "item"
 
     def requires(self):
@@ -47,6 +47,31 @@ class TransformCsvItemDescription(TransformCsvItemTask):
         ]
 
 
+class TransformCsvItemDescriptionTranslation(transform_csv.TransformCsvTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "item"
+    translation_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+
+    def get_rows(self, item):
+        item_description = item.get("description", "")
+        if item_description == "":
+            return []
+        return [
+            {
+                "app_name": self.app_name,
+                "item_id": item["id"],
+                "original_lang_tag": self.original_lang_tag.value,
+                "translation_lang_tag": self.translation_lang_tag.value,
+                "translation": common.to_xhmtl_fragment(item_description),
+            }
+        ]
+
+    def requires(self):
+        return item_extract.ExtractBatch(lang_tag=self.translation_lang_tag)
+
+
 class TransformCsvItemFlag(TransformCsvItemTask):
     def get_rows(self, item):
         item_id = item["id"]
@@ -75,6 +100,31 @@ class TransformCsvItemName(TransformCsvItemTask):
                 "original": common.to_xhmtl_fragment(item_name),
             }
         ]
+
+
+class TransformCsvItemNameTranslation(transform_csv.TransformCsvTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "item"
+    translation_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+
+    def get_rows(self, item):
+        item_name = item.get("name", "")
+        if item_name == "":
+            return []
+        return [
+            {
+                "app_name": self.app_name,
+                "item_id": item["id"],
+                "original_lang_tag": self.original_lang_tag.value,
+                "translation_lang_tag": self.translation_lang_tag.value,
+                "translation": common.to_xhmtl_fragment(item_name),
+            }
+        ]
+
+    def requires(self):
+        return item_extract.ExtractBatch(lang_tag=self.translation_lang_tag)
 
 
 class TransformCsvItemRestriction(TransformCsvItemTask):

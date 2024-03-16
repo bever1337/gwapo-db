@@ -1,21 +1,21 @@
-import datetime
 import luigi
 from psycopg import sql
 
-import common
-from tasks import load_csv
-import lang_load
 import color_transform_csv
+import common
+import lang_load
+from tasks import config
+from tasks import load_csv
 
 
 class WrapColor(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
 
     def requires(self):
         args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
         yield LoadCsvColor(**args)
-        yield LoadCsvColorName(**args)
+        yield LoadColorName(**args)
         yield LoadCsvColorSample(**args)
         yield LoadCsvColorBase(**args)
         yield LoadCsvColorSampleAdjustment(**args)
@@ -24,9 +24,25 @@ class WrapColor(luigi.WrapperTask):
         yield LoadCsvColorSampleReferencePerception(**args)
 
 
+class WrapColorTranslate(luigi.WrapperTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+
+    def requires(self):
+        for lang_tag in common.LangTag:
+            if lang_tag == self.original_lang_tag:
+                continue
+            yield LoadColorNameTranslation(
+                original_lang_tag=self.original_lang_tag,
+                task_datetime=self.task_datetime,
+                translation_lang_tag=lang_tag,
+            )
+
+
 class LoadCsvColorTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "color"
 
 
@@ -87,21 +103,11 @@ WHEN NOT MATCHED THEN
         }
 
 
-class LoadCsvColorName(LoadCsvColorTask):
+class LoadColorName(lang_load.LangLoadCopySourceTask):
+    id_attributes = [("color_id", sql.SQL("integer NOT NULL"))]
     table = "color_name"
-
-    postcopy_sql = sql.Composed(
-        [
-            lang_load.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_color_name")
-            ),
-            lang_load.merge_into_placed_copy.format(
-                table_name=sql.Identifier("color_name"),
-                temp_table_name=sql.Identifier("tempo_color_name"),
-                pk_name=sql.Identifier("color_id"),
-            ),
-        ]
-    )
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "color"
 
     def requires(self):
         return {
@@ -113,33 +119,12 @@ class LoadCsvColorName(LoadCsvColorTask):
         }
 
 
-class LoadCsvColorNameTranslation(load_csv.LoadCsvTask):
-    app_name = luigi.Parameter(default="gw2")
-    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    table = "translated_copy"
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+class LoadColorNameTranslation(lang_load.LangLoadCopyTargetTask):
+    id_attributes = [("color_id", sql.SQL("integer NOT NULL"))]
+    table = "color_name_context"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "color"
-    translation_lang_tag = luigi.EnumParameter(enum=common.LangTag)
-
-    precopy_sql = sql.Composed(
-        [
-            lang_load.create_temporary_translation_table,
-            sql.SQL(
-                """
-ALTER TABLE tempo_translated_copy
-  DROP COLUMN original,
-  ADD COLUMN color_id integer NOT NULL,
-  DROP COLUMN IF EXISTS sysrange_lower,
-  DROP COLUMN IF EXISTS sysrange_upper;
-"""
-            ),
-        ]
-    )
-
-    postcopy_sql = lang_load.merge_into_translated_copy.format(
-        cross_ref_table_name=sql.Identifier("color_name"),
-        pk_name=sql.Identifier("color_id"),
-    )
+    widget_table = "color_name"
 
     def requires(self):
         return {
@@ -148,7 +133,7 @@ ALTER TABLE tempo_translated_copy
                 original_lang_tag=self.original_lang_tag,
                 translation_lang_tag=self.translation_lang_tag,
             ),
-            "color": LoadCsvColorName(lang_tag=self.original_lang_tag),
+            "color": LoadColorName(lang_tag=self.original_lang_tag),
         }
 
 

@@ -1,17 +1,17 @@
-import datetime
 import luigi
 from psycopg import sql
 
 import common
 import color_load_csv
-from tasks import load_csv
 import lang_load
 import skiff_transform_csv
+from tasks import config
+from tasks import load_csv
 
 
 class WrapSkiff(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
 
     def requires(self):
         args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
@@ -20,9 +20,26 @@ class WrapSkiff(luigi.WrapperTask):
         yield LoadCsvSkiffName(**args)
 
 
+class WrapSkiffTranslate(luigi.WrapperTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+
+    def requires(self):
+        for lang_tag in common.LangTag:
+            if lang_tag == self.original_lang_tag:
+                continue
+            yield LoadCsvSkiffNameTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                task_datetime=self.task_datetime,
+                translation_lang_tag=lang_tag,
+            )
+
+
 class LoadCsvSkiffTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "skiff"
 
 
@@ -92,21 +109,11 @@ WHEN NOT MATCHED THEN
         }
 
 
-class LoadCsvSkiffName(LoadCsvSkiffTask):
+class LoadCsvSkiffName(lang_load.LangLoadCopySourceTask):
+    id_attributes = [("skiff_id", sql.SQL("integer NOT NULL"))]
     table = "skiff_name"
-
-    postcopy_sql = sql.Composed(
-        [
-            lang_load.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_skiff_name")
-            ),
-            lang_load.merge_into_placed_copy.format(
-                table_name=sql.Identifier("skiff_name"),
-                temp_table_name=sql.Identifier("tempo_skiff_name"),
-                pk_name=sql.Identifier("skiff_id"),
-            ),
-        ]
-    )
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "skiff"
 
     def requires(self):
         return {
@@ -115,4 +122,22 @@ class LoadCsvSkiffName(LoadCsvSkiffTask):
             ),
             "skiff": LoadCsvSkiff(lang_tag=self.lang_tag),
             "lang": lang_load.LangLoad(),
+        }
+
+
+class LoadCsvSkiffNameTranslation(lang_load.LangLoadCopyTargetTask):
+    id_attributes = [("skiff_id", sql.SQL("integer NOT NULL"))]
+    table = "skiff_name_context"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "skiff"
+    widget_table = "skiff_name"
+
+    def requires(self):
+        return {
+            self.table: skiff_transform_csv.TransformCsvSkiffNameTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                translation_lang_tag=self.translation_lang_tag,
+            ),
+            "_": LoadCsvSkiffName(lang_tag=self.original_lang_tag),
         }

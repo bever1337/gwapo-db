@@ -1,16 +1,16 @@
-import datetime
 import luigi
 from psycopg import sql
 
 import common
-from tasks import load_csv
 import lang_load
 import race_transform_csv
+from tasks import config
+from tasks import load_csv
 
 
 class WrapRace(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
 
     def requires(self):
         args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
@@ -18,9 +18,26 @@ class WrapRace(luigi.WrapperTask):
         yield LoadCsvRaceName(**args)
 
 
+class WrapRaceTranslate(luigi.WrapperTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+
+    def requires(self):
+        for lang_tag in common.LangTag:
+            if lang_tag == self.original_lang_tag:
+                continue
+            yield LoadCsvRaceNameTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                task_datetime=self.task_datetime,
+                translation_lang_tag=lang_tag,
+            )
+
+
 class LoadCsvRaceTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "race"
 
 
@@ -41,25 +58,33 @@ WHEN NOT MATCHED THEN
         return {self.table: race_transform_csv.TransformCsvRace(lang_tag=self.lang_tag)}
 
 
-class LoadCsvRaceName(LoadCsvRaceTask):
+class LoadCsvRaceName(lang_load.LangLoadCopySourceTask):
+    id_attributes = [("race_id", sql.SQL("text NOT NULL"))]
     table = "race_name"
-
-    postcopy_sql = sql.Composed(
-        [
-            lang_load.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_race_name")
-            ),
-            lang_load.merge_into_placed_copy.format(
-                table_name=sql.Identifier("race_name"),
-                temp_table_name=sql.Identifier("tempo_race_name"),
-                pk_name=sql.Identifier("race_id"),
-            ),
-        ]
-    )
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "race"
 
     def requires(self):
         return {
             self.table: race_transform_csv.TransformCsvRaceName(lang_tag=self.lang_tag),
             "race": LoadCsvRace(lang_tag=self.lang_tag),
             "lang": lang_load.LangLoad(),
+        }
+
+
+class LoadCsvRaceNameTranslation(lang_load.LangLoadCopyTargetTask):
+    id_attributes = [("race_id", sql.SQL("text NOT NULL"))]
+    table = "race_name_context"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "race"
+    widget_table = "race_name"
+
+    def requires(self):
+        return {
+            self.table: race_transform_csv.TransformCsvRaceNameTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                translation_lang_tag=self.translation_lang_tag,
+            ),
+            "_": LoadCsvRaceName(lang_tag=self.original_lang_tag),
         }

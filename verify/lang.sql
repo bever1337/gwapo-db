@@ -39,6 +39,30 @@ WHERE
 
 SELECT
   app_name,
+  document,
+  lang_tag,
+  original,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.copy_document
+WHERE
+  FALSE;
+
+SELECT
+  app_name,
+  document,
+  lang_tag,
+  original,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.copy_document_history
+WHERE
+  FALSE;
+
+SELECT
+  app_name,
   lang_tag,
   sysrange_lower,
   sysrange_upper
@@ -64,7 +88,7 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.operating_copy
+  gwapese.copy_source
 WHERE
   FALSE;
 
@@ -75,33 +99,31 @@ SELECT
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.operating_copy_history
+  gwapese.copy_source_history
 WHERE
   FALSE;
 
 SELECT
   app_name,
-  original_lang_tag,
   original,
   sysrange_lower,
   sysrange_upper,
   translation_lang_tag,
   translation
 FROM
-  gwapese.translated_copy
+  gwapese.copy_target
 WHERE
   FALSE;
 
 SELECT
   app_name,
-  original_lang_tag,
   original,
   sysrange_lower,
   sysrange_upper,
   translation_lang_tag,
   translation
 FROM
-  gwapese.translated_copy_history
+  gwapese.copy_target_history
 WHERE
   FALSE;
 

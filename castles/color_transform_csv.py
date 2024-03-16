@@ -1,9 +1,9 @@
-import datetime
 import luigi
 
-import common
-from tasks import transform_csv
 import color_transform_patch
+import common
+from tasks import config
+from tasks import transform_csv
 
 
 materials = ["cloth", "fur", "leather", "metal"]
@@ -11,7 +11,7 @@ materials = ["cloth", "fur", "leather", "metal"]
 
 class TransformCsvColorTask(transform_csv.TransformCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "color"
 
     def requires(self):
@@ -64,7 +64,7 @@ class TransformCsvColorName(TransformCsvColorTask):
 class TransformCsvColorNameTranslation(transform_csv.TransformCsvTask):
     app_name = luigi.Parameter(default="gw2")
     original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "color"
     translation_lang_tag = luigi.EnumParameter(enum=common.LangTag)
 

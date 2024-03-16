@@ -14,7 +14,7 @@ class TransformCsvTask(luigi.Task):
         gwapo_config = config.gconfig()
         return luigi.LocalTarget(
             path=path.join(
-                gwapo_config.output_dir,
+                str(gwapo_config.output_dir),
                 self.get_task_family(),
                 path.extsep.join([self.task_id, "csv"]),
             )

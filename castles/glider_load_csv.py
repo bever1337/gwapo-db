@@ -1,18 +1,18 @@
-import datetime
 import luigi
 from psycopg import sql
 
 import common
 import color_load_csv
-from tasks import load_csv
+import glider_transform_csv
 import item_load_csv
 import lang_load
-import glider_transform_csv
+from tasks import config
+from tasks import load_csv
 
 
 class WrapGlider(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
 
     def requires(self):
         args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
@@ -22,9 +22,30 @@ class WrapGlider(luigi.WrapperTask):
         yield LoadCsvGliderName(**args)
 
 
+class WrapGliderTranslate(luigi.WrapperTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+
+    def requires(self):
+        for lang_tag in common.LangTag:
+            if lang_tag == self.original_lang_tag:
+                continue
+            yield LoadCsvGliderDescriptionTranslation(
+                original_lang_tag=self.original_lang_tag,
+                task_datetime=self.task_datetime,
+                translation_lang_tag=lang_tag,
+            )
+            yield LoadCsvGliderNameTranslation(
+                original_lang_tag=self.original_lang_tag,
+                task_datetime=self.task_datetime,
+                translation_lang_tag=lang_tag,
+            )
+
+
 class LoadCsvGliderTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "glider"
 
 
@@ -52,21 +73,11 @@ WHEN NOT MATCHED THEN
         }
 
 
-class LoadCsvGliderDescription(LoadCsvGliderTask):
+class LoadCsvGliderDescription(lang_load.LangLoadCopySourceTask):
+    id_attributes = [("glider_id", sql.SQL("integer NOT NULL"))]
     table = "glider_description"
-
-    postcopy_sql = sql.Composed(
-        [
-            lang_load.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_glider_description")
-            ),
-            lang_load.merge_into_placed_copy.format(
-                table_name=sql.Identifier("glider_description"),
-                temp_table_name=sql.Identifier("tempo_glider_description"),
-                pk_name=sql.Identifier("glider_id"),
-            ),
-        ]
-    )
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "glider"
 
     def requires(self):
         return {
@@ -75,6 +86,24 @@ class LoadCsvGliderDescription(LoadCsvGliderTask):
             ),
             "glider": LoadCsvGlider(lang_tag=self.lang_tag),
             "lang": lang_load.LangLoad(),
+        }
+
+
+class LoadCsvGliderDescriptionTranslation(lang_load.LangLoadCopyTargetTask):
+    id_attributes = [("glider_id", sql.SQL("integer NOT NULL"))]
+    table = "glider_description_context"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "glider"
+    widget_table = "glider_description"
+
+    def requires(self):
+        return {
+            self.table: glider_transform_csv.TransformCsvGliderDescriptionTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                translation_lang_tag=self.translation_lang_tag,
+            ),
+            "finisher": LoadCsvGliderDescription(lang_tag=self.original_lang_tag),
         }
 
 
@@ -141,21 +170,11 @@ class LoadCsvGliderItem(LoadCsvGliderTask):
         }
 
 
-class LoadCsvGliderName(LoadCsvGliderTask):
+class LoadCsvGliderName(lang_load.LangLoadCopySourceTask):
+    id_attributes = [("glider_id", sql.SQL("integer NOT NULL"))]
     table = "glider_name"
-
-    postcopy_sql = sql.Composed(
-        [
-            lang_load.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_glider_name")
-            ),
-            lang_load.merge_into_placed_copy.format(
-                table_name=sql.Identifier("glider_name"),
-                temp_table_name=sql.Identifier("tempo_glider_name"),
-                pk_name=sql.Identifier("glider_id"),
-            ),
-        ]
-    )
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "glider"
 
     def requires(self):
         return {
@@ -164,4 +183,22 @@ class LoadCsvGliderName(LoadCsvGliderTask):
             ),
             "glider": LoadCsvGlider(lang_tag=self.lang_tag),
             "lang": lang_load.LangLoad(),
+        }
+
+
+class LoadCsvGliderNameTranslation(lang_load.LangLoadCopyTargetTask):
+    id_attributes = [("glider_id", sql.SQL("integer NOT NULL"))]
+    table = "glider_name_context"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "glider"
+    widget_table = "glider_name"
+
+    def requires(self):
+        return {
+            self.table: glider_transform_csv.TransformCsvGliderNameTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                translation_lang_tag=self.translation_lang_tag,
+            ),
+            "finisher": LoadCsvGliderName(lang_tag=self.original_lang_tag),
         }

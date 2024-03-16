@@ -8,14 +8,14 @@ BEGIN;
 CREATE TABLE gwapese.emote_item (
   emote_id text NOT NULL,
   item_id integer NOT NULL,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
   CONSTRAINT emote_item_pk PRIMARY KEY (emote_id, item_id),
-  CONSTRAINT emote_identifies_emote_item_fk FOREIGN KEY (emote_id) REFERENCES
+  CONSTRAINT emote_identifies_item_fk FOREIGN KEY (emote_id) REFERENCES
     gwapese.emote (emote_id),
   CONSTRAINT item_identifies_emote_item_fk FOREIGN KEY (item_id) REFERENCES
     gwapese.item (item_id)
 );
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'emote_item');
 
 CREATE TABLE gwapese.emote_item_history (
   LIKE gwapese.emote_item

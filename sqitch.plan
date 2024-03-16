@@ -5,24 +5,41 @@
 schema 2023-12-08T04:26:35Z gwapobot <gwapobot@example.com> # Base schema
 history 2023-12-08T04:26:36Z gwapobot <gwapobot@example.com> # Add history table
 lang [schema history] 2023-12-08T05:50:13Z gwapobot <gwapobot@example.com> # Add lang
-currency [schema history lang] 2023-12-08T04:29:19Z gwapobot <gwapobot@example.com> # Add currency schema
-race [schema history lang] 2023-12-09T20:19:23Z gwapobot <gwapobot@example.com> # Add races
-color [schema history lang] 2023-12-10T18:35:11Z gwapobot <gwapobot@example.com> # Add color
-skin [schema history lang race color] 2023-12-09T20:09:21Z gwapobot <gwapobot@example.com> # Add skin
-mini [schema history lang] 2024-01-20T05:25:08Z bever1337 <gwapobot@example.com> # Adds minis
-novelty [schema history lang] 2024-01-20T05:41:00Z bever1337 <gwapobot@example.com> # Adds novelties
-glider [schema history lang color] 2024-01-20T05:47:48Z bever1337 <gwapobot@example.com> # Adds gliders
-mount [schema history lang] 2024-01-20T06:00:14Z bever1337 <gwapobot@example.com> # Adds mounts
-outfit [schema history lang] 2024-01-20T16:50:41Z bever1337 <gwapobot@example.com> # Adds outfits
-jade_bot [schema history lang] 2024-01-20T17:16:39Z bever1337 <gwapobot@example.com> # Adds jade bots
-guild_upgrade [schema history lang] 2024-01-20T17:23:59Z bever1337 <gwapobot@example.com> # Adds guild upgrades
-skiff [schema history lang color] 2024-01-20T17:44:13Z bever1337 <gwapobot@example.com> # Adds skiffs
-finisher [schema history lang] 2024-01-20T17:56:05Z bever1337 <gwapobot@example.com> # Adds finishers
+currency [schema history] 2023-12-08T04:29:19Z gwapobot <gwapobot@example.com> # Add currency schema
+currency_lang [schema history lang currency] 2024-03-05T18:42:26Z bever1337 <gwapobot@example.com> # Translates currency
+race [schema history] 2023-12-09T20:19:23Z gwapobot <gwapobot@example.com> # Add races
+race_lang [schema history lang race] 2024-03-05T18:48:18Z bever1337 <gwapobot@example.com> # Translates race
+color [schema history] 2023-12-10T18:35:11Z gwapobot <gwapobot@example.com> # Add color
+color_lang [schema history lang] 2024-03-05T18:42:07Z bever1337 <gwapobot@example.com> # Translates color
+skin [schema history race color] 2023-12-09T20:09:21Z gwapobot <gwapobot@example.com> # Add skin
+skin_lang [schema history lang skin] 2024-03-05T18:49:28Z bever1337 <gwapobot@example.com> # Translates skin
+mini [schema history] 2024-01-20T05:25:08Z bever1337 <gwapobot@example.com> # Adds minis
+mini_lang [schema history lang mini] 2024-03-05T18:46:38Z bever1337 <gwapobot@example.com> # Translates mini
+novelty [schema history] 2024-01-20T05:41:00Z bever1337 <gwapobot@example.com> # Adds novelties
+novelty_lang [schema history lang novelty] 2024-03-05T18:47:28Z bever1337 <gwapobot@example.com> # Translates novelty
+glider [schema history color] 2024-01-20T05:47:48Z bever1337 <gwapobot@example.com> # Adds gliders
+glider_lang [schema history lang glider] 2024-03-05T18:43:11Z bever1337 <gwapobot@example.com> # Translates glider
+mount [schema history] 2024-01-20T06:00:14Z bever1337 <gwapobot@example.com> # Adds mounts
+mount_lang [schema history lang mount] 2024-03-05T18:47:12Z bever1337 <gwapobot@example.com> # Translates mount
+outfit [schema history] 2024-01-20T16:50:41Z bever1337 <gwapobot@example.com> # Adds outfits
+outfit_lang [schema history lang outfit] 2024-03-05T18:47:42Z bever1337 <gwapobot@example.com> # Translates outfit
+jade_bot [schema history] 2024-01-20T17:16:39Z bever1337 <gwapobot@example.com> # Adds jade bots
+jade_bot_lang [schema history lang jade_bot] 2024-03-05T18:46:20Z bever1337 <gwapobot@example.com> # Translates jade bot
+guild_upgrade [schema history] 2024-01-20T17:23:59Z bever1337 <gwapobot@example.com> # Adds guild upgrades
+guild_upgrade_lang [schema history lang guild_upgrade] 2024-03-05T18:45:25Z bever1337 <gwapobot@example.com> # Translates guild upgrade
+skiff [schema history color] 2024-01-20T17:44:13Z bever1337 <gwapobot@example.com> # Adds skiffs
+skiff_lang [schema history lang skiff] 2024-03-05T18:49:17Z bever1337 <gwapobot@example.com> # Translates skiff
+finisher [schema history] 2024-01-20T17:56:05Z bever1337 <gwapobot@example.com> # Adds finishers
+finisher_lang [schema history lang finisher] 2024-03-05T18:42:55Z bever1337 <gwapobot@example.com> # Translates finisher
 emote [schema history] 2024-01-20T22:25:06Z bever1337 <gwapobot@example.com> # Adds emotes
-mount_skin [schema history lang color mount] 2024-01-21T19:11:51Z bever1337 <gwapobot@example.com> # Adds mount skins
-profession [schema history lang] 2024-01-21T21:23:18Z bever1337 <gwapobot@example.com> # Adds professions
-specialization [schema history lang profession] 2024-01-21T21:24:19Z bever1337 <gwapobot@example.com> # Adds specs
-item [schema history lang] 2024-01-25T01:58:46Z bever1337 <gwapobot@example.com> # Adds items
+mount_skin [schema history color mount] 2024-01-21T19:11:51Z bever1337 <gwapobot@example.com> # Adds mount skins
+mount_skin_lang [schema history lang mount_skin] 2024-03-05T18:47:03Z bever1337 <gwapobot@example.com> # Translates mount skin
+profession [schema history] 2024-01-21T21:23:18Z bever1337 <gwapobot@example.com> # Adds professions
+profession_lang [schema history lang profession] 2024-03-05T18:47:58Z bever1337 <gwapobot@example.com> # Translates profession
+specialization [schema history profession] 2024-01-21T21:24:19Z bever1337 <gwapobot@example.com> # Adds specs
+specialization_lang [schema history lang specialization] 2024-03-05T18:49:43Z bever1337 <gwapobot@example.com> # Translates specialization
+item [schema history] 2024-01-25T01:58:46Z bever1337 <gwapobot@example.com> # Adds items
+item_lang [schema history lang item] 2024-03-05T18:45:41Z bever1337 <gwapobot@example.com> # Translates item
 emote_item [schema history emote item] 2024-02-04T23:59:36Z bever1337 <gwapobot@example.com> # Adds emote x item
 finisher_item [schema history finisher item] 2024-02-05T00:28:51Z bever1337 <gwapobot@example.com> # Adds finisher x item
 glider_item [schema history glider item] 2024-02-05T00:48:42Z bever1337 <gwapobot@example.com> # Adds glider x item
@@ -31,5 +48,5 @@ mini_item [schema history mini item] 2024-02-05T01:10:00Z bever1337 <gwapobot@ex
 novelty_item [schema history novelty item] 2024-02-05T01:20:21Z bever1337 <gwapobot@example.com> # Adds novelty x item
 outfit_item [schema history outfit item] 2024-02-05T01:21:47Z bever1337 <gwapobot@example.com> # Adds outfit x item
 skin_default_item [schema history skin item] 2024-02-05T02:20:28Z bever1337 <gwapobot@example.com> # Adds item default skin
-guild_currency [schema history lang] 2024-02-08T23:32:52Z bever1337 <gwapobot@example.com> # Adds guild currency
+guild_currency [schema history] 2024-02-08T23:32:52Z bever1337 <gwapobot@example.com> # Adds guild currency
 guild_upgrade_cost [schema history currency guild_currency guild_upgrade item] 2024-02-05T02:47:52Z bever1337 <gwapobot@example.com> # Adds guild upgrade costs

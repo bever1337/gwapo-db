@@ -1,12 +1,12 @@
-import datetime
 import luigi
 
 import emote_extract
+from tasks import config
 from tasks import transform_csv
 
 
 class TransformCsvEmoteTask(transform_csv.TransformCsvTask):
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "emote"
 
     def requires(self):

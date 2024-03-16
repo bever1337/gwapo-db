@@ -24,30 +24,6 @@ WHERE
   FALSE;
 
 SELECT
-  app_name,
-  glider_id,
-  original,
-  lang_tag,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.glider_description
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  glider_id,
-  original,
-  lang_tag,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.glider_description_history
-WHERE
-  FALSE;
-
-SELECT
   color_id,
   glider_id,
   slot_index,
@@ -66,30 +42,6 @@ SELECT
   sysrange_upper
 FROM
   gwapese.glider_dye_slot_history
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  glider_id,
-  original,
-  lang_tag,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.glider_name
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  glider_id,
-  original,
-  lang_tag,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.glider_name_history
 WHERE
   FALSE;
 

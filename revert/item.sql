@@ -1,12 +1,6 @@
 -- Revert gwapo-db:item from pg
 BEGIN;
 
-CALL temporal_tables.drop_historicize_fn ('gwapese', 'item_description');
-
-DROP TABLE gwapese.item_description_history;
-
-DROP TABLE gwapese.item_description;
-
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'item_flag');
 
 DROP TABLE gwapese.item_flag_history;
@@ -18,12 +12,6 @@ CALL temporal_tables.drop_historicize_fn ('gwapese', 'item_game_type');
 DROP TABLE gwapese.item_game_type_history;
 
 DROP TABLE gwapese.item_game_type;
-
-CALL temporal_tables.drop_historicize_fn ('gwapese', 'item_name');
-
-DROP TABLE gwapese.item_name_history;
-
-DROP TABLE gwapese.item_name;
 
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'item_restriction_profession');
 

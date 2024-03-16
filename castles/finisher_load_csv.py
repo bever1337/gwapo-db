@@ -1,17 +1,17 @@
-import datetime
 import luigi
 from psycopg import sql
 
 import common
-from tasks import load_csv
+import finisher_transform_csv
 import item_load_csv
 import lang_load
-import finisher_transform_csv
+from tasks import config
+from tasks import load_csv
 
 
 class WrapFinisher(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
 
     def requires(self):
         args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
@@ -20,9 +20,30 @@ class WrapFinisher(luigi.WrapperTask):
         yield LoadCsvFinisherName(**args)
 
 
+class WrapFinisherTranslate(luigi.WrapperTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+
+    def requires(self):
+        for lang_tag in common.LangTag:
+            if lang_tag == self.original_lang_tag:
+                continue
+            yield LoadCsvFinisherDetailTranslation(
+                original_lang_tag=self.original_lang_tag,
+                task_datetime=self.task_datetime,
+                translation_lang_tag=lang_tag,
+            )
+            yield LoadCsvFinisherNameTranslation(
+                original_lang_tag=self.original_lang_tag,
+                task_datetime=self.task_datetime,
+                translation_lang_tag=lang_tag,
+            )
+
+
 class LoadCsvFinisherTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "finisher"
 
 
@@ -54,21 +75,11 @@ WHEN NOT MATCHED THEN
         }
 
 
-class LoadCsvFinisherDetail(LoadCsvFinisherTask):
+class LoadCsvFinisherDetail(lang_load.LangLoadCopySourceTask):
+    id_attributes = [("finisher_id", sql.SQL("integer NOT NULL"))]
     table = "finisher_detail"
-
-    postcopy_sql = sql.Composed(
-        [
-            lang_load.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_finisher_detail")
-            ),
-            lang_load.merge_into_placed_copy.format(
-                table_name=sql.Identifier("finisher_detail"),
-                temp_table_name=sql.Identifier("tempo_finisher_detail"),
-                pk_name=sql.Identifier("finisher_id"),
-            ),
-        ]
-    )
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "finisher"
 
     def requires(self):
         return {
@@ -77,6 +88,24 @@ class LoadCsvFinisherDetail(LoadCsvFinisherTask):
             ),
             "finisher": LoadCsvFinisher(lang_tag=self.lang_tag),
             "lang": lang_load.LangLoad(),
+        }
+
+
+class LoadCsvFinisherDetailTranslation(lang_load.LangLoadCopyTargetTask):
+    id_attributes = [("finisher_id", sql.SQL("integer NOT NULL"))]
+    table = "finisher_detail_context"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "finisher"
+    widget_table = "finisher_detail"
+
+    def requires(self):
+        return {
+            self.table: finisher_transform_csv.TransformCsvFinisherDetailTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                translation_lang_tag=self.translation_lang_tag,
+            ),
+            "finisher": LoadCsvFinisherDetail(lang_tag=self.original_lang_tag),
         }
 
 
@@ -100,21 +129,11 @@ class LoadCsvFinisherItem(LoadCsvFinisherTask):
         }
 
 
-class LoadCsvFinisherName(LoadCsvFinisherTask):
+class LoadCsvFinisherName(lang_load.LangLoadCopySourceTask):
+    id_attributes = [("finisher_id", sql.SQL("integer NOT NULL"))]
     table = "finisher_name"
-
-    postcopy_sql = sql.Composed(
-        [
-            lang_load.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_finisher_name")
-            ),
-            lang_load.merge_into_placed_copy.format(
-                table_name=sql.Identifier("finisher_name"),
-                temp_table_name=sql.Identifier("tempo_finisher_name"),
-                pk_name=sql.Identifier("finisher_id"),
-            ),
-        ]
-    )
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "finisher"
 
     def requires(self):
         return {
@@ -123,4 +142,22 @@ class LoadCsvFinisherName(LoadCsvFinisherTask):
             ),
             "finisher": LoadCsvFinisher(lang_tag=self.lang_tag),
             "lang": lang_load.LangLoad(),
+        }
+
+
+class LoadCsvFinisherNameTranslation(lang_load.LangLoadCopyTargetTask):
+    id_attributes = [("finisher_id", sql.SQL("integer NOT NULL"))]
+    table = "finisher_name_context"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "finisher"
+    widget_table = "finisher_name"
+
+    def requires(self):
+        return {
+            self.table: finisher_transform_csv.TransformCsvFinisherNameTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                translation_lang_tag=self.translation_lang_tag,
+            ),
+            "finisher": LoadCsvFinisherName(lang_tag=self.original_lang_tag),
         }

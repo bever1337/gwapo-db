@@ -30,30 +30,6 @@ WHERE
   FALSE;
 
 SELECT
-  app_name,
-  item_id,
-  lang_tag,
-  original,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.item_description
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  item_id,
-  lang_tag,
-  original,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.item_description_history
-WHERE
-  FALSE;
-
-SELECT
   flag,
   item_id,
   sysrange_lower,
@@ -90,30 +66,6 @@ SELECT
   sysrange_upper
 FROM
   gwapese.item_game_type_history
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  item_id,
-  lang_tag,
-  original,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.item_name
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  item_id,
-  lang_tag,
-  original,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.item_name_history
 WHERE
   FALSE;
 

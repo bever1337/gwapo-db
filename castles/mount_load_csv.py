@@ -1,16 +1,16 @@
-import datetime
 import luigi
 from psycopg import sql
 
 import common
-from tasks import load_csv
 import lang_load
 import mount_transform_csv
+from tasks import config
+from tasks import load_csv
 
 
 class WrapMount(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
 
     def requires(self):
         args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
@@ -18,9 +18,26 @@ class WrapMount(luigi.WrapperTask):
         yield LoadCsvMountName(**args)
 
 
+class WrapMountTranslate(luigi.WrapperTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+
+    def requires(self):
+        for lang_tag in common.LangTag:
+            if lang_tag == self.original_lang_tag:
+                continue
+            yield LoadCsvMountNameTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                task_datetime=self.task_datetime,
+                translation_lang_tag=lang_tag,
+            )
+
+
 class LoadCsvMountTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "mount"
 
 
@@ -43,21 +60,11 @@ WHEN NOT MATCHED THEN
         }
 
 
-class LoadCsvMountName(LoadCsvMountTask):
+class LoadCsvMountName(lang_load.LangLoadCopySourceTask):
+    id_attributes = [("mount_id", sql.SQL("text NOT NULL"))]
     table = "mount_name"
-
-    postcopy_sql = sql.Composed(
-        [
-            lang_load.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_mount_name")
-            ),
-            lang_load.merge_into_placed_copy.format(
-                table_name=sql.Identifier("mount_name"),
-                temp_table_name=sql.Identifier("tempo_mount_name"),
-                pk_name=sql.Identifier("mount_id"),
-            ),
-        ]
-    )
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "mount"
 
     def requires(self):
         return {
@@ -66,4 +73,22 @@ class LoadCsvMountName(LoadCsvMountTask):
             ),
             "mount": LoadCsvMount(lang_tag=self.lang_tag),
             "lang": lang_load.LangLoad(),
+        }
+
+
+class LoadCsvMountNameTranslation(lang_load.LangLoadCopyTargetTask):
+    id_attributes = [("mount_id", sql.SQL("text NOT NULL"))]
+    table = "mount_name_context"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "mount"
+    widget_table = "mount_name"
+
+    def requires(self):
+        return {
+            self.table: mount_transform_csv.TransformCsvMountNameTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                translation_lang_tag=self.translation_lang_tag,
+            ),
+            "_": LoadCsvMountName(lang_tag=self.original_lang_tag),
         }

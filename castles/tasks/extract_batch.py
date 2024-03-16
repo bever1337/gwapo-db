@@ -18,7 +18,7 @@ class ExtractBatchTask(luigi.Task):
         gwapo_config = config.gconfig()
         return luigi.LocalTarget(
             path=os.path.join(
-                gwapo_config.output_dir,
+                str(gwapo_config.output_dir),
                 self.get_task_family(),
                 os.path.extsep.join([self.task_id, "ndjson"]),
             )
@@ -29,8 +29,14 @@ class ExtractBatchTask(luigi.Task):
 
     def run(self):
         self.set_status_message("Starting")
+        self.set_progress_percentage(0)
 
-        with open(self.json_schema_path) as json_schema_file:
+        input_file: luigi.LocalTarget = self.input()
+        input_file_size = os.stat(input_file.path).st_size
+        approx_bytes_processed = 0
+        progress_percentage = 0
+
+        with open(str(self.json_schema_path)) as json_schema_file:
             json_schema = json.load(fp=json_schema_file)
         # because schema is union type, this could validate unexpected data
         validator = jsonschema.Draft202012Validator(
@@ -38,11 +44,11 @@ class ExtractBatchTask(luigi.Task):
         )
 
         with (
-            self.input().open("r") as r_input_file,
+            input_file.open("r") as r_input_file,
             self.output().open("w") as write_target,
         ):
-            self.set_status_message("Count: {current:d}".format(current=0))
-            for index, id_batch in enumerate(itertools.batched(r_input_file, 200)):
+            self.set_status_message("Extracting")
+            for id_batch in itertools.batched(r_input_file, 200):
                 next_params = dict(self.url_params)
                 next_params["ids"] = ",".join(
                     [str(json.loads(id)).strip() for id in id_batch]
@@ -57,9 +63,13 @@ class ExtractBatchTask(luigi.Task):
                     "".join([json.dumps(entity), "\n"]) for entity in response_json
                 )
 
-                if index % 100 == 0:
-                    processed_so_far = (index * 200) + len(id_batch)
-                    self.set_status_message(
-                        "Count: {current:d}".format(current=processed_so_far)
-                    )
-                time.sleep(1 / 5)
+                approx_bytes_processed = approx_bytes_processed + len(
+                    next_params["ids"]
+                )
+                next_progress_percentage = round(
+                    (approx_bytes_processed / input_file_size) * 100
+                )
+                if next_progress_percentage != progress_percentage:
+                    progress_percentage = next_progress_percentage
+                    self.set_progress_percentage(progress_percentage)
+                time.sleep(1 / 4)

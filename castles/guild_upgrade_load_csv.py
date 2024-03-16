@@ -1,19 +1,19 @@
-import datetime
 import luigi
 from psycopg import sql
 
 import common
-from tasks import load_csv
 import currency_load_csv
 import guild_currency_load
+import guild_upgrade_transform_csv
 import item_load_csv
 import lang_load
-import guild_upgrade_transform_csv
+from tasks import config
+from tasks import load_csv
 
 
 class WrapGuildUpgrade(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
 
     def requires(self):
         args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
@@ -23,9 +23,32 @@ class WrapGuildUpgrade(luigi.WrapperTask):
         yield LoadCsvGuildUpgradePrerequisite(**args)
 
 
+class WrapGuildUpgradeTranslate(luigi.WrapperTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+
+    def requires(self):
+        for lang_tag in common.LangTag:
+            if lang_tag == self.original_lang_tag:
+                continue
+            yield LoadCsvGuildUpgradeDescriptionTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                task_datetime=self.task_datetime,
+                translation_lang_tag=lang_tag,
+            )
+            yield LoadCsvGuildUpgradeNameTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                task_datetime=self.task_datetime,
+                translation_lang_tag=lang_tag,
+            )
+
+
 class LoadCsvGuildUpgradeTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "guild_upgrade"
 
 
@@ -67,21 +90,11 @@ WHEN NOT MATCHED THEN
         }
 
 
-class LoadCsvGuildUpgradeDescription(LoadCsvGuildUpgradeTask):
+class LoadCsvGuildUpgradeDescription(lang_load.LangLoadCopySourceTask):
+    id_attributes = [("guild_upgrade_id", sql.SQL("integer NOT NULL"))]
     table = "guild_upgrade_description"
-
-    postcopy_sql = sql.Composed(
-        [
-            lang_load.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_guild_upgrade_description")
-            ),
-            lang_load.merge_into_placed_copy.format(
-                table_name=sql.Identifier("guild_upgrade_description"),
-                temp_table_name=sql.Identifier("tempo_guild_upgrade_description"),
-                pk_name=sql.Identifier("guild_upgrade_id"),
-            ),
-        ]
-    )
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "guild_upgrade"
 
     def requires(self):
         return {
@@ -93,21 +106,31 @@ class LoadCsvGuildUpgradeDescription(LoadCsvGuildUpgradeTask):
         }
 
 
-class LoadCsvGuildUpgradeName(LoadCsvGuildUpgradeTask):
-    table = "guild_upgrade_name"
+class LoadCsvGuildUpgradeDescriptionTranslation(lang_load.LangLoadCopyTargetTask):
+    id_attributes = [("guild_upgrade_id", sql.SQL("integer NOT NULL"))]
+    table = "guild_upgrade_description_context"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "guild_upgrade"
+    widget_table = "guild_upgrade_description"
 
-    postcopy_sql = sql.Composed(
-        [
-            lang_load.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_guild_upgrade_name")
+    def requires(self):
+        return {
+            self.table: guild_upgrade_transform_csv.TransformCsvGuildUpgradeDescriptionTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                translation_lang_tag=self.translation_lang_tag,
             ),
-            lang_load.merge_into_placed_copy.format(
-                table_name=sql.Identifier("guild_upgrade_name"),
-                temp_table_name=sql.Identifier("tempo_guild_upgrade_name"),
-                pk_name=sql.Identifier("guild_upgrade_id"),
+            "guild_upgrade_description": LoadCsvGuildUpgradeDescription(
+                lang_tag=self.original_lang_tag
             ),
-        ]
-    )
+        }
+
+
+class LoadCsvGuildUpgradeName(lang_load.LangLoadCopySourceTask):
+    id_attributes = [("guild_upgrade_id", sql.SQL("integer NOT NULL"))]
+    table = "guild_upgrade_name"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "guild_upgrade"
 
     def requires(self):
         return {
@@ -116,6 +139,26 @@ class LoadCsvGuildUpgradeName(LoadCsvGuildUpgradeTask):
             ),
             "guild_upgrade": LoadCsvGuildUpgrade(lang_tag=self.lang_tag),
             "lang": lang_load.LangLoad(),
+        }
+
+
+class LoadCsvGuildUpgradeNameTranslation(lang_load.LangLoadCopyTargetTask):
+    id_attributes = [("guild_upgrade_id", sql.SQL("integer NOT NULL"))]
+    table = "guild_upgrade_name_context"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "guild_upgrade"
+    widget_table = "guild_upgrade_name"
+
+    def requires(self):
+        return {
+            self.table: guild_upgrade_transform_csv.TransformCsvGuildUpgradeNameTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                translation_lang_tag=self.translation_lang_tag,
+            ),
+            "guild_upgrade_name": LoadCsvGuildUpgradeName(
+                lang_tag=self.original_lang_tag
+            ),
         }
 
 

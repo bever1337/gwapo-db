@@ -19,28 +19,4 @@ FROM
 WHERE
   FALSE;
 
-SELECT
-  app_name,
-  lang_tag,
-  original,
-  race_id,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.race_name
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  lang_tag,
-  original,
-  race_id,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.race_name_history
-WHERE
-  FALSE;
-
 ROLLBACK;

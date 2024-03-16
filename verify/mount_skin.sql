@@ -63,28 +63,4 @@ FROM
 WHERE
   FALSE;
 
-SELECT
-  app_name,
-  lang_tag,
-  mount_skin_id,
-  original,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.mount_skin_name
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  lang_tag,
-  mount_skin_id,
-  original,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.mount_skin_name_history
-WHERE
-  FALSE;
-
 ROLLBACK;
