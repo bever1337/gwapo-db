@@ -15,7 +15,7 @@ class WrapColor(luigi.WrapperTask):
     def requires(self):
         args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
         yield LoadCsvColor(**args)
-        yield LoadColorName(**args)
+        yield LoadCsvColorName(**args)
         yield LoadCsvColorSample(**args)
         yield LoadCsvColorBase(**args)
         yield LoadCsvColorSampleAdjustment(**args)
@@ -33,7 +33,7 @@ class WrapColorTranslate(luigi.WrapperTask):
         for lang_tag in common.LangTag:
             if lang_tag == self.original_lang_tag:
                 continue
-            yield LoadColorNameTranslation(
+            yield LoadCsvColorNameTranslation(
                 original_lang_tag=self.original_lang_tag,
                 task_datetime=self.task_datetime,
                 translation_lang_tag=lang_tag,
@@ -103,7 +103,7 @@ WHEN NOT MATCHED THEN
         }
 
 
-class LoadColorName(lang_load.LangLoadCopySourceTask):
+class LoadCsvColorName(lang_load.LangLoadCopySourceTask):
     id_attributes = [("color_id", sql.SQL("integer NOT NULL"))]
     table = "color_name"
     task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
@@ -119,7 +119,7 @@ class LoadColorName(lang_load.LangLoadCopySourceTask):
         }
 
 
-class LoadColorNameTranslation(lang_load.LangLoadCopyTargetTask):
+class LoadCsvColorNameTranslation(lang_load.LangLoadCopyTargetTask):
     id_attributes = [("color_id", sql.SQL("integer NOT NULL"))]
     table = "color_name_context"
     task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
@@ -133,7 +133,7 @@ class LoadColorNameTranslation(lang_load.LangLoadCopyTargetTask):
                 original_lang_tag=self.original_lang_tag,
                 translation_lang_tag=self.translation_lang_tag,
             ),
-            "color": LoadColorName(lang_tag=self.original_lang_tag),
+            "color": LoadCsvColorName(lang_tag=self.original_lang_tag),
         }
 
 
