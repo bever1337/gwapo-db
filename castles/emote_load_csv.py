@@ -1,15 +1,15 @@
-import datetime
 import luigi
 from psycopg import sql
 
 import common
-from tasks import load_csv
-import item_load_csv
 import emote_transform_csv
+import item_load_csv
+from tasks import config
+from tasks import load_csv
 
 
 class WrapEmote(luigi.WrapperTask):
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
 
     def requires(self):
         args = {"task_datetime": self.task_datetime}
@@ -18,7 +18,7 @@ class WrapEmote(luigi.WrapperTask):
 
 
 class LoadCsvEmoteTask(load_csv.LoadCsvTask):
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "emote"
 
 

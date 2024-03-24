@@ -1,28 +1,49 @@
-import datetime
 import luigi
 from psycopg import sql
 
 import common
-from tasks import load_csv
-import lang_load
 import currency_transform_csv
+import lang_load
+from tasks import config
+from tasks import load_csv
 
 
 class WrapCurrency(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
 
     def requires(self):
         args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
         yield LoadCsvCurrency(**args)
         yield LoadCsvCurrencyCategory(**args)
-        yield LoadCsvCurrencyDescription(**args)
+        yield LoadCurrencyDescription(**args)
         yield LoadCsvCurrencyName(**args)
+
+
+class WrapCurrencyTranslate(luigi.WrapperTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+
+    def requires(self):
+        for lang_tag in common.LangTag:
+            if lang_tag == self.original_lang_tag:
+                continue
+            yield LoadCurrencyDescriptionTranslation(
+                original_lang_tag=self.original_lang_tag,
+                task_datetime=self.task_datetime,
+                translation_lang_tag=lang_tag,
+            )
+            yield LoadCurrencyNameTranslation(
+                original_lang_tag=self.original_lang_tag,
+                task_datetime=self.task_datetime,
+                translation_lang_tag=lang_tag,
+            )
 
 
 class LoadCsvCurrencyTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "currency"
 
 
@@ -97,21 +118,11 @@ WHEN NOT MATCHED THEN
         }
 
 
-class LoadCsvCurrencyDescription(LoadCsvCurrencyTask):
+class LoadCurrencyDescription(lang_load.LangLoadCopySourceTask):
+    id_attributes = [("currency_id", sql.SQL("integer NOT NULL"))]
     table = "currency_description"
-
-    postcopy_sql = sql.Composed(
-        [
-            lang_load.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_currency_description")
-            ),
-            lang_load.merge_into_placed_copy.format(
-                table_name=sql.Identifier("currency_description"),
-                temp_table_name=sql.Identifier("tempo_currency_description"),
-                pk_name=sql.Identifier("currency_id"),
-            ),
-        ]
-    )
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "currency"
 
     def requires(self):
         return {
@@ -123,21 +134,29 @@ class LoadCsvCurrencyDescription(LoadCsvCurrencyTask):
         }
 
 
-class LoadCsvCurrencyName(LoadCsvCurrencyTask):
-    table = "currency_name"
+class LoadCurrencyDescriptionTranslation(lang_load.LangLoadCopyTargetTask):
+    id_attributes = [("currency_id", sql.SQL("integer NOT NULL"))]
+    table = "currency_description_context"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "currency"
+    widget_table = "currency_description"
 
-    postcopy_sql = sql.Composed(
-        [
-            lang_load.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_currency_name")
+    def requires(self):
+        return {
+            self.table: currency_transform_csv.TransformCsvCurrencyDescriptionTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                translation_lang_tag=self.translation_lang_tag,
             ),
-            lang_load.merge_into_placed_copy.format(
-                table_name=sql.Identifier("currency_name"),
-                temp_table_name=sql.Identifier("tempo_currency_name"),
-                pk_name=sql.Identifier("currency_id"),
-            ),
-        ]
-    )
+            "currency": LoadCurrencyDescription(lang_tag=self.original_lang_tag),
+        }
+
+
+class LoadCsvCurrencyName(lang_load.LangLoadCopySourceTask):
+    id_attributes = [("currency_id", sql.SQL("integer NOT NULL"))]
+    table = "currency_name"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "currency"
 
     def requires(self):
         return {
@@ -146,4 +165,22 @@ class LoadCsvCurrencyName(LoadCsvCurrencyTask):
             ),
             "currency": LoadCsvCurrency(lang_tag=self.lang_tag),
             "lang": lang_load.LangLoad(),
+        }
+
+
+class LoadCurrencyNameTranslation(lang_load.LangLoadCopyTargetTask):
+    id_attributes = [("currency_id", sql.SQL("integer NOT NULL"))]
+    table = "currency_name_context"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "currency"
+    widget_table = "currency_name"
+
+    def requires(self):
+        return {
+            self.table: currency_transform_csv.TransformCsvCurrencyNameTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                translation_lang_tag=self.translation_lang_tag,
+            ),
+            "currency": LoadCsvCurrencyName(lang_tag=self.original_lang_tag),
         }

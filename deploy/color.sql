@@ -1,7 +1,6 @@
 -- Deploy gwapo-db:color to pg
 -- requires: schema
 -- requires: history
--- requires: lang
 BEGIN;
 
 CREATE TABLE gwapese.color (
@@ -9,10 +8,10 @@ CREATE TABLE gwapese.color (
   hue text,
   material text,
   rarity text,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
   CONSTRAINT color_pk PRIMARY KEY (color_id)
 );
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color');
 
 CREATE TABLE gwapese.color_history (
   LIKE gwapese.color
@@ -26,12 +25,12 @@ CREATE TABLE gwapese.color_base (
   color_id integer NOT NULL,
   green smallint NOT NULL,
   red smallint NOT NULL,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
   CONSTRAINT color_base_pk PRIMARY KEY (color_id),
-  CONSTRAINT color_identifies_color_base_fk FOREIGN KEY (color_id) REFERENCES
+  CONSTRAINT color_identifies_base_fk FOREIGN KEY (color_id) REFERENCES
     gwapese.color (color_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_base');
 
 CREATE TABLE gwapese.color_base_history (
   LIKE gwapese.color_base
@@ -40,37 +39,15 @@ CREATE TABLE gwapese.color_base_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'color_base', 'color_base_history');
 
-CREATE TABLE gwapese.color_name (
-  app_name text NOT NULL,
-  color_id integer NOT NULL,
-  original text NOT NULL,
-  lang_tag text NOT NULL,
-  CONSTRAINT color_name_pk PRIMARY KEY (app_name, lang_tag, color_id),
-  CONSTRAINT color_identifies_color_name_fk FOREIGN KEY (color_id) REFERENCES
-    gwapese.color (color_id) ON DELETE CASCADE,
-  CONSTRAINT operating_copy_precedes_color_name_fk FOREIGN KEY (app_name,
-    lang_tag, original) REFERENCES gwapese.operating_copy (app_name, lang_tag,
-    original) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_name');
-
-CREATE TABLE gwapese.color_name_history (
-  LIKE gwapese.color_name
-);
-
-CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'color_name', 'color_name_history');
-
 CREATE TABLE gwapese.color_sample (
   color_id integer NOT NULL,
   material text NOT NULL,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
   CONSTRAINT color_sample_pk PRIMARY KEY (color_id, material),
-  CONSTRAINT color_comprises_color_sample_fk FOREIGN KEY (color_id) REFERENCES
+  CONSTRAINT color_comprises_sample_fk FOREIGN KEY (color_id) REFERENCES
     gwapese.color (color_id) ON DELETE CASCADE
 );
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_sample');
 
 CREATE TABLE gwapese.color_sample_history (
   LIKE gwapese.color_sample
@@ -84,13 +61,13 @@ CREATE TABLE gwapese.color_sample_adjustment (
   color_id integer NOT NULL,
   contrast double precision NOT NULL,
   material text NOT NULL,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
   CONSTRAINT color_sample_adjustment_pk PRIMARY KEY (color_id, material),
-  CONSTRAINT color_sample_identifies_color_sample_adjustment_fk FOREIGN KEY
-    (color_id, material) REFERENCES gwapese.color_sample (color_id, material)
-    ON DELETE CASCADE
+  CONSTRAINT color_sample_identifies_adjustment_fk FOREIGN KEY (color_id,
+    material) REFERENCES gwapese.color_sample (color_id, material) ON DELETE
+    CASCADE
 );
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_sample_adjustment');
 
 CREATE TABLE gwapese.color_sample_adjustment_history (
   LIKE gwapese.color_sample_adjustment
@@ -105,13 +82,12 @@ CREATE TABLE gwapese.color_sample_shift (
   lightness double precision NOT NULL,
   material text NOT NULL,
   saturation double precision NOT NULL,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
   CONSTRAINT color_sample_shift_pk PRIMARY KEY (color_id, material),
-  CONSTRAINT color_sample_identifies_color_sample_shift_fk FOREIGN KEY
-    (color_id, material) REFERENCES gwapese.color_sample (color_id, material)
-    ON DELETE CASCADE
+  CONSTRAINT color_sample_identifies_shift_fk FOREIGN KEY (color_id, material)
+    REFERENCES gwapese.color_sample (color_id, material) ON DELETE CASCADE
 );
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_sample_shift');
 
 CREATE TABLE gwapese.color_sample_shift_history (
   LIKE gwapese.color_sample_shift
@@ -126,14 +102,14 @@ CREATE TABLE gwapese.color_sample_reference (
   green smallint NOT NULL,
   material text NOT NULL,
   red smallint NOT NULL,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
   CONSTRAINT color_sample_reference_pk PRIMARY KEY (color_id, material),
   CONSTRAINT color_sample_reference_u UNIQUE (color_id, material, red, green, blue),
-  CONSTRAINT color_sample_identifies_color_sample_reference_fk FOREIGN KEY
-    (color_id, material) REFERENCES gwapese.color_sample (color_id, material)
-    ON DELETE CASCADE
+  CONSTRAINT color_sample_identifies_reference_fk FOREIGN KEY (color_id,
+    material) REFERENCES gwapese.color_sample (color_id, material) ON DELETE
+    CASCADE
 );
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_sample_reference');
 
 CREATE TABLE gwapese.color_sample_reference_history (
   LIKE gwapese.color_sample_reference
@@ -224,14 +200,14 @@ CREATE TABLE gwapese.color_sample_reference_perception (
   perceived_lightness double precision GENERATED ALWAYS AS
     (gwapese.rgb_to_lightness (red, green, blue)) STORED NOT NULL,
   red smallint NOT NULL,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
   CONSTRAINT color_sample_reference_perception_pk PRIMARY KEY (color_id, material),
-  CONSTRAINT c_s_r_identifies_color_sample_reference_perception_fk FOREIGN KEY
+  CONSTRAINT color_sample_reference_identifies_perception_fk FOREIGN KEY
     (color_id, material, red, green, blue) REFERENCES
     gwapese.color_sample_reference (color_id, material, red, green, blue) ON
     DELETE CASCADE ON UPDATE CASCADE
 );
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'color_sample_reference_perception');
 
 CREATE TABLE gwapese.color_sample_reference_perception_history (
   LIKE gwapese.color_sample_reference_perception

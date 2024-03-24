@@ -1,18 +1,18 @@
-import datetime
 import luigi
 
 import common
-import skin_extract
+import skin_transform_patch
+from tasks import config
 from tasks import transform_csv
 
 
 class TransformCsvSkinTask(transform_csv.TransformCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "skin"
 
     def requires(self):
-        return skin_extract.ExtractBatch(lang_tag=self.lang_tag)
+        return skin_transform_patch.TransformPatch(lang_tag=self.lang_tag)
 
 
 class TransformCsvSkin(TransformCsvSkinTask):
@@ -80,6 +80,31 @@ class TransformCsvSkinDescription(TransformCsvSkinTask):
         ]
 
 
+class TransformCsvSkinDescriptionTranslation(transform_csv.TransformCsvTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "skin"
+    translation_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+
+    def get_rows(self, skin):
+        skin_description = skin.get("description")
+        if skin_description is None or skin_description == "":
+            return []
+        return [
+            {
+                "app_name": self.app_name,
+                "original_lang_tag": self.original_lang_tag.value,
+                "skin_id": skin["id"],
+                "translation_lang_tag": self.translation_lang_tag.value,
+                "translation": common.to_xhmtl_fragment(skin_description),
+            }
+        ]
+
+    def requires(self):
+        return skin_transform_patch.TransformPatch(lang_tag=self.translation_lang_tag)
+
+
 class TransformCsvSkinFlag(TransformCsvSkinTask):
     def get_rows(self, skin):
         skin_id = skin["id"]
@@ -112,6 +137,31 @@ class TransformCsvSkinName(TransformCsvSkinTask):
                 "skin_id": skin["id"],
             }
         ]
+
+
+class TransformCsvSkinNameTranslation(transform_csv.TransformCsvTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "skin"
+    translation_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+
+    def get_rows(self, skin):
+        skin_name = skin.get("name")
+        if skin_name is None or skin_name == "":
+            return []
+        return [
+            {
+                "app_name": self.app_name,
+                "original_lang_tag": self.original_lang_tag.value,
+                "skin_id": skin["id"],
+                "translation_lang_tag": self.translation_lang_tag.value,
+                "translation": common.to_xhmtl_fragment(skin_name),
+            }
+        ]
+
+    def requires(self):
+        return skin_transform_patch.TransformPatch(lang_tag=self.translation_lang_tag)
 
 
 class TransformCsvSkinRestriction(TransformCsvSkinTask):

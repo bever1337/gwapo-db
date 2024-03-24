@@ -15,7 +15,7 @@ class TransformPatchTask(luigi.Task):
         gwapo_config = config.gconfig()
         return luigi.LocalTarget(
             path=path.join(
-                gwapo_config.output_dir,
+                str(gwapo_config.output_dir),
                 self.get_task_family(),
                 path.extsep.join([self.task_id, "ndjson"]),
             )
@@ -27,7 +27,7 @@ class TransformPatchTask(luigi.Task):
     def run(self):
         self.set_status_message("Starting")
 
-        with open(self.json_patch_path) as json_patch_file:
+        with open(str(self.json_patch_path)) as json_patch_file:
             json_patches = [
                 jsonpatch.JsonPatch(patch) for patch in json.load(fp=json_patch_file)
             ]

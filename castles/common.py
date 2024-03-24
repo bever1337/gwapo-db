@@ -4,6 +4,7 @@ import enum
 import html.parser
 import psycopg
 import re
+from xml.sax.saxutils import escape
 import xml.etree.ElementTree as ET
 
 
@@ -28,52 +29,66 @@ class LangTag(enum.Enum):
     Zh = "zh"
 
 
+root_name = "gw2-rich-text-root"
+
+
 class Gw2RichTextStack(html.parser.HTMLParser):
     def __init__(self, *, convert_charrefs: bool = True) -> None:
         super().__init__(convert_charrefs=convert_charrefs)
-        self.stack: list[str] = []
+        self.root = ET.Element(root_name)
+        self.stack: list[ET.Element] = [self.root]
+
+    @property
+    def leaf(self) -> ET.Element | None:
+        if len(self.stack) == 0:
+            return None
+        return self.stack[-1]
+
+    def handle_data(self, data: str) -> None:
+        escaped = escape(data=data)
+        if self.leaf.tag == "br":
+            self.leaf.tail = "".join([self.leaf.tail or "", escaped])
+        else:
+            if len(self.leaf):
+                self.leaf.tail = "".join([self.leaf.tail or "", escaped])
+            else:
+                self.leaf.text = escaped
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        self.stack.append(tag)
+        if tag == "br":
+            if self.leaf.tag == "br":
+                self.stack.pop()
+            self.stack.append(ET.SubElement(self.leaf, "br"))
+        elif tag == "c":
+            if self.leaf.tag == "br":
+                self.stack.pop()
+            if self.leaf.tag == "gw2-color":
+                self.stack.pop()
+            self.stack.append(ET.SubElement(self.leaf, "gw2-color", dict(attrs)))
+        else:
+            self.handle_data("<{tag}>".format(tag=tag))
 
-    def handle_endtag(self, tag: str) -> None:
-        self.stack.pop()
 
-
-# kind of gross to use _three_ languages
-# xml is only an assertion step, and could be removed
 def to_xhmtl_fragment(original: str):
-    # convert to html
-    accumulate_line = re.sub(
-        pattern="<c=@?(#?\w+)>",
-        repl='<gw2-color value="\\1">',
-        string=original,
-    )
-    accumulate_line = re.sub(
-        pattern="</?c([#=@a-zA-Z0-9]+)?\s?>",
-        repl="</gw2-color>",
-        string=accumulate_line,
-    )
-    accumulate_line = re.sub(
-        pattern="<br>",
-        repl="<br />",
-        string=accumulate_line,
-    )
-    accumulate_line = re.sub(
-        pattern="<REDACTED>", repl="&gt;REDACTED&lt;", string=accumulate_line
-    )
+    as_html = original
+    for pattern, repl in (
+        (r"<c=@?(#?\w+)>", '<c value="\\1">'),
+        (r"</c([#=@a-zA-Z0-9]+)?\s?>", "</c>"),
+        # https://api.guildwars2.com/v2/items?ids=23425&lang=zh
+        (r"<br11>", "<br>"),
+    ):
+        as_html = re.sub(
+            pattern=pattern,
+            repl=repl,
+            string=as_html,
+        )
 
-    # close html tags, ie convert to xhtml
     parser = Gw2RichTextStack()
-    parser.feed(accumulate_line)
-    closing_elements = "".join(
-        ["</{element}>".format(element=element) for element in parser.stack]
-    )
-    accumulate_line = "".join([accumulate_line, closing_elements])
+    parser.feed(as_html)
+    as_xml = ET.tostring(element=parser.root, encoding="unicode")
 
-    # assert as xml
-    ET.fromstring(
-        "<root>{accumulate_line}</root>".format(accumulate_line=accumulate_line)
-    )
+    open_root = "<{tag}>".format(tag=root_name)
+    close_root = "</{tag}>".format(tag=root_name)
+    as_fragment = as_xml[len(open_root) : -len(close_root)]
 
-    return accumulate_line
+    return as_fragment

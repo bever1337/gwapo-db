@@ -21,24 +21,4 @@ FROM
 WHERE
   FALSE;
 
-SELECT
-  app_name,
-  lang_tag,
-  original,
-  outfit_id
-FROM
-  gwapese.outfit_name
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  lang_tag,
-  original,
-  outfit_id
-FROM
-  gwapese.outfit_name_history
-WHERE
-  FALSE;
-
 ROLLBACK;

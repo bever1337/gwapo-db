@@ -5,10 +5,10 @@ BEGIN;
 
 CREATE TABLE gwapese.emote (
   emote_id text NOT NULL,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
   CONSTRAINT emote_pk PRIMARY KEY (emote_id)
 );
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'emote');
 
 CREATE TABLE gwapese.emote_history (
   LIKE gwapese.emote
@@ -20,12 +20,12 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 CREATE TABLE gwapese.emote_command (
   command text NOT NULL,
   emote_id text NOT NULL,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
   CONSTRAINT emote_command_pk PRIMARY KEY (emote_id, command),
-  CONSTRAINT emote_identifies_emote_command_fk FOREIGN KEY (emote_id)
-    REFERENCES gwapese.emote (emote_id) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT emote_identifies_command_fk FOREIGN KEY (emote_id) REFERENCES
+    gwapese.emote (emote_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
-CALL temporal_tables.alter_table_to_temporal ('gwapese', 'emote_command');
 
 CREATE TABLE gwapese.emote_command_history (
   LIKE gwapese.emote_command

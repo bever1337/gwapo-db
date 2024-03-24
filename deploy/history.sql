@@ -29,19 +29,6 @@ IMMUTABLE;
 
 COMMENT ON FUNCTION temporal_tables.fmt_trigger_name (text) IS 'WARNING: Function name is unescaped, unquoted, and potentially longer than an OID.';
 
-CREATE OR REPLACE FUNCTION temporal_tables.fmt_alter_table_to_temporal (IN
-  in_schema_name text, IN in_table_name text)
-  RETURNS text
-  AS $quote_fmt_alter_table_to_temporal$
-BEGIN
-  RETURN format('ALTER TABLE %1$I.%2$I
-    ADD COLUMN sysrange_lower timestamp(3) NOT NULL,
-    ADD COLUMN sysrange_upper timestamp(3) NOT NULL;', in_schema_name, in_table_name);
-END;
-$quote_fmt_alter_table_to_temporal$
-LANGUAGE plpgsql
-IMMUTABLE;
-
 CREATE OR REPLACE FUNCTION temporal_tables.fmt_create_temporal_fn (IN
   in_schema_name text, IN in_temporal_table_name text, IN in_history_table_name
   text)
@@ -122,15 +109,6 @@ END;
 $quote_fmt_drop_trigger_fn$
 LANGUAGE plpgsql
 IMMUTABLE;
-
-CREATE OR REPLACE PROCEDURE temporal_tables.alter_table_to_temporal (IN
-  in_schema_name text, IN in_table_name text)
-  AS $quote_alter_table_to_temporal$
-BEGIN
-  EXECUTE temporal_tables.fmt_alter_table_to_temporal (in_schema_name, in_table_name);
-END;
-$quote_alter_table_to_temporal$
-LANGUAGE plpgsql;
 
 CREATE OR REPLACE PROCEDURE temporal_tables.create_historicize_trigger (IN
   in_schema_name text, IN in_temporal_table_name text, IN in_history_table_name

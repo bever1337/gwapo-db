@@ -21,24 +21,4 @@ FROM
 WHERE
   FALSE;
 
-SELECT
-  app_name,
-  lang_tag,
-  original,
-  profession_id
-FROM
-  gwapese.profession_name
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  lang_tag,
-  original,
-  profession_id
-FROM
-  gwapese.profession_name_history
-WHERE
-  FALSE;
-
 ROLLBACK;

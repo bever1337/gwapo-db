@@ -1,20 +1,20 @@
-import datetime
 import luigi
 from psycopg import sql
 
-import common
 import color_load_csv
-from tasks import load_csv
+import common
 import item_load_csv
+import item_transform_csv
 import lang_load
 import race_load_csv
-import item_transform_csv
 import skin_transform_csv
+from tasks import config
+from tasks import load_csv
 
 
 class WrapSkin(luigi.WrapperTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
 
     def requires(self):
         args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
@@ -31,9 +31,32 @@ class WrapSkin(luigi.WrapperTask):
         yield LoadCsvSkinWeapon(**args)
 
 
+class WrapSkinTranslate(luigi.WrapperTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+
+    def requires(self):
+        for lang_tag in common.LangTag:
+            if lang_tag == self.original_lang_tag:
+                continue
+            yield LoadCsvSkinDescriptionTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                task_datetime=self.task_datetime,
+                translation_lang_tag=lang_tag,
+            )
+            yield LoadCsvSkinNameTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                task_datetime=self.task_datetime,
+                translation_lang_tag=lang_tag,
+            )
+
+
 class LoadCsvSkinTask(load_csv.LoadCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "skin"
 
 
@@ -59,21 +82,11 @@ WHEN NOT MATCHED THEN
         return {self.table: skin_transform_csv.TransformCsvSkin(lang_tag=self.lang_tag)}
 
 
-class LoadCsvSkinDescription(LoadCsvSkinTask):
+class LoadCsvSkinDescription(lang_load.LangLoadCopySourceTask):
+    id_attributes = [("skin_id", sql.SQL("integer NOT NULL"))]
     table = "skin_description"
-
-    postcopy_sql = sql.Composed(
-        [
-            lang_load.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_skin_description")
-            ),
-            lang_load.merge_into_placed_copy.format(
-                table_name=sql.Identifier("skin_description"),
-                temp_table_name=sql.Identifier("tempo_skin_description"),
-                pk_name=sql.Identifier("skin_id"),
-            ),
-        ]
-    )
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "skin"
 
     def requires(self):
         return {
@@ -82,6 +95,24 @@ class LoadCsvSkinDescription(LoadCsvSkinTask):
             ),
             "skin": LoadCsvSkin(lang_tag=self.lang_tag),
             "lang": lang_load.LangLoad(),
+        }
+
+
+class LoadCsvSkinDescriptionTranslation(lang_load.LangLoadCopyTargetTask):
+    id_attributes = [("skin_id", sql.SQL("integer NOT NULL"))]
+    table = "skin_description_context"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "skin"
+    widget_table = "skin_description"
+
+    def requires(self):
+        return {
+            self.table: skin_transform_csv.TransformCsvSkinDescriptionTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                translation_lang_tag=self.translation_lang_tag,
+            ),
+            "_": LoadCsvSkinDescription(lang_tag=self.original_lang_tag),
         }
 
 
@@ -124,27 +155,35 @@ WHEN NOT MATCHED THEN
         }
 
 
-class LoadCsvSkinName(LoadCsvSkinTask):
+class LoadCsvSkinName(lang_load.LangLoadCopySourceTask):
+    id_attributes = [("skin_id", sql.SQL("integer NOT NULL"))]
     table = "skin_name"
-
-    postcopy_sql = sql.Composed(
-        [
-            lang_load.merge_into_operating_copy.format(
-                table_name=sql.Identifier("tempo_skin_name")
-            ),
-            lang_load.merge_into_placed_copy.format(
-                table_name=sql.Identifier("skin_name"),
-                temp_table_name=sql.Identifier("tempo_skin_name"),
-                pk_name=sql.Identifier("skin_id"),
-            ),
-        ]
-    )
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "skin"
 
     def requires(self):
         return {
             self.table: skin_transform_csv.TransformCsvSkinName(lang_tag=self.lang_tag),
             "skin": LoadCsvSkin(lang_tag=self.lang_tag),
             "lang": lang_load.LangLoad(),
+        }
+
+
+class LoadCsvSkinNameTranslation(lang_load.LangLoadCopyTargetTask):
+    id_attributes = [("skin_id", sql.SQL("integer NOT NULL"))]
+    table = "skin_name_context"
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "skin"
+    widget_table = "skin_name"
+
+    def requires(self):
+        return {
+            self.table: skin_transform_csv.TransformCsvSkinNameTranslation(
+                app_name=self.app_name,
+                original_lang_tag=self.original_lang_tag,
+                translation_lang_tag=self.translation_lang_tag,
+            ),
+            "_": LoadCsvSkinName(lang_tag=self.original_lang_tag),
         }
 
 

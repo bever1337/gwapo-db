@@ -24,30 +24,6 @@ WHERE
   FALSE;
 
 SELECT
-  app_name,
-  original,
-  lang_tag,
-  skin_id,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.skin_description
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  original,
-  lang_tag,
-  skin_id,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.skin_description_history
-WHERE
-  FALSE;
-
-SELECT
   flag,
   skin_id,
   sysrange_lower,
@@ -64,30 +40,6 @@ SELECT
   sysrange_upper
 FROM
   gwapese.skin_flag_history
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  original,
-  lang_tag,
-  skin_id,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.skin_name
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  original,
-  lang_tag,
-  skin_id,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.skin_name_history
 WHERE
   FALSE;
 

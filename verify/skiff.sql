@@ -45,28 +45,4 @@ FROM
 WHERE
   FALSE;
 
-SELECT
-  app_name,
-  lang_tag,
-  original,
-  skiff_id,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.skiff_name
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  lang_tag,
-  original,
-  skiff_id,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.skiff_name_history
-WHERE
-  FALSE;
-
 ROLLBACK;

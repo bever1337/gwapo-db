@@ -9,9 +9,9 @@ from tasks import config
 
 
 class LoadCsvTask(luigi.Task):
-    precopy_sql: None | sql.SQL = None
-    copy_sql: None | sql.SQL = None
-    postcopy_sql: None | sql.SQL = None
+    precopy_sql: None | (sql.Composed | sql.SQL) = None
+    copy_sql: None | (sql.Composed | sql.SQL) = None
+    postcopy_sql: None | (sql.Composed | sql.SQL) = None
 
     table = luigi.Parameter()
 
@@ -19,7 +19,7 @@ class LoadCsvTask(luigi.Task):
         gwapo_config = config.gconfig()
         return luigi.LocalTarget(
             path=path.join(
-                gwapo_config.output_dir,
+                str(gwapo_config.output_dir),
                 self.get_task_family(),
                 path.extsep.join([self.task_id, "txt"]),
             )
@@ -35,7 +35,7 @@ class LoadCsvTask(luigi.Task):
         r_input_file: io.FileIO
         w_output_file: io.FileIO
         with (
-            self.input().get(self.table).open("r") as r_input_file,
+            self.input().get(str(self.table)).open("r") as r_input_file,
             self.output().open("w") as w_output_file,
             common.get_conn() as connection,
         ):
@@ -53,9 +53,9 @@ CREATE TEMPORARY TABLE {temp_table_name} (
 ) ON COMMIT DROP;
 """
                         ).format(
-                            table_name=sql.Identifier(self.table),
+                            table_name=sql.Identifier(str(self.table)),
                             temp_table_name=sql.Identifier(
-                                "_".join(["tempo", self.table])
+                                "_".join(["tempo", str(self.table)])
                             ),
                         ),
                         sql.SQL(
@@ -66,7 +66,7 @@ ALTER TABLE {temp_table_name}
 """
                         ).format(
                             temp_table_name=sql.Identifier(
-                                "_".join(["tempo", self.table])
+                                "_".join(["tempo", str(self.table)])
                             )
                         ),
                     ]
@@ -84,10 +84,12 @@ COPY {temp_table_name} ({fields}) FROM STDIN (FORMAT 'csv');
                     fields=sql.SQL(",").join(
                         [
                             sql.Identifier(fieldname)
-                            for fieldname in csv_reader.fieldnames
+                            for fieldname in (csv_reader.fieldnames or [])
                         ]
                     ),
-                    temp_table_name=sql.Identifier("_".join(["tempo", self.table])),
+                    temp_table_name=sql.Identifier(
+                        "_".join(["tempo", str(self.table)])
+                    ),
                 )
             )
 

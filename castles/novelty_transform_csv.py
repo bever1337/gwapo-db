@@ -1,14 +1,14 @@
-import datetime
 import luigi
 
 import common
 import novelty_extract
+from tasks import config
 from tasks import transform_csv
 
 
 class TransformCsvNoveltyTask(transform_csv.TransformCsvTask):
     lang_tag = luigi.EnumParameter(enum=common.LangTag)
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "novelty"
 
     def requires(self):
@@ -41,6 +41,31 @@ class TransformCsvNoveltyDescription(TransformCsvNoveltyTask):
         ]
 
 
+class TransformCsvNoveltyDescriptionTranslation(transform_csv.TransformCsvTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "novelty"
+    translation_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+
+    def get_rows(self, novelty):
+        novelty_description = novelty["description"]
+        if novelty_description == "":
+            return []
+        return [
+            {
+                "app_name": self.app_name,
+                "novelty_id": novelty["id"],
+                "original_lang_tag": self.original_lang_tag.value,
+                "translation_lang_tag": self.translation_lang_tag.value,
+                "translation": common.to_xhmtl_fragment(novelty_description),
+            }
+        ]
+
+    def requires(self):
+        return novelty_extract.ExtractBatch(lang_tag=self.translation_lang_tag)
+
+
 class TransformCsvNoveltyItem(TransformCsvNoveltyTask):
     def get_rows(self, novelty):
         novelty_id = novelty["id"]
@@ -60,3 +85,25 @@ class TransformCsvNoveltyName(TransformCsvNoveltyTask):
                 "original": common.to_xhmtl_fragment(novelty["name"]),
             }
         ]
+
+
+class TransformCsvNoveltyNameTranslation(transform_csv.TransformCsvTask):
+    app_name = luigi.Parameter(default="gw2")
+    original_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
+    task_namespace = "novelty"
+    translation_lang_tag = luigi.EnumParameter(enum=common.LangTag)
+
+    def get_rows(self, novelty):
+        return [
+            {
+                "app_name": self.app_name,
+                "novelty_id": novelty["id"],
+                "original_lang_tag": self.original_lang_tag.value,
+                "translation_lang_tag": self.translation_lang_tag.value,
+                "translation": common.to_xhmtl_fragment(novelty["name"]),
+            }
+        ]
+
+    def requires(self):
+        return novelty_extract.ExtractBatch(lang_tag=self.translation_lang_tag)

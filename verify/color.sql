@@ -50,30 +50,6 @@ WHERE
   FALSE;
 
 SELECT
-  app_name,
-  color_id,
-  original,
-  lang_tag,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.color_name
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  color_id,
-  original,
-  lang_tag,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.color_name_history
-WHERE
-  FALSE;
-
-SELECT
   color_id,
   material,
   sysrange_lower,

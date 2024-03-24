@@ -7,12 +7,6 @@ DROP TABLE gwapese.color_base_history;
 
 DROP TABLE gwapese.color_base;
 
-CALL temporal_tables.drop_historicize_fn ('gwapese', 'color_name');
-
-DROP TABLE gwapese.color_name_history;
-
-DROP TABLE gwapese.color_name;
-
 CALL temporal_tables.drop_historicize_fn ('gwapese', 'color_sample_adjustment');
 
 DROP TABLE gwapese.color_sample_adjustment_history;

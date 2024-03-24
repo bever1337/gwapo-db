@@ -1,5 +1,3 @@
-import datetime
-
 import luigi
 from os import path
 from psycopg import sql
@@ -9,14 +7,14 @@ from tasks import config
 
 
 class GuildCurrencyLoad(luigi.Task):
-    task_datetime = luigi.DateSecondParameter(default=datetime.datetime.now())
+    task_datetime = luigi.DateSecondParameter(default=config.gconfig().task_datetime)
     task_namespace = "guild_currency"
 
     def output(self):
         gwapo_config = config.gconfig()
         return luigi.LocalTarget(
             path=path.join(
-                gwapo_config.output_dir,
+                str(gwapo_config.output_dir),
                 self.get_task_family(),
                 path.extsep.join([self.task_id, "txt"]),
             )

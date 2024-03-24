@@ -30,50 +30,22 @@ WHERE
   FALSE;
 
 SELECT
-  app_name,
   guild_upgrade_id,
-  lang_tag,
-  original,
+  prerequisite_guild_upgrade_id,
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.guild_upgrade_description
+  gwapese.guild_upgrade_prerequisite
 WHERE
   FALSE;
 
 SELECT
-  app_name,
   guild_upgrade_id,
-  lang_tag,
-  original,
+  prerequisite_guild_upgrade_id,
   sysrange_lower,
   sysrange_upper
 FROM
-  gwapese.guild_upgrade_description_history
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  guild_upgrade_id,
-  lang_tag,
-  original,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.guild_upgrade_name
-WHERE
-  FALSE;
-
-SELECT
-  app_name,
-  guild_upgrade_id,
-  lang_tag,
-  original,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.guild_upgrade_name_history
+  gwapese.guild_upgrade_prerequisite_history
 WHERE
   FALSE;
 
