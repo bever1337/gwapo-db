@@ -29,9 +29,14 @@ class TransformCsvCurrency(TransformCsvCurrencyTask):
 
 class TransformCsvCurrencyCategory(TransformCsvCurrencyTask):
     def get_rows(self, currency):
+        return [{"category_id": category_id} for category_id in currency["categories"]]
+
+
+class TransformCsvCurrencyCurrencyCategory(TransformCsvCurrencyTask):
+    def get_rows(self, currency):
         return [
-            {"category": category, "currency_id": currency["id"]}
-            for category in currency["categories"]
+            {"category_id": category_id, "currency_id": currency["id"]}
+            for category_id in currency["categories"]
         ]
 
 

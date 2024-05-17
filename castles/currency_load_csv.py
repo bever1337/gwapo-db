@@ -16,6 +16,7 @@ class WrapCurrency(luigi.WrapperTask):
         args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
         yield LoadCsvCurrency(**args)
         yield LoadCsvCurrencyCategory(**args)
+        yield LoadCsvCurrencyCurrencyCategory(**args)
         yield LoadCsvCurrencyDescription(**args)
         yield LoadCsvCurrencyName(**args)
 
@@ -86,24 +87,29 @@ class LoadCsvCurrencyCategory(LoadCsvCurrencyTask):
                 """
 DELETE FROM gwapese.currency_category
 WHERE NOT EXISTS (
-    SELECT
-      1
+  SELECT
+    1
+  FROM (
+    SELECT DISTINCT ON
+      (category_id) category_id
     FROM
-      tempo_currency_category
-    WHERE
-      gwapese.currency_category.category = tempo_currency_category.category
-      AND gwapese.currency_category.currency_id = tempo_currency_category.currency_id);
+      tempo_currency_category) AS currency_category_source
+  WHERE gwapese.currency_category.category_id = currency_category_source.category_id
+);
 """
             ),
             sql.SQL(
                 """
 MERGE INTO gwapese.currency_category
-USING tempo_currency_category ON gwapese.currency_category.category =
-  tempo_currency_category.category
-  AND gwapese.currency_category.currency_id = tempo_currency_category.currency_id
+USING (
+  SELECT DISTINCT ON
+    (category_id) category_id
+  FROM
+    tempo_currency_category) AS currency_category_source
+  ON gwapese.currency_category.category_id = currency_category_source.category_id
 WHEN NOT MATCHED THEN
-  INSERT (category, currency_id)
-    VALUES (tempo_currency_category.category, tempo_currency_category.currency_id);
+  INSERT (category_id)
+    VALUES (currency_category_source.category_id);
 """
             ),
         ]
@@ -115,6 +121,48 @@ WHEN NOT MATCHED THEN
                 lang_tag=self.lang_tag
             ),
             "currency": LoadCsvCurrency(lang_tag=self.lang_tag),
+        }
+
+
+class LoadCsvCurrencyCurrencyCategory(LoadCsvCurrencyTask):
+    table = "currency_currency_category"
+
+    postcopy_sql = sql.Composed(
+        [
+            sql.SQL(
+                """
+DELETE FROM gwapese.currency_currency_category
+WHERE NOT EXISTS (
+    SELECT
+      1
+    FROM
+      tempo_currency_currency_category
+    WHERE
+      gwapese.currency_currency_category.category_id = tempo_currency_currency_category.category_id
+      AND gwapese.currency_currency_category.currency_id = tempo_currency_currency_category.currency_id);
+"""
+            ),
+            sql.SQL(
+                """
+MERGE INTO gwapese.currency_currency_category
+USING tempo_currency_currency_category ON gwapese.currency_currency_category.category_id =
+  tempo_currency_currency_category.category_id
+  AND gwapese.currency_currency_category.currency_id = tempo_currency_currency_category.currency_id
+WHEN NOT MATCHED THEN
+  INSERT (category_id, currency_id)
+    VALUES (tempo_currency_currency_category.category_id, tempo_currency_currency_category.currency_id);
+"""
+            ),
+        ]
+    )
+
+    def requires(self):
+        return {
+            self.table: currency_transform_csv.TransformCsvCurrencyCurrencyCategory(
+                lang_tag=self.lang_tag
+            ),
+            "currency": LoadCsvCurrency(lang_tag=self.lang_tag),
+            "currency_category": LoadCsvCurrencyCategory(lang_tag=self.lang_tag),
         }
 
 

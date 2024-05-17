@@ -26,8 +26,7 @@ WHERE
   FALSE;
 
 SELECT
-  category,
-  currency_id,
+  category_id,
   sysrange_lower,
   sysrange_upper
 FROM
@@ -36,12 +35,31 @@ WHERE
   FALSE;
 
 SELECT
-  category,
-  currency_id,
+  category_id,
   sysrange_lower,
   sysrange_upper
 FROM
   gwapese.currency_category_history
+WHERE
+  FALSE;
+
+SELECT
+  category_id,
+  currency_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.currency_currency_category
+WHERE
+  FALSE;
+
+SELECT
+  category_id,
+  currency_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.currency_currency_category_history
 WHERE
   FALSE;
 
