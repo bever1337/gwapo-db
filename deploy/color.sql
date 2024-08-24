@@ -3,6 +3,8 @@
 -- requires: history
 BEGIN;
 
+-- todo category types and rarity are not normalized
+-- would be lost if a color is deleted
 CREATE TABLE gwapese.color (
   color_id integer NOT NULL,
   hue text,
@@ -39,6 +41,7 @@ CREATE TABLE gwapese.color_base_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'color_base', 'color_base_history');
 
+-- todo should material be normalized? All (but 2) dyes have all 4 materials
 CREATE TABLE gwapese.color_sample (
   color_id integer NOT NULL,
   material text NOT NULL,

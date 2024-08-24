@@ -2,5 +2,9 @@
   [
     { "op": "test", "path": "/id", "value": 1594 },
     { "op": "copy", "path": "/fur", "from": "/cloth" }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 1708 },
+    { "op": "copy", "path": "/fur", "from": "/cloth" }
   ]
 ]
