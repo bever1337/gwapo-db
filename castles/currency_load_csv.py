@@ -81,25 +81,8 @@ WHEN NOT MATCHED THEN
 class LoadCsvCurrencyCategory(LoadCsvCurrencyTask):
     table = "currency_category"
 
-    postcopy_sql = sql.Composed(
-        [
-            sql.SQL(
-                """
-DELETE FROM gwapese.currency_category
-WHERE NOT EXISTS (
-  SELECT
-    1
-  FROM (
-    SELECT DISTINCT ON
-      (category_id) category_id
-    FROM
-      tempo_currency_category) AS currency_category_source
-  WHERE gwapese.currency_category.category_id = currency_category_source.category_id
-);
-"""
-            ),
-            sql.SQL(
-                """
+    postcopy_sql = sql.SQL(
+        """
 MERGE INTO gwapese.currency_category
 USING (
   SELECT DISTINCT ON
@@ -111,8 +94,6 @@ WHEN NOT MATCHED THEN
   INSERT (category_id)
     VALUES (currency_category_source.category_id);
 """
-            ),
-        ]
     )
 
     def requires(self):

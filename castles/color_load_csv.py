@@ -52,25 +52,8 @@ class LoadCsvColorTask(load_csv.LoadCsvTask):
 class LoadCsvColorHue(LoadCsvColorTask):
     table = "color_hue"
 
-    postcopy_sql = sql.Composed(
-        [
-            sql.SQL(
-                """
-DELETE FROM gwapese.color_hue
-WHERE NOT EXISTS (
-  SELECT
-    1
-  FROM (
-    SELECT DISTINCT ON
-      (hue) hue
-    FROM
-      tempo_color_hue) AS color_hue_source
-  WHERE gwapese.color_hue.hue = color_hue_source.hue
-);
-"""
-            ),
-            sql.SQL(
-                """
+    postcopy_sql = sql.SQL(
+        """
 MERGE INTO gwapese.color_hue
 USING (
   SELECT DISTINCT ON
@@ -82,8 +65,6 @@ WHEN NOT MATCHED THEN
   INSERT (hue)
     VALUES (color_hue_source.hue);
 """
-            ),
-        ]
     )
 
     def requires(self):
@@ -97,25 +78,8 @@ WHEN NOT MATCHED THEN
 class LoadCsvColorMaterial(LoadCsvColorTask):
     table = "color_material"
 
-    postcopy_sql = sql.Composed(
-        [
-            sql.SQL(
-                """
-DELETE FROM gwapese.color_material
-WHERE NOT EXISTS (
-  SELECT
-    1
-  FROM (
-    SELECT DISTINCT ON
-      (material) material
-    FROM
-      tempo_color_material) AS color_material_source
-  WHERE gwapese.color_material.material = color_material_source.material
-);
-"""
-            ),
-            sql.SQL(
-                """
+    postcopy_sql = sql.SQL(
+        """
 MERGE INTO gwapese.color_material
 USING (
   SELECT DISTINCT ON
@@ -127,8 +91,6 @@ WHEN NOT MATCHED THEN
   INSERT (material)
     VALUES (color_material_source.material);
 """
-            ),
-        ]
     )
 
     def requires(self):
@@ -142,25 +104,8 @@ WHEN NOT MATCHED THEN
 class LoadCsvColorRarity(LoadCsvColorTask):
     table = "color_rarity"
 
-    postcopy_sql = sql.Composed(
-        [
-            sql.SQL(
-                """
-DELETE FROM gwapese.color_rarity
-WHERE NOT EXISTS (
-  SELECT
-    1
-  FROM (
-    SELECT DISTINCT ON
-      (rarity) rarity
-    FROM
-      tempo_color_rarity) AS color_rarity_source
-  WHERE gwapese.color_rarity.rarity = color_rarity_source.rarity
-);
-"""
-            ),
-            sql.SQL(
-                """
+    postcopy_sql = sql.SQL(
+        """
 MERGE INTO gwapese.color_rarity
 USING (
   SELECT DISTINCT ON
@@ -172,8 +117,6 @@ WHEN NOT MATCHED THEN
   INSERT (rarity)
     VALUES (color_rarity_source.rarity);
 """
-            ),
-        ]
     )
 
     def requires(self):

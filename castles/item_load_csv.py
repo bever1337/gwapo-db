@@ -150,32 +150,59 @@ class LoadCsvItemDescriptionTranslation(lang_load.LangLoadCopyTargetTask):
 
 
 class LoadCsvItemFlag(LoadCsvItemTask):
-    table = "item_flag"
+    table = "item_item_flag"
 
     postcopy_sql = sql.Composed(
         [
             sql.SQL(
                 """
-DELETE FROM gwapese.item_flag
-WHERE NOT EXISTS (
-    SELECT
-      1
-    FROM
-      tempo_item_flag
-    WHERE
-      gwapese.item_flag.flag = tempo_item_flag.flag
-      AND gwapese.item_flag.item_id = tempo_item_flag.item_id);
+MERGE INTO
+  gwapese.item_flag
+USING (
+  SELECT DISTINCT ON
+    (flag)
+    flag
+  FROM
+    tempo_item_item_flag)
+AS
+  item_flag_source
+ON
+  gwapese.item_flag.flag = item_flag_source.flag
+WHEN NOT MATCHED THEN
+  INSERT (flag)
+    VALUES (item_flag_source.flag);
 """
             ),
             sql.SQL(
                 """
-MERGE INTO gwapese.item_flag AS target_item_flag
-USING tempo_item_flag AS source_item_flag ON target_item_flag.flag =
-  source_item_flag.flag
-  AND target_item_flag.item_id = source_item_flag.item_id
+DELETE FROM
+  gwapese.item_item_flag
+WHERE NOT EXISTS (
+    SELECT
+      1
+    FROM
+      tempo_item_item_flag
+    WHERE
+      gwapese.item_item_flag.flag = tempo_item_item_flag.flag
+      AND gwapese.item_item_flag.item_id = tempo_item_item_flag.item_id);
+"""
+            ),
+            sql.SQL(
+                """
+MERGE INTO
+  gwapese.item_item_flag
+AS
+  target_item_item_flag
+USING
+  tempo_item_item_flag
+AS
+  source_item_item_flag
+ON
+  target_item_item_flag.flag = source_item_item_flag.flag
+    AND target_item_item_flag.item_id = source_item_item_flag.item_id
 WHEN NOT MATCHED THEN
   INSERT (flag, item_id)
-    VALUES (source_item_flag.flag, source_item_flag.item_id);
+    VALUES (source_item_item_flag.flag, source_item_item_flag.item_id);
 """
             ),
         ]
@@ -189,32 +216,59 @@ WHEN NOT MATCHED THEN
 
 
 class LoadCsvItemGameType(LoadCsvItemTask):
-    table = "item_game_type"
+    table = "item_item_game_type"
 
     postcopy_sql = sql.Composed(
         [
             sql.SQL(
                 """
-DELETE FROM gwapese.item_game_type
-WHERE NOT EXISTS (
-    SELECT
-      1
-    FROM
-      tempo_item_game_type
-    WHERE
-      gwapese.item_game_type.game_type = tempo_item_game_type.game_type
-      AND gwapese.item_game_type.item_id = tempo_item_game_type.item_id);
+MERGE INTO
+  gwapese.item_game_type
+USING (
+  SELECT DISTINCT ON
+    (game_type)
+    game_type
+  FROM
+    tempo_item_item_game_type)
+AS
+  item_game_type_source
+ON
+  gwapese.item_game_type.game_type = item_game_type_source.game_type
+WHEN NOT MATCHED THEN
+  INSERT (game_type)
+    VALUES (item_game_type_source.game_type);
 """
             ),
             sql.SQL(
                 """
-MERGE INTO gwapese.item_game_type AS target_item_game_type
-USING tempo_item_game_type AS source_item_game_type ON
-  target_item_game_type.game_type = source_item_game_type.game_type
-  AND target_item_game_type.item_id = source_item_game_type.item_id
+DELETE FROM
+  gwapese.item_item_game_type
+WHERE NOT EXISTS (
+  SELECT
+    1
+  FROM
+    tempo_item_item_game_type
+  WHERE
+    gwapese.item_item_game_type.game_type = tempo_item_item_game_type.game_type
+      AND gwapese.item_item_game_type.item_id = tempo_item_item_game_type.item_id);
+"""
+            ),
+            sql.SQL(
+                """
+MERGE INTO
+  gwapese.item_item_game_type
+AS
+  target_item_item_game_type
+USING
+  tempo_item_item_game_type
+AS
+  source_item_item_game_type
+ON
+  target_item_item_game_type.game_type = source_item_item_game_type.game_type
+  AND target_item_item_game_type.item_id = source_item_item_game_type.item_id
 WHEN NOT MATCHED THEN
   INSERT (game_type, item_id)
-    VALUES (source_item_game_type.game_type, source_item_game_type.item_id);
+    VALUES (source_item_item_game_type.game_type, source_item_item_game_type.item_id);
 """
             ),
         ]
@@ -430,17 +484,62 @@ WHEN NOT MATCHED THEN
 
 
 class LoadCsvItemType(LoadCsvItemTask):
-    table = "item_type"
+    table = "item_item_type"
 
-    postcopy_sql = sql.SQL(
-        """
-MERGE INTO gwapese.item_type AS target_item_type
-USING tempo_item_type AS source_item_type ON target_item_type.item_id =
-  source_item_type.item_id
+    postcopy_sql = sql.Composed(
+        [
+            sql.SQL(
+                """
+MERGE INTO
+  gwapese.item_type
+USING (
+  SELECT DISTINCT ON
+    (item_type)
+    item_type
+  FROM
+    tempo_item_item_type)
+AS
+  item_type_source
+ON
+  gwapese.item_type.item_type = item_type_source.item_type
+WHEN NOT MATCHED THEN
+  INSERT (item_type)
+    VALUES (item_type_source.item_type);
+"""
+            ),
+            sql.SQL(
+                """
+DELETE FROM
+  gwapese.item_item_type
+WHERE NOT EXISTS (
+    SELECT
+      1
+    FROM
+      tempo_item_item_type
+    WHERE
+      gwapese.item_item_type.item_type = tempo_item_item_type.item_type
+      AND gwapese.item_item_type.item_id = tempo_item_item_type.item_id);
+"""
+            ),
+            sql.SQL(
+                """
+MERGE INTO
+  gwapese.item_item_type
+AS
+  target_item_item_type
+USING
+  tempo_item_item_type
+AS
+  source_item_item_type
+ON
+  target_item_item_type.item_id = source_item_item_type.item_id
+    AND target_item_item_type.item_type = source_item_item_type.item_type
 WHEN NOT MATCHED THEN
   INSERT (item_id, item_type)
-    VALUES (source_item_type.item_id, source_item_type.item_type);
+    VALUES (source_item_item_type.item_id, source_item_item_type.item_type);
 """
+            ),
+        ]
     )
 
     def requires(self):

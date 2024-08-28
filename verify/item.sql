@@ -31,7 +31,6 @@ WHERE
 
 SELECT
   flag,
-  item_id,
   sysrange_lower,
   sysrange_upper
 FROM
@@ -41,7 +40,6 @@ WHERE
 
 SELECT
   flag,
-  item_id,
   sysrange_lower,
   sysrange_upper
 FROM
@@ -50,8 +48,27 @@ WHERE
   FALSE;
 
 SELECT
-  game_type,
+  flag,
   item_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.item_item_flag
+WHERE
+  FALSE;
+
+SELECT
+  flag,
+  item_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.item_item_flag_history
+WHERE
+  FALSE;
+
+SELECT
+  game_type,
   sysrange_lower,
   sysrange_upper
 FROM
@@ -61,11 +78,30 @@ WHERE
 
 SELECT
   game_type,
-  item_id,
   sysrange_lower,
   sysrange_upper
 FROM
   gwapese.item_game_type_history
+WHERE
+  FALSE;
+
+SELECT
+  game_type,
+  item_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.item_item_game_type
+WHERE
+  FALSE;
+
+SELECT
+  game_type,
+  item_id,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.item_item_game_type_history
 WHERE
   FALSE;
 
@@ -110,7 +146,6 @@ WHERE
   FALSE;
 
 SELECT
-  item_id,
   item_type,
   sysrange_lower,
   sysrange_upper
@@ -120,12 +155,31 @@ WHERE
   FALSE;
 
 SELECT
-  item_id,
   item_type,
   sysrange_lower,
   sysrange_upper
 FROM
   gwapese.item_type_history
+WHERE
+  FALSE;
+
+SELECT
+  item_id,
+  item_type,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.item_item_type
+WHERE
+  FALSE;
+
+SELECT
+  item_id,
+  item_type,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.item_item_type_history
 WHERE
   FALSE;
 
