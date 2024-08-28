@@ -2,6 +2,60 @@
 BEGIN;
 
 SELECT
+  hue,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.color_hue
+WHERE
+  FALSE;
+
+SELECT
+  hue,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.color_hue_history
+WHERE
+  FALSE;
+
+SELECT
+  material,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.color_material
+WHERE
+  FALSE;
+
+SELECT
+  material,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.color_material_history
+WHERE
+  FALSE;
+
+SELECT
+  rarity,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.color_rarity
+WHERE
+  FALSE;
+
+SELECT
+  rarity,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.color_rarity_history
+WHERE
+  FALSE;
+
+SELECT
   color_id,
   hue,
   material,

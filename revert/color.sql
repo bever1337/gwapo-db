@@ -53,4 +53,22 @@ DROP TABLE gwapese.color_history;
 
 DROP TABLE gwapese.color;
 
+CALL temporal_tables.drop_historicize_fn ('gwapese', 'color_hue');
+
+DROP TABLE gwapese.color_hue_history;
+
+DROP TABLE gwapese.color_hue;
+
+CALL temporal_tables.drop_historicize_fn ('gwapese', 'color_material');
+
+DROP TABLE gwapese.color_material_history;
+
+DROP TABLE gwapese.color_material;
+
+CALL temporal_tables.drop_historicize_fn ('gwapese', 'color_rarity');
+
+DROP TABLE gwapese.color_rarity_history;
+
+DROP TABLE gwapese.color_rarity;
+
 COMMIT;

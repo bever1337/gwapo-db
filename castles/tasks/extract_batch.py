@@ -48,7 +48,7 @@ class ExtractBatchTask(luigi.Task):
             self.output().open("w") as write_target,
         ):
             self.set_status_message("Extracting")
-            for id_batch in itertools.batched(r_input_file, 200):
+            for id_batch in itertools.batched(r_input_file, 100):
                 next_params = dict(self.url_params)
                 next_params["ids"] = ",".join(
                     [str(json.loads(id)).strip() for id in id_batch]
@@ -56,7 +56,10 @@ class ExtractBatchTask(luigi.Task):
                 response = requests.get(url=self.url, params=next_params)
 
                 if response.status_code != 200:
-                    raise RuntimeError("Expected status code 200")
+                    print("ERROR!")
+                    print(next_params)
+                    print(response)
+                    continue
                 response_json: list = response.json()
                 validator.validate(response_json)
                 write_target.writelines(

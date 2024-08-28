@@ -1,0 +1,29 @@
+{
+  "$id": "gw2/v2/commerce/listings.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "listing": {
+      "additionalProperties": false,
+      "properties": {
+        "listings": { "type": "integer" },
+        "quantity": { "type": "integer" },
+        "unit_price": { "type": "integer" }
+      },
+      "required": ["listings", "quantity", "unit_price"],
+      "type": "object"
+    }
+  },
+  "oneOf": [
+    { "items": { "type": "integer" }, "type": "array" },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "buys": { "items": { "$ref": "#/$defs/listing" }, "type": "array" },
+        "id": { "type": "integer" },
+        "sells": { "items": { "$ref": "#/$defs/listing" }, "type": "array" }
+      },
+      "required": ["buys", "id", "sells"],
+      "type": "object"
+    }
+  ]
+}

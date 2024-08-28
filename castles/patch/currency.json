@@ -352,5 +352,10 @@
     { "op": "test", "path": "/id", "value": 75 },
     { "op": "add", "path": "/categories", "value": [3] },
     { "op": "add", "path": "/deprecated", "value": false }
+  ],
+  [
+    { "op": "test", "path": "/id", "value": 76 },
+    { "op": "add", "path": "/categories", "value": [] },
+    { "op": "add", "path": "/deprecated", "value": false }
   ]
 ]

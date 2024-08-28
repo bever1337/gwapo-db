@@ -3,8 +3,48 @@
 -- requires: history
 BEGIN;
 
--- todo category types and rarity are not normalized
--- would be lost if a color is deleted
+CREATE TABLE gwapese.color_hue (
+  hue text,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
+  CONSTRAINT color_hue_pk PRIMARY KEY (hue)
+);
+
+CREATE TABLE gwapese.color_hue_history (
+  LIKE gwapese.color_hue
+);
+
+CALL temporal_tables.create_historicize_trigger ('gwapese',
+  'color_hue', 'color_hue_history');
+
+CREATE TABLE gwapese.color_material (
+  material text,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
+  CONSTRAINT color_material_pk PRIMARY KEY (material)
+);
+
+CREATE TABLE gwapese.color_material_history (
+  LIKE gwapese.color_material
+);
+
+CALL temporal_tables.create_historicize_trigger ('gwapese',
+  'color_material', 'color_material_history');
+
+CREATE TABLE gwapese.color_rarity (
+  rarity text,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
+  CONSTRAINT color_rarity_pk PRIMARY KEY (rarity)
+);
+
+CREATE TABLE gwapese.color_rarity_history (
+  LIKE gwapese.color_rarity
+);
+
+CALL temporal_tables.create_historicize_trigger ('gwapese',
+  'color_rarity', 'color_rarity_history');
+
 CREATE TABLE gwapese.color (
   color_id integer NOT NULL,
   hue text,
@@ -12,7 +52,14 @@ CREATE TABLE gwapese.color (
   rarity text,
   sysrange_lower timestamp(3) NOT NULL,
   sysrange_upper timestamp(3) NOT NULL,
-  CONSTRAINT color_pk PRIMARY KEY (color_id)
+  CONSTRAINT color_pk PRIMARY KEY (color_id),
+  CONSTRAINT color_hue_identifies_color_fk FOREIGN KEY (hue) REFERENCES
+    gwapese.color_hue (hue) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT color_material_identifies_color_fk FOREIGN KEY (material)
+    REFERENCES gwapese.color_material (material) ON DELETE CASCADE ON UPDATE
+    CASCADE,
+  CONSTRAINT color_rarity_identifies_color_fk FOREIGN KEY (rarity) REFERENCES
+    gwapese.color_rarity (rarity) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE gwapese.color_history (

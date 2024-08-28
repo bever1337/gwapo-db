@@ -14,6 +14,9 @@ class WrapColor(luigi.WrapperTask):
 
     def requires(self):
         args = {"lang_tag": self.lang_tag, "task_datetime": self.task_datetime}
+        yield LoadCsvColorHue(**args)
+        yield LoadCsvColorMaterial(**args)
+        yield LoadCsvColorRarity(**args)
         yield LoadCsvColor(**args)
         yield LoadCsvColorName(**args)
         yield LoadCsvColorSample(**args)
@@ -46,6 +49,141 @@ class LoadCsvColorTask(load_csv.LoadCsvTask):
     task_namespace = "color"
 
 
+class LoadCsvColorHue(LoadCsvColorTask):
+    table = "color_hue"
+
+    postcopy_sql = sql.Composed(
+        [
+            sql.SQL(
+                """
+DELETE FROM gwapese.color_hue
+WHERE NOT EXISTS (
+  SELECT
+    1
+  FROM (
+    SELECT DISTINCT ON
+      (hue) hue
+    FROM
+      tempo_color_hue) AS color_hue_source
+  WHERE gwapese.color_hue.hue = color_hue_source.hue
+);
+"""
+            ),
+            sql.SQL(
+                """
+MERGE INTO gwapese.color_hue
+USING (
+  SELECT DISTINCT ON
+    (hue) hue
+  FROM
+    tempo_color_hue) AS color_hue_source
+  ON gwapese.color_hue.hue = color_hue_source.hue
+WHEN NOT MATCHED THEN
+  INSERT (hue)
+    VALUES (color_hue_source.hue);
+"""
+            ),
+        ]
+    )
+
+    def requires(self):
+        return {
+            self.table: color_transform_csv.TransformCsvColorHue(
+                lang_tag=self.lang_tag
+            ),
+        }
+
+
+class LoadCsvColorMaterial(LoadCsvColorTask):
+    table = "color_material"
+
+    postcopy_sql = sql.Composed(
+        [
+            sql.SQL(
+                """
+DELETE FROM gwapese.color_material
+WHERE NOT EXISTS (
+  SELECT
+    1
+  FROM (
+    SELECT DISTINCT ON
+      (material) material
+    FROM
+      tempo_color_material) AS color_material_source
+  WHERE gwapese.color_material.material = color_material_source.material
+);
+"""
+            ),
+            sql.SQL(
+                """
+MERGE INTO gwapese.color_material
+USING (
+  SELECT DISTINCT ON
+    (material) material
+  FROM
+    tempo_color_material) AS color_material_source
+  ON gwapese.color_material.material = color_material_source.material
+WHEN NOT MATCHED THEN
+  INSERT (material)
+    VALUES (color_material_source.material);
+"""
+            ),
+        ]
+    )
+
+    def requires(self):
+        return {
+            self.table: color_transform_csv.TransformCsvColorMaterial(
+                lang_tag=self.lang_tag
+            ),
+        }
+
+
+class LoadCsvColorRarity(LoadCsvColorTask):
+    table = "color_rarity"
+
+    postcopy_sql = sql.Composed(
+        [
+            sql.SQL(
+                """
+DELETE FROM gwapese.color_rarity
+WHERE NOT EXISTS (
+  SELECT
+    1
+  FROM (
+    SELECT DISTINCT ON
+      (rarity) rarity
+    FROM
+      tempo_color_rarity) AS color_rarity_source
+  WHERE gwapese.color_rarity.rarity = color_rarity_source.rarity
+);
+"""
+            ),
+            sql.SQL(
+                """
+MERGE INTO gwapese.color_rarity
+USING (
+  SELECT DISTINCT ON
+    (rarity) rarity
+  FROM
+    tempo_color_rarity) AS color_rarity_source
+  ON gwapese.color_rarity.rarity = color_rarity_source.rarity
+WHEN NOT MATCHED THEN
+  INSERT (rarity)
+    VALUES (color_rarity_source.rarity);
+"""
+            ),
+        ]
+    )
+
+    def requires(self):
+        return {
+            self.table: color_transform_csv.TransformCsvColorRarity(
+                lang_tag=self.lang_tag
+            ),
+        }
+
+
 class LoadCsvColor(LoadCsvColorTask):
     table = "color"
 
@@ -58,17 +196,20 @@ WHEN MATCHED
   OR target_color.material != source_color.material
   OR target_color.rarity != source_color.rarity THEN
   UPDATE SET
-    (hue, material, rarity) = (source_color.hue, source_color.material, source_color.rarity)
+    (hue, material, rarity) = (NULLIF(source_color.hue, ''), NULLIF(source_color.material, ''), NULLIF(source_color.rarity, ''))
 WHEN NOT MATCHED THEN
   INSERT (color_id, hue, material, rarity)
-    VALUES (source_color.color_id, source_color.hue, source_color.material,
-      source_color.rarity);
+    VALUES (source_color.color_id, NULLIF(source_color.hue, ''), NULLIF(source_color.material, ''),
+      NULLIF(source_color.rarity, ''));
 """
     )
 
     def requires(self):
         return {
-            self.table: color_transform_csv.TransformCsvColor(lang_tag=self.lang_tag)
+            self.table: color_transform_csv.TransformCsvColor(lang_tag=self.lang_tag),
+            "hue": LoadCsvColorHue(lang_tag=self.lang_tag),
+            "material": LoadCsvColorMaterial(lang_tag=self.lang_tag),
+            "rarity": LoadCsvColorRarity(lang_tag=self.lang_tag),
         }
 
 

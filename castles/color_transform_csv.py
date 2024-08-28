@@ -18,6 +18,39 @@ class TransformCsvColorTask(transform_csv.TransformCsvTask):
         return color_transform_patch.TransformPatch(lang_tag=self.lang_tag)
 
 
+class TransformCsvColorHue(TransformCsvColorTask):
+    def get_rows(self, color):
+        color_categories = color["categories"]
+        hue = (color_categories[0:1] or [None])[0]
+        match hue:
+            case None | "":
+                return []
+            case _:
+                return [{"hue": hue}]
+
+
+class TransformCsvColorMaterial(TransformCsvColorTask):
+    def get_rows(self, color):
+        color_categories = color["categories"]
+        material = (color_categories[1:2] or [None])[0]
+        match material:
+            case None | "":
+                return []
+            case _:
+                return [{"material": material}]
+
+
+class TransformCsvColorRarity(TransformCsvColorTask):
+    def get_rows(self, color):
+        color_categories = color["categories"]
+        rarity = (color_categories[2:3] or [None])[0]
+        match rarity:
+            case None | "":
+                return []
+            case _:
+                return [{"rarity": rarity}]
+
+
 class TransformCsvColor(TransformCsvColorTask):
     def get_rows(self, color):
         color_categories = color["categories"]
@@ -27,9 +60,9 @@ class TransformCsvColor(TransformCsvColorTask):
         return [
             {
                 "color_id": color["id"],
-                "hue": hue,
-                "material": material,
-                "rarity": rarity,
+                "hue": hue or None,
+                "material": material or None,
+                "rarity": rarity or None,
             }
         ]
 
