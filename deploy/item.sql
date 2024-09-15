@@ -3,25 +3,6 @@
 -- requires: history
 BEGIN;
 
-CREATE TABLE gwapese.item (
-  chat_link text NOT NULL,
-  icon text,
-  item_id integer NOT NULL,
-  rarity text NOT NULL,
-  required_level integer NOT NULL,
-  sysrange_lower timestamp(3) NOT NULL,
-  sysrange_upper timestamp(3) NOT NULL,
-  vendor_value bigint NOT NULL,
-  CONSTRAINT item_pk PRIMARY KEY (item_id)
-);
-
-CREATE TABLE gwapese.item_history (
-  LIKE gwapese.item
-);
-
-CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'item', 'item_history');
-
 CREATE TABLE gwapese.item_flag (
   flag text NOT NULL,
   sysrange_lower timestamp(3) NOT NULL,
@@ -35,6 +16,72 @@ CREATE TABLE gwapese.item_flag_history (
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'item_flag', 'item_flag_history');
+
+CREATE TABLE gwapese.item_game_type (
+  game_type text NOT NULL,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
+  CONSTRAINT item_game_type_pk PRIMARY KEY (game_type)
+);
+
+CREATE TABLE gwapese.item_game_type_history (
+  LIKE gwapese.item_game_type
+);
+
+CALL temporal_tables.create_historicize_trigger ('gwapese',
+  'item_game_type', 'item_game_type_history');
+
+CREATE TABLE gwapese.item_rarity (
+  rarity text NOT NULL,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
+  CONSTRAINT item_rarity_pk PRIMARY KEY (rarity)
+);
+
+CREATE TABLE gwapese.item_rarity_history (
+  LIKE gwapese.item_rarity
+);
+
+CALL temporal_tables.create_historicize_trigger ('gwapese',
+  'item_rarity', 'item_rarity_history');
+
+CREATE TABLE gwapese.item_type (
+  item_type text NOT NULL,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
+  CONSTRAINT item_type_pk PRIMARY KEY (item_type)
+);
+
+CREATE TABLE gwapese.item_type_history (
+  LIKE gwapese.item_type
+);
+
+CALL temporal_tables.create_historicize_trigger ('gwapese',
+  'item_type', 'item_type_history');
+
+CREATE TABLE gwapese.item (
+  chat_link text NOT NULL,
+  icon text,
+  item_id integer NOT NULL,
+  item_type text NOT NULL,
+  rarity text NOT NULL,
+  required_level integer NOT NULL,
+  sysrange_lower timestamp(3) NOT NULL,
+  sysrange_upper timestamp(3) NOT NULL,
+  vendor_value bigint NOT NULL,
+  CONSTRAINT item_pk PRIMARY KEY (item_id),
+  CONSTRAINT item_rarity_identifies_item_fk FOREIGN KEY (rarity) REFERENCES
+    gwapese.item_rarity (rarity) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT item_type_identifies_item_fk FOREIGN KEY (item_type) REFERENCES
+    gwapese.item_type (item_type) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE gwapese.item_history (
+  LIKE gwapese.item
+);
+
+CALL temporal_tables.create_historicize_trigger ('gwapese',
+  'item', 'item_history');
 
 CREATE TABLE gwapese.item_item_flag (
   flag text NOT NULL,
@@ -54,20 +101,6 @@ CREATE TABLE gwapese.item_item_flag_history (
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'item_item_flag', 'item_item_flag_history');
-
-CREATE TABLE gwapese.item_game_type (
-  game_type text NOT NULL,
-  sysrange_lower timestamp(3) NOT NULL,
-  sysrange_upper timestamp(3) NOT NULL,
-  CONSTRAINT item_game_type_pk PRIMARY KEY (game_type)
-);
-
-CREATE TABLE gwapese.item_game_type_history (
-  LIKE gwapese.item_game_type
-);
-
-CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'item_game_type', 'item_game_type_history');
 
 CREATE TABLE gwapese.item_item_game_type (
   game_type text NOT NULL,
@@ -127,40 +160,6 @@ CREATE TABLE gwapese.item_restriction_race_history (
 
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'item_restriction_race', 'item_restriction_race_history');
-
-CREATE TABLE gwapese.item_type (
-  item_type text NOT NULL,
-  sysrange_lower timestamp(3) NOT NULL,
-  sysrange_upper timestamp(3) NOT NULL,
-  CONSTRAINT item_type_pk PRIMARY KEY (item_type)
-);
-
-CREATE TABLE gwapese.item_type_history (
-  LIKE gwapese.item_type
-);
-
-CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'item_type', 'item_type_history');
-
-CREATE TABLE gwapese.item_item_type (
-  item_id integer UNIQUE NOT NULL,
-  item_type text NOT NULL,
-  sysrange_lower timestamp(3) NOT NULL,
-  sysrange_upper timestamp(3) NOT NULL,
-  CONSTRAINT item_item_type_pk PRIMARY KEY (item_id, item_type),
-  CONSTRAINT item_identifies_item_item_type_fk FOREIGN KEY (item_id) REFERENCES
-    gwapese.item (item_id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT item_type_identifies_item_item_type_fk FOREIGN KEY (item_type)
-    REFERENCES gwapese.item_type (item_type) ON DELETE CASCADE ON UPDATE
-    CASCADE
-);
-
-CREATE TABLE gwapese.item_item_type_history (
-  LIKE gwapese.item_item_type
-);
-
-CALL temporal_tables.create_historicize_trigger ('gwapese',
-  'item_item_type', 'item_item_type_history');
 
 CREATE TABLE gwapese.item_upgrade (
   from_item_id integer NOT NULL,

@@ -3,10 +3,7 @@ BEGIN;
 
 SELECT
   item_id,
-  listings,
-  quantity,
   recorded,
-  unit_price,
   sysrange_lower,
   sysrange_upper
 FROM
@@ -16,10 +13,7 @@ WHERE
 
 SELECT
   item_id,
-  listings,
-  quantity,
   recorded,
-  unit_price,
   sysrange_lower,
   sysrange_upper
 FROM
@@ -29,10 +23,7 @@ WHERE
 
 SELECT
   item_id,
-  listings,
-  quantity,
   recorded,
-  unit_price,
   sysrange_lower,
   sysrange_upper
 FROM
@@ -42,10 +33,7 @@ WHERE
 
 SELECT
   item_id,
-  listings,
-  quantity,
   recorded,
-  unit_price,
   sysrange_lower,
   sysrange_upper
 FROM

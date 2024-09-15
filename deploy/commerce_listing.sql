@@ -8,11 +8,11 @@ CREATE TABLE gwapese.commerce_listing_buy (
   item_id integer NOT NULL,
   listings integer NOT NULL,
   quantity integer NOT NULL,
-  recorded timestamp(3) NOT NULL,
-  unit_price integer NOT NULL,
+  recorded timestamptz(3) NOT NULL,
   sysrange_lower timestamp(3) NOT NULL,
   sysrange_upper timestamp(3) NOT NULL,
-  CONSTRAINT commerce_listing_buy_pk PRIMARY KEY (item_id, unit_price, recorded),
+  unit_price integer NOT NULL,
+  CONSTRAINT commerce_listing_buy_pk PRIMARY KEY (item_id, recorded, unit_price),
   CONSTRAINT item_identifies_commerce_listing_buy_fk FOREIGN KEY (item_id)
     REFERENCES gwapese.item (item_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -28,11 +28,11 @@ CREATE TABLE gwapese.commerce_listing_sell (
   item_id integer NOT NULL,
   listings integer NOT NULL,
   quantity integer NOT NULL,
-  recorded timestamp(3) NOT NULL,
-  unit_price integer NOT NULL,
+  recorded timestamptz(3) NOT NULL,
   sysrange_lower timestamp(3) NOT NULL,
   sysrange_upper timestamp(3) NOT NULL,
-  CONSTRAINT commerce_listing_sell_pk PRIMARY KEY (item_id, unit_price, recorded),
+  unit_price integer NOT NULL,
+  CONSTRAINT commerce_listing_sell_pk PRIMARY KEY (item_id, recorded, unit_price),
   CONSTRAINT item_identifies_commerce_listing_sell_fk FOREIGN KEY (item_id)
     REFERENCES gwapese.item (item_id) ON DELETE CASCADE ON UPDATE CASCADE
 );

@@ -2,6 +2,42 @@
 BEGIN;
 
 SELECT
+  rarity,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.item_rarity
+WHERE
+  FALSE;
+
+SELECT
+  rarity,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.item_rarity_history
+WHERE
+  FALSE;
+
+SELECT
+  item_type,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.item_type
+WHERE
+  FALSE;
+
+SELECT
+  item_type,
+  sysrange_lower,
+  sysrange_upper
+FROM
+  gwapese.item_type_history
+WHERE
+  FALSE;
+
+SELECT
   chat_link,
   icon,
   item_id,
@@ -142,44 +178,6 @@ SELECT
   sysrange_upper
 FROM
   gwapese.item_restriction_race_history
-WHERE
-  FALSE;
-
-SELECT
-  item_type,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.item_type
-WHERE
-  FALSE;
-
-SELECT
-  item_type,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.item_type_history
-WHERE
-  FALSE;
-
-SELECT
-  item_id,
-  item_type,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.item_item_type
-WHERE
-  FALSE;
-
-SELECT
-  item_id,
-  item_type,
-  sysrange_lower,
-  sysrange_upper
-FROM
-  gwapese.item_item_type_history
 WHERE
   FALSE;
 

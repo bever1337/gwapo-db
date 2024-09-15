@@ -51,3 +51,4 @@ skin_default_item [schema history skin item] 2024-02-05T02:20:28Z bever1337 <gwa
 guild_currency [schema history] 2024-02-08T23:32:52Z bever1337 <gwapobot@example.com> # Adds guild currency
 guild_upgrade_cost [schema history currency guild_currency guild_upgrade item] 2024-02-05T02:47:52Z bever1337 <gwapobot@example.com> # Adds guild upgrade costs
 commerce_listing [schema history item] 2024-08-27T21:04:20Z bever1337 <gwapobot@example.com> # Add trading post listings
+currency_exchange [schema history currency] 2024-09-13T01:38:39Z bever1337 <gwapobot@example.com> # Adds currency exchange

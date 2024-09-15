@@ -1,0 +1,11 @@
+{
+  "$id": "gw2/v2/commerce/exchange/coins.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "coins_per_gem": { "type": "integer" },
+    "quantity": { "type": "integer" }
+  },
+  "required": ["coins_per_gem", "quantity"],
+  "type": "object"
+}

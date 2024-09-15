@@ -39,6 +39,7 @@ WHERE
 
 SELECT
   app_name,
+  content,
   document,
   lang_tag,
   original,
@@ -51,6 +52,7 @@ WHERE
 
 SELECT
   app_name,
+  content,
   document,
   lang_tag,
   original,

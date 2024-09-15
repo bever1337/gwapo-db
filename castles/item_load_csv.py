@@ -55,7 +55,6 @@ class WrapItem(luigi.WrapperTask):
         yield LoadCsvItemName(**args)
         yield LoadCsvItemRestrictionProfession(**args)
         yield LoadCsvItemRestrictionRace(**args)
-        yield LoadCsvItemType(**args)
         yield LoadCsvItemUpgrade(**args)
 
 
@@ -91,24 +90,80 @@ class LoadCsvItemTask(load_csv.LoadCsvTask):
 class LoadCsvItem(LoadCsvItemTask):
     table = "item"
 
-    postcopy_sql = sql.SQL(
-        """
-MERGE INTO gwapese.item AS target_item
-USING tempo_item AS source_item ON target_item.item_id = source_item.item_id
-WHEN MATCHED
-  AND source_item IS DISTINCT FROM (target_item.chat_link, target_item.icon,
-    target_item.item_id, target_item.rarity, target_item.required_level,
+    postcopy_sql = sql.Composed(
+        [
+            sql.SQL(
+                """
+MERGE INTO
+  gwapese.item_rarity
+USING (
+  SELECT DISTINCT ON
+    (rarity)
+    rarity
+  FROM
+    tempo_item)
+AS
+  item_rarity_source
+ON
+  gwapese.item_rarity.rarity = item_rarity_source.rarity
+WHEN NOT MATCHED THEN
+  INSERT (rarity)
+    VALUES (item_rarity_source.rarity);
+"""
+            ),
+            sql.SQL(
+                """
+MERGE INTO
+  gwapese.item_type
+USING (
+  SELECT DISTINCT ON
+    (item_type)
+    item_type
+  FROM
+    tempo_item)
+AS
+  item_type_source
+ON
+  gwapese.item_type.item_type = item_type_source.item_type
+WHEN NOT MATCHED THEN
+  INSERT (item_type)
+    VALUES (item_type_source.item_type);
+"""
+            ),
+            sql.SQL(
+                """
+MERGE INTO
+  gwapese.item
+AS
+  target_item
+USING
+  tempo_item
+AS
+  source_item
+ON
+  target_item.item_id = source_item.item_id
+WHEN MATCHED AND
+  source_item IS DISTINCT FROM (
+    target_item.chat_link, target_item.icon,
+    target_item.item_id, target_item.item_type,
+    target_item.rarity, target_item.required_level,
     target_item.vendor_value) THEN
   UPDATE SET
-    (chat_link, icon, rarity, required_level, vendor_value) =
-      (source_item.chat_link, source_item.icon, source_item.rarity,
+    (chat_link, icon, item_type, rarity,
+      required_level, vendor_value) = (
+      source_item.chat_link, source_item.icon,
+      source_item.item_type, source_item.rarity,
       source_item.required_level, source_item.vendor_value)
 WHEN NOT MATCHED THEN
-  INSERT (chat_link, icon, item_id, rarity, required_level, vendor_value)
-    VALUES (source_item.chat_link, source_item.icon, source_item.item_id,
+  INSERT (chat_link, icon, item_id, item_type,
+      rarity, required_level, vendor_value)
+    VALUES (source_item.chat_link, source_item.icon,
+      source_item.item_id, source_item.item_type,
       source_item.rarity, source_item.required_level,
       source_item.vendor_value);
 """
+            ),
+        ]
     )
 
     def requires(self):
@@ -479,72 +534,6 @@ WHEN NOT MATCHED THEN
                 lang_tag=self.lang_tag
             ),
             "race": race_load_csv.LoadCsvRace(lang_tag=self.lang_tag),
-            "item": LoadCsvItem(lang_tag=self.lang_tag),
-        }
-
-
-class LoadCsvItemType(LoadCsvItemTask):
-    table = "item_item_type"
-
-    postcopy_sql = sql.Composed(
-        [
-            sql.SQL(
-                """
-MERGE INTO
-  gwapese.item_type
-USING (
-  SELECT DISTINCT ON
-    (item_type)
-    item_type
-  FROM
-    tempo_item_item_type)
-AS
-  item_type_source
-ON
-  gwapese.item_type.item_type = item_type_source.item_type
-WHEN NOT MATCHED THEN
-  INSERT (item_type)
-    VALUES (item_type_source.item_type);
-"""
-            ),
-            sql.SQL(
-                """
-DELETE FROM
-  gwapese.item_item_type
-WHERE NOT EXISTS (
-    SELECT
-      1
-    FROM
-      tempo_item_item_type
-    WHERE
-      gwapese.item_item_type.item_type = tempo_item_item_type.item_type
-      AND gwapese.item_item_type.item_id = tempo_item_item_type.item_id);
-"""
-            ),
-            sql.SQL(
-                """
-MERGE INTO
-  gwapese.item_item_type
-AS
-  target_item_item_type
-USING
-  tempo_item_item_type
-AS
-  source_item_item_type
-ON
-  target_item_item_type.item_id = source_item_item_type.item_id
-    AND target_item_item_type.item_type = source_item_item_type.item_type
-WHEN NOT MATCHED THEN
-  INSERT (item_id, item_type)
-    VALUES (source_item_item_type.item_id, source_item_item_type.item_type);
-"""
-            ),
-        ]
-    )
-
-    def requires(self):
-        return {
-            self.table: item_transform_csv.TransformCsvItemType(lang_tag=self.lang_tag),
             "item": LoadCsvItem(lang_tag=self.lang_tag),
         }
 

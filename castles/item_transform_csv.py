@@ -25,6 +25,7 @@ class TransformCsvItem(TransformCsvItemTask):
                 "chat_link": item["chat_link"],
                 "icon": item_icon,
                 "item_id": item["id"],
+                "item_type": item["type"],
                 "rarity": item["rarity"],
                 "required_level": item["level"],
                 "vendor_value": item["vendor_value"],
@@ -134,11 +135,6 @@ class TransformCsvItemRestriction(TransformCsvItemTask):
             {"item_id": item_id, "restriction_id": restriction_id}
             for restriction_id in item["restrictions"]
         ]
-
-
-class TransformCsvItemType(TransformCsvItemTask):
-    def get_rows(self, item):
-        return [{"item_id": item["id"], "item_type": item["type"]}]
 
 
 class TransformCsvItemUpgrade(TransformCsvItemTask):

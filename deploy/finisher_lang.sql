@@ -8,8 +8,7 @@ BEGIN;
 CREATE TABLE gwapese.finisher_detail (
   LIKE gwapese.copy_source,
   finisher_id integer NOT NULL,
-  CONSTRAINT finisher_detail_pk PRIMARY KEY (app_name, lang_tag, original, finisher_id),
-  CONSTRAINT finisher_detail_u UNIQUE (app_name, lang_tag, finisher_id),
+  CONSTRAINT finisher_detail_pk PRIMARY KEY (app_name, lang_tag, finisher_id),
   CONSTRAINT finisher_identifies_detail_fk FOREIGN KEY (finisher_id) REFERENCES
     gwapese.finisher (finisher_id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT copy_source_identifies_finisher_detail_fk FOREIGN KEY (app_name,
@@ -28,11 +27,10 @@ CREATE TABLE gwapese.finisher_detail_context (
   LIKE gwapese.copy_target,
   finisher_id integer NOT NULL,
   CONSTRAINT finisher_detail_context_pk PRIMARY KEY (app_name,
-    original_lang_tag, translation_lang_tag, finisher_id),
+    original_lang_tag, finisher_id, translation_lang_tag),
   CONSTRAINT finisher_detail_sources_context_fk FOREIGN KEY (app_name,
-    original_lang_tag, original, finisher_id) REFERENCES
-    gwapese.finisher_detail (app_name, lang_tag, original, finisher_id) ON
-    DELETE CASCADE ON UPDATE CASCADE,
+    original_lang_tag, finisher_id) REFERENCES gwapese.finisher_detail
+    (app_name, lang_tag, finisher_id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT copy_target_identifies_finisher_detail_context_fk FOREIGN KEY
     (app_name, original_lang_tag, original, translation_lang_tag, translation)
     REFERENCES gwapese.copy_target (app_name, original_lang_tag, original,
@@ -49,8 +47,7 @@ CALL temporal_tables.create_historicize_trigger ('gwapese',
 CREATE TABLE gwapese.finisher_name (
   LIKE gwapese.copy_source,
   finisher_id integer NOT NULL,
-  CONSTRAINT finisher_name_pk PRIMARY KEY (app_name, lang_tag, original, finisher_id),
-  CONSTRAINT finisher_name_u UNIQUE (app_name, lang_tag, finisher_id),
+  CONSTRAINT finisher_name_pk PRIMARY KEY (app_name, lang_tag, finisher_id),
   CONSTRAINT finisher_identifies_name_fk FOREIGN KEY (finisher_id) REFERENCES
     gwapese.finisher (finisher_id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT copy_source_identifies_finisher_name_fk FOREIGN KEY (app_name,
@@ -69,11 +66,10 @@ CREATE TABLE gwapese.finisher_name_context (
   LIKE gwapese.copy_target,
   finisher_id integer NOT NULL,
   CONSTRAINT finisher_name_context_pk PRIMARY KEY (app_name, original_lang_tag,
-    translation_lang_tag, finisher_id),
+    finisher_id, translation_lang_tag),
   CONSTRAINT finisher_name_sources_context_fk FOREIGN KEY (app_name,
-    original_lang_tag, original, finisher_id) REFERENCES gwapese.finisher_name
-    (app_name, lang_tag, original, finisher_id) ON DELETE CASCADE ON UPDATE
-    CASCADE,
+    original_lang_tag, finisher_id) REFERENCES gwapese.finisher_name (app_name,
+    lang_tag, finisher_id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT copy_target_identifies_finisher_name_context_fk FOREIGN KEY
     (app_name, original_lang_tag, original, translation_lang_tag, translation)
     REFERENCES gwapese.copy_target (app_name, original_lang_tag, original,

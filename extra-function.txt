@@ -1,0 +1,11 @@
+xmlelement
+xmlparse
+xmlserialize
+xpath
+gwapese.xml_to_text
+temporal_tables.fmt_trigger_fn_name
+temporal_tables.fmt_trigger_name
+temporal_tables.fmt_create_temporal_fn
+temporal_tables.fmt_create_table_trigger
+temporal_tables.fmt_drop_table_trigger
+temporal_tables.fmt_drop_trigger_fn

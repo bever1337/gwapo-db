@@ -6,7 +6,6 @@ dist
 .env
 include
 node_modules
-.vscode
 castles/artifacts/
 
 # Byte-compiled / optimized / DLL files

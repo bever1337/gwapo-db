@@ -31,17 +31,34 @@ CREATE TABLE gwapese.app_history (
 CALL temporal_tables.create_historicize_trigger ('gwapese',
   'app', 'app_history');
 
+CREATE OR REPLACE FUNCTION gwapese.xml_to_text (IN in_original text)
+  RETURNS text
+  AS $$
+BEGIN
+  RETURN xmlserialize(CONTENT ((xpath('//text()', xmlelement(name root,
+    NULL, xmlparse(CONTENT in_original))))[1]) AS text);
+END;
+$$
+LANGUAGE plpgsql
+IMMUTABLE;
+
 CREATE TABLE gwapese.copy_document (
   app_name text NOT NULL,
-  document xml GENERATED ALWAYS AS (XMLPARSE (CONTENT original)) STORED NOT NULL,
+  content text GENERATED ALWAYS AS (gwapese.xml_to_text(original)) STORED NOT NULL,
+  document xml GENERATED ALWAYS AS (xmlparse(CONTENT original)) STORED NOT NULL,
   lang_tag text NOT NULL,
   original text NOT NULL,
   sysrange_lower timestamp(3) NOT NULL,
   sysrange_upper timestamp(3) NOT NULL,
   CONSTRAINT copy_document_pk PRIMARY KEY (app_name, lang_tag, original),
-  CONSTRAINT lang_comprises_copy_document FOREIGN KEY (lang_tag) REFERENCES
+  CONSTRAINT app_identifies_copy_document_fk FOREIGN KEY (app_name) REFERENCES
+    gwapese.app (app_name) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT lang_identifies_copy_document_fk FOREIGN KEY (lang_tag) REFERENCES
     gwapese.lang (lang_tag) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+CREATE INDEX copy_document_trgm_idx ON gwapese.copy_document USING GIST
+  (content gist_trgm_ops);
 
 CREATE TABLE gwapese.copy_document_history (
   LIKE gwapese.copy_document
@@ -58,8 +75,8 @@ CREATE TABLE gwapese.operating_lang (
   CONSTRAINT operating_lang_pk PRIMARY KEY (app_name, lang_tag),
   CONSTRAINT app_operates_operating_lang_fk FOREIGN KEY (app_name) REFERENCES
     gwapese.app (app_name) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT lang_comprises_operating_lang_fk FOREIGN KEY (lang_tag) REFERENCES
-    gwapese.lang (lang_tag) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT lang_identifies_operating_lang_fk FOREIGN KEY (lang_tag)
+    REFERENCES gwapese.lang (lang_tag) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE gwapese.operating_lang_history (
